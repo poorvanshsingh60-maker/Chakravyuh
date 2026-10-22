@@ -1,22 +1,21 @@
 import React, { useState } from 'react';
-import { Button } from '../../components/ui/button';
 import { UserRole } from '../../types/user';
 import { ChakravyuhLogo } from '../../components/ChakravyuhLogo';
-import { Lock, Mail, ArrowRight, ShieldCheck } from 'lucide-react';
+import { ChevronRight } from 'lucide-react';
 
 interface LoginPageProps {
   onLogin: (user: { id: string; email: string; full_name: string; role: UserRole }) => void;
 }
 
 export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
-  const [email, setEmail] = useState('coordinator@chakravyuh.ai');
-  const [password, setPassword] = useState('password123');
+  const [email, setEmail] = useState('emma.watson@chakravyuh.ai');
+  const [password, setPassword] = useState('••••••••••••');
 
   const handleCustomSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     onLogin({
       id: 'coord-1',
-      email: email || 'coordinator@chakravyuh.ai',
+      email: email || 'emma.watson@chakravyuh.ai',
       full_name: 'Emma Watson',
       role: 'COORDINATOR'
     });
@@ -48,139 +47,159 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
   };
 
   return (
-    <div className="min-h-screen bg-[#f8f9fa] flex flex-col justify-center items-center p-6 font-['Inter',-apple-system,BlinkMacSystemFont,'Segoe_UI',Roboto,sans-serif]">
+    <div className="min-h-screen bg-[#f0f4f9] flex flex-col justify-between items-center py-8 px-4 font-['Inter',-apple-system,BlinkMacSystemFont,'Segoe_UI',Roboto,sans-serif]">
       
-      {/* Top Brand Header with Authentic Labyrinth Logo */}
-      <div className="mb-6 flex flex-col items-center text-center space-y-3">
-        <ChakravyuhLogo size={48} showText={false} />
-        
-        <div>
-          <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[#e7f2fe] border border-[#bcd7fd] text-[#1668e8] text-[11px] font-mono font-bold mb-1">
-            <ShieldCheck className="w-3.5 h-3.5" />
-            <span>CHAKRAVYUH OPTIMIZATION SYSTEM</span>
+      <div className="w-full flex-1 flex items-center justify-center">
+        {/* Google-Style Card */}
+        <div className="bg-white border border-[#dadce0] rounded-[28px] max-w-[448px] w-full p-10 shadow-xs">
+          
+          {/* Logo & Header */}
+          <div className="flex flex-col items-start">
+            <ChakravyuhLogo size={40} showText={false} />
+            <h1 className="text-2xl font-normal text-[#1f1f1f] mt-4 tracking-tight">
+              Sign in
+            </h1>
+            <p className="text-sm text-[#444746] mt-1">
+              to continue to Chakravyuh
+            </p>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-[#101828] tracking-tight">
-            Enterprise Interview Orchestration
-          </h1>
-          <p className="text-xs text-[#667085] max-w-sm mx-auto mt-1">
-            Combinatorial constraint scheduling engine powered by Google OR-Tools CP-SAT.
-          </p>
-        </div>
-      </div>
 
-      {/* Main Login Card */}
-      <div className="bg-white border border-[#eaecf0] rounded-2xl shadow-xl max-w-md w-full p-8 space-y-6">
-        <div>
-          <span className="font-bold text-base text-[#101828] block">Sign In to Workspace</span>
-          <p className="text-xs text-[#667085] mt-1">Select a role below or enter your work credentials.</p>
-        </div>
-
-        {/* 1-Click Demo Persona Logins */}
-        <div className="space-y-2.5">
-          <span className="text-[10px] font-bold text-[#98a2b3] uppercase tracking-wider block">
-            1-Click Persona Access
-          </span>
-
-          {/* Coordinator */}
-          <button
-            type="button"
-            onClick={() => handleQuickLogin('COORDINATOR')}
-            className="w-full p-3 rounded-xl border border-[#eaecf0] hover:border-[#1668e8] bg-[#f9fafb] hover:bg-[#eff8ff] flex items-center justify-between transition-all text-left text-xs group shadow-2xs"
-          >
-            <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-lg bg-[#e7f2fe] text-[#1668e8] flex items-center justify-center font-bold text-sm shadow-xs">
-                👑
-              </div>
-              <div>
-                <span className="font-bold text-[#101828] block group-hover:text-[#1668e8]">Coordinator Portal</span>
-                <span className="text-[11px] text-[#667085]">Emma Watson • Master Solver, Config & Dispatch</span>
-              </div>
-            </div>
-            <ArrowRight className="w-4 h-4 text-[#1668e8] opacity-0 group-hover:opacity-100 transition-opacity" />
-          </button>
-
-          {/* Interviewer */}
-          <button
-            type="button"
-            onClick={() => handleQuickLogin('INTERVIEWER')}
-            className="w-full p-3 rounded-xl border border-[#eaecf0] hover:border-[#12b76a] bg-[#f9fafb] hover:bg-[#ecfdf3] flex items-center justify-between transition-all text-left text-xs group shadow-2xs"
-          >
-            <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-lg bg-[#ecfdf3] text-[#027a48] flex items-center justify-center font-bold text-sm shadow-xs">
-                💼
-              </div>
-              <div>
-                <span className="font-bold text-[#101828] block group-hover:text-[#027a48]">Interviewer Portal</span>
-                <span className="text-[11px] text-[#667085]">Dr. Sarah Chen • Rubric Scorecards & Availability</span>
-              </div>
-            </div>
-            <ArrowRight className="w-4 h-4 text-[#027a48] opacity-0 group-hover:opacity-100 transition-opacity" />
-          </button>
-
-          {/* Candidate */}
-          <button
-            type="button"
-            onClick={() => handleQuickLogin('CANDIDATE')}
-            className="w-full p-3 rounded-xl border border-[#eaecf0] hover:border-[#6941c6] bg-[#f9fafb] hover:bg-[#f4ebff] flex items-center justify-between transition-all text-left text-xs group shadow-2xs"
-          >
-            <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-lg bg-[#f4ebff] text-[#6941c6] flex items-center justify-center font-bold text-sm shadow-xs">
-                🎓
-              </div>
-              <div>
-                <span className="font-bold text-[#101828] block group-hover:text-[#6941c6]">Candidate Portal</span>
-                <span className="text-[11px] text-[#667085]">Alex Mercer • Confirmed Loop, Timezones & Slots</span>
-              </div>
-            </div>
-            <ArrowRight className="w-4 h-4 text-[#6941c6] opacity-0 group-hover:opacity-100 transition-opacity" />
-          </button>
-        </div>
-
-        <div className="relative flex items-center justify-center">
-          <div className="border-t border-[#eaecf0] w-full"></div>
-          <span className="bg-white px-3 text-[11px] text-[#98a2b3] absolute">or sign in with credentials</span>
-        </div>
-
-        {/* Credentials Form */}
-        <form onSubmit={handleCustomSubmit} className="space-y-4 text-xs">
-          <div className="space-y-1">
-            <label className="font-semibold text-[#344054]">Work Email</label>
-            <div className="relative">
-              <Mail className="w-4 h-4 text-[#98a2b3] absolute left-3 top-1/2 -translate-y-1/2" />
+          {/* Credentials Form */}
+          <form onSubmit={handleCustomSubmit} className="mt-8 space-y-5">
+            <div>
               <input 
                 type="email" 
                 required
                 value={email} 
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full border border-[#d0d5dd] rounded-lg pl-9 pr-3 py-2 text-xs text-[#101828] focus:border-[#1668e8] focus:ring-1 focus:ring-[#1668e8] outline-none" 
+                placeholder="Email or phone"
+                className="w-full border border-[#747775] hover:border-[#1f1f1f] focus:border-[#0b57d0] focus:ring-1 focus:ring-[#0b57d0] rounded-md px-3.5 py-3.5 text-sm text-[#1f1f1f] outline-none transition-colors placeholder-[#747775]" 
               />
+              <div className="mt-2 text-left">
+                <button type="button" className="text-xs font-semibold text-[#0b57d0] hover:underline">
+                  Forgot email?
+                </button>
+              </div>
             </div>
-          </div>
 
-          <div className="space-y-1">
-            <label className="font-semibold text-[#344054]">Password</label>
-            <div className="relative">
-              <Lock className="w-4 h-4 text-[#98a2b3] absolute left-3 top-1/2 -translate-y-1/2" />
+            <div>
               <input 
                 type="password" 
                 required
                 value={password} 
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full border border-[#d0d5dd] rounded-lg pl-9 pr-3 py-2 text-xs text-[#101828] focus:border-[#1668e8] focus:ring-1 focus:ring-[#1668e8] outline-none" 
+                placeholder="Enter your password"
+                className="w-full border border-[#747775] hover:border-[#1f1f1f] focus:border-[#0b57d0] focus:ring-1 focus:ring-[#0b57d0] rounded-md px-3.5 py-3.5 text-sm text-[#1f1f1f] outline-none transition-colors placeholder-[#747775]" 
               />
+            </div>
+
+            <p className="text-xs text-[#444746] leading-relaxed pt-1">
+              Not your computer? Use a private browsing window to sign in.
+            </p>
+
+            <div className="flex items-center justify-between pt-4">
+              <button 
+                type="button"
+                className="text-sm font-semibold text-[#0b57d0] hover:bg-[#f4f7fc] px-4 py-2 rounded-full transition-colors"
+              >
+                Create account
+              </button>
+              <button 
+                type="submit"
+                className="bg-[#0b57d0] hover:bg-[#0842a0] text-white text-sm font-semibold px-6 py-2.5 rounded-full transition-colors shadow-none"
+              >
+                Next
+              </button>
+            </div>
+          </form>
+
+          {/* Demo Accounts Selector */}
+          <div className="mt-8 pt-6 border-t border-[#e0e2e0]">
+            <span className="text-[11px] font-semibold text-[#747775] uppercase tracking-wider block mb-3">
+              Fast Demo Sign-In
+            </span>
+
+            <div className="space-y-1.5">
+              {/* Coordinator */}
+              <button
+                type="button"
+                onClick={() => handleQuickLogin('COORDINATOR')}
+                className="w-full p-2.5 rounded-lg border border-[#e0e2e0] hover:border-[#0b57d0] hover:bg-[#f8fafd] flex items-center justify-between transition-colors text-left group"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-full bg-[#e8f0fe] text-[#0b57d0] font-semibold flex items-center justify-center text-xs">
+                    EW
+                  </div>
+                  <div>
+                    <span className="text-xs font-semibold text-[#1f1f1f] block group-hover:text-[#0b57d0]">
+                      Emma Watson
+                    </span>
+                    <span className="text-[11px] text-[#747775]">
+                      Recruiting Coordinator
+                    </span>
+                  </div>
+                </div>
+                <ChevronRight className="w-4 h-4 text-[#747775] group-hover:text-[#0b57d0]" />
+              </button>
+
+              {/* Interviewer */}
+              <button
+                type="button"
+                onClick={() => handleQuickLogin('INTERVIEWER')}
+                className="w-full p-2.5 rounded-lg border border-[#e0e2e0] hover:border-[#0b57d0] hover:bg-[#f8fafd] flex items-center justify-between transition-colors text-left group"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-full bg-[#e6f4ea] text-[#137333] font-semibold flex items-center justify-center text-xs">
+                    SC
+                  </div>
+                  <div>
+                    <span className="text-xs font-semibold text-[#1f1f1f] block group-hover:text-[#0b57d0]">
+                      Dr. Sarah Chen
+                    </span>
+                    <span className="text-[11px] text-[#747775]">
+                      Interviewer (Senior Staff Eng)
+                    </span>
+                  </div>
+                </div>
+                <ChevronRight className="w-4 h-4 text-[#747775] group-hover:text-[#0b57d0]" />
+              </button>
+
+              {/* Candidate */}
+              <button
+                type="button"
+                onClick={() => handleQuickLogin('CANDIDATE')}
+                className="w-full p-2.5 rounded-lg border border-[#e0e2e0] hover:border-[#0b57d0] hover:bg-[#f8fafd] flex items-center justify-between transition-colors text-left group"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-full bg-[#fce8e6] text-[#c5221f] font-semibold flex items-center justify-center text-xs">
+                    AM
+                  </div>
+                  <div>
+                    <span className="text-xs font-semibold text-[#1f1f1f] block group-hover:text-[#0b57d0]">
+                      Alex Mercer
+                    </span>
+                    <span className="text-[11px] text-[#747775]">
+                      Candidate (Staff Distributed Systems)
+                    </span>
+                  </div>
+                </div>
+                <ChevronRight className="w-4 h-4 text-[#747775] group-hover:text-[#0b57d0]" />
+              </button>
             </div>
           </div>
 
-          <Button type="submit" variant="primary" className="w-full py-2.5 font-bold shadow-xs">
-            Sign In with Enterprise SSO
-          </Button>
-        </form>
-
+        </div>
       </div>
 
-      <div className="mt-8 text-center text-xs text-[#98a2b3] font-mono">
-        Chakravyuh Labyrinth Architecture • Google OR-Tools v2.4
-      </div>
+      {/* Google-Style Footer */}
+      <footer className="w-full max-w-[448px] flex items-center justify-between text-xs text-[#444746] pt-4 select-none">
+        <span>English (United States)</span>
+        <div className="flex items-center gap-6">
+          <a href="#" className="hover:text-[#1f1f1f]">Help</a>
+          <a href="#" className="hover:text-[#1f1f1f]">Privacy</a>
+          <a href="#" className="hover:text-[#1f1f1f]">Terms</a>
+        </div>
+      </footer>
 
     </div>
   );

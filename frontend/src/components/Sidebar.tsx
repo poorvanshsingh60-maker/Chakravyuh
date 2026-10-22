@@ -16,9 +16,11 @@ import {
   MessageSquare,
   GraduationCap,
   X,
-  ChevronRight
+  ChevronRight,
+  LogOut
 } from 'lucide-react';
 import { NavTab } from '../types';
+import { UserRole } from '../types/user';
 import { INITIAL_CANDIDATES, INITIAL_DIRECTORY, INITIAL_JOBS } from '../data/mockDatabase';
 import { ChakravyuhLogo } from './ChakravyuhLogo';
 
@@ -28,13 +30,22 @@ interface SidebarProps {
   pendingTasksCount?: number;
   urgentAlertsCount?: number;
   onSelectCandidate?: (candidateName: string) => void;
+  currentUser?: {
+    id: string;
+    email: string;
+    full_name: string;
+    role: UserRole;
+  } | null;
+  onSignOut?: () => void;
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({ 
   currentTab, 
   onSelectTab,
   pendingTasksCount = 3,
-  urgentAlertsCount = 2
+  urgentAlertsCount = 2,
+  currentUser,
+  onSignOut
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [searchFocused, setSearchFocused] = useState(false);
@@ -61,10 +72,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
     <aside className="w-60 bg-white border-r border-[#eaecf0] flex flex-col h-screen sticky top-0 shrink-0 select-none">
       
       {/* Top Organization Header */}
-      <div className="p-3.5 flex items-center justify-between border-b border-[#f1f3f5]">
-        <div className="flex items-center gap-2">
-          <ChakravyuhLogo size={20} showText={true} />
-        </div>
+      <div className="h-14 px-4 flex items-center justify-between border-b border-[#f1f3f5] shrink-0">
+        <ChakravyuhLogo size={24} showText={true} />
       </div>
 
       {/* Search Input with Live Quick-Results Popover */}
@@ -73,7 +82,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           <Search className="w-4 h-4 text-[#98a2b3] absolute left-3 top-1/2 -translate-y-1/2" />
           <input 
             type="text" 
-            placeholder="Search everything..."
+            placeholder="Search..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             onFocus={() => setSearchFocused(true)}
@@ -167,7 +176,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       {/* Main Navigation Links */}
       <nav className="flex-1 px-2.5 py-1 space-y-0.5 overflow-y-auto text-xs">
         
-        {/* Home / Summary Dashboard with Moodle-style Red Alerts */}
+        {/* Home */}
         <button 
           onClick={() => onSelectTab('home')}
           className={`w-full flex items-center justify-between px-3 py-2 rounded-lg font-medium transition-colors text-left ${
@@ -181,18 +190,16 @@ export const Sidebar: React.FC<SidebarProps> = ({
             <span className="font-semibold">Home</span>
           </div>
           {urgentAlertsCount > 0 && (
-            <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-bold flex items-center gap-1 ${
-              currentTab === 'home' 
-                ? 'bg-red-500 text-white' 
-                : 'bg-red-100 text-red-700 border border-red-200'
+            <span className={`flex items-center gap-1.5 text-[11px] font-medium ${
+              currentTab === 'home' ? 'text-white' : 'text-red-600'
             }`}>
-              <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
-              <span>{urgentAlertsCount} urgent</span>
+              <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-[pulse_1.5s_ease-in-out_infinite]" />
+              <span>{urgentAlertsCount}</span>
             </span>
           )}
         </button>
 
-        {/* Flowmap Interactive Workspace */}
+        {/* Workflow */}
         <button 
           onClick={() => onSelectTab('flowchart')}
           className={`w-full flex items-center justify-between px-3 py-2 rounded-lg font-medium transition-colors text-left ${
@@ -203,13 +210,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
         >
           <div className="flex items-center gap-2.5">
             <GitBranch className={`w-4 h-4 ${currentTab === 'flowchart' ? 'text-white' : 'text-[#667085]'}`} />
-            <span>Flowmap Workspace</span>
+            <span>Workflow</span>
           </div>
-          <span className={`text-[9px] px-1.5 py-0.2 rounded font-mono ${
-            currentTab === 'flowchart' ? 'bg-white/20 text-white' : 'bg-[#f2f4f7] text-[#667085]'
-          }`}>
-            INTERACTIVE
-          </span>
         </button>
 
         <div className="my-1 border-t border-[#f2f4f7]" />
@@ -370,11 +372,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
       </nav>
 
-      {/* Footer Navigation */}
-      <div className="p-3 border-t border-[#f1f3f5] space-y-0.5 text-xs">
+      {/* Footer Settings & Help */}
+      <div className="p-2.5 border-t border-[#f1f3f5] space-y-0.5 text-xs">
         <button 
           onClick={() => onSelectTab('settings')}
-          className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg font-medium transition-colors text-left ${
+          className={`w-full flex items-center gap-2.5 px-3 py-1.5 rounded-lg font-medium transition-colors text-left ${
             currentTab === 'settings' 
               ? 'bg-[#1668e8] text-white' 
               : 'text-[#475467] hover:bg-[#f9fafb]'
@@ -386,7 +388,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
         <button 
           onClick={() => onSelectTab('help')}
-          className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg font-medium transition-colors text-left ${
+          className={`w-full flex items-center gap-2.5 px-3 py-1.5 rounded-lg font-medium transition-colors text-left ${
             currentTab === 'help' 
               ? 'bg-[#1668e8] text-white' 
               : 'text-[#475467] hover:bg-[#f9fafb]'
@@ -396,6 +398,34 @@ export const Sidebar: React.FC<SidebarProps> = ({
           <span>Help & support</span>
         </button>
       </div>
+
+      {/* User Profile Card at Bottom of Sidebar */}
+      {currentUser && (
+        <div className="p-3 border-t border-[#eaecf0] flex items-center justify-between text-xs bg-[#fafbfc]">
+          <div className="flex items-center gap-2.5 overflow-hidden">
+            <div className="w-7 h-7 rounded-full bg-[#1668e8] text-white flex items-center justify-center font-bold text-[11px] shrink-0 select-none">
+              {currentUser.full_name.charAt(0)}
+            </div>
+            <div className="truncate">
+              <span className="font-semibold text-[#101828] block truncate leading-none">
+                {currentUser.full_name}
+              </span>
+              <span className="text-[10px] text-[#667085] capitalize block mt-1 leading-none">
+                {currentUser.role.toLowerCase()}
+              </span>
+            </div>
+          </div>
+          {onSignOut && (
+            <button
+              onClick={onSignOut}
+              title="Sign Out"
+              className="p-1.5 rounded-md text-[#667085] hover:text-red-600 hover:bg-[#f2f4f7] transition-colors"
+            >
+              <LogOut className="w-3.5 h-3.5" />
+            </button>
+          )}
+        </div>
+      )}
 
     </aside>
   );
