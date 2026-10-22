@@ -1,0 +1,55 @@
+version: '3.8'
+
+services:
+  mongodb:
+    image: mongo:6.0
+    container_name: chakravyuh-mongodb
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_DATABASE: chakravyuh
+    volumes:
+      - mongo_data:/data/db
+    networks:
+      - chakravyuh-network
+
+  backend:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.backend
+    container_name: chakravyuh-backend
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      - MONGODB_URI=mongodb://mongodb:27017/chakravyuh
+      - JWT_SECRET=super_secret_chakravyuh_jwt_key
+      - SOLVER_TIMEOUT_SECONDS=30
+    depends_on:
+      - mongodb
+    volumes:
+      - ../backend:/app/backend
+    networks:
+      - chakravyuh-network
+
+  frontend:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.frontend
+    container_name: chakravyuh-frontend
+    restart: unless-stopped
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
+    networks:
+      - chakravyuh-network
+
+volumes:
+  mongo_data:
+    driver: local
+
+networks:
+  chakravyuh-network:
+    driver: bridge
