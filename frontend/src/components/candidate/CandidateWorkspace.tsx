@@ -13,6 +13,8 @@ import {
 import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
 import { Dialog } from '../ui/dialog';
+import { TimezoneSelector } from '../common/TimezoneSelector';
+import { useTimezone } from '../../context/TimezoneContext';
 
 interface ConfirmedRound {
   id: string;
@@ -20,16 +22,17 @@ interface ConfirmedRound {
   order: number;
   duration: number;
   date: string;
-  timeSlot: string;
+  pstTimeSlot: string;
   interviewerName: string;
   interviewerRole: string;
   interviewerAvatar: string;
   location: string;
   meetingLink: string;
-  status: 'CONFIRMED' | 'COMPLETED';
+  status: 'CONFIRMED' | 'RESCHEDULE_REQUESTED' | 'COMPLETED';
 }
 
 export const CandidateWorkspace: React.FC = () => {
+  const { convertTime, currentTimezone } = useTimezone();
   const [activeTab, setActiveTab] = useState<'schedule' | 'slot-selection'>('schedule');
 
   // Candidate Data
@@ -42,14 +45,14 @@ export const CandidateWorkspace: React.FC = () => {
   };
 
   // --- Confirmed Schedule View State (CandSchedule) ---
-  const [confirmedRounds] = useState<ConfirmedRound[]>([
+  const [confirmedRounds, setConfirmedRounds] = useState<ConfirmedRound[]>([
     {
       id: 'round-1',
       roundName: 'Round 1: Distributed Systems Architecture',
       order: 1,
       duration: 60,
       date: 'Monday, Oct 26, 2026',
-      timeSlot: '10:00 AM – 11:00 AM PST',
+      pstTimeSlot: '10:00 AM – 11:00 AM PST',
       interviewerName: 'Dr. Sarah Chen',
       interviewerRole: 'Staff Distributed Systems Engineer',
       interviewerAvatar: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=100&h=100&fit=crop&crop=faces',
@@ -63,7 +66,7 @@ export const CandidateWorkspace: React.FC = () => {
       order: 2,
       duration: 60,
       date: 'Tuesday, Oct 27, 2026',
-      timeSlot: '2:00 PM – 3:00 PM PST',
+      pstTimeSlot: '2:00 PM – 3:00 PM PST',
       interviewerName: 'Phil Dunphy',
       interviewerRole: 'Principal Infrastructure Architect',
       interviewerAvatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&h=100&fit=crop&crop=faces',
@@ -77,7 +80,7 @@ export const CandidateWorkspace: React.FC = () => {
       order: 3,
       duration: 45,
       date: 'Friday, Oct 30, 2026',
-      timeSlot: '2:00 PM – 2:45 PM PST',
+      pstTimeSlot: '2:00 PM – 2:45 PM PST',
       interviewerName: 'Claire Pritchett',
       interviewerRole: 'VP of Engineering',
       interviewerAvatar: 'https://images.unsplash.com/photo-1580489944761-15a19d654956?w=100&h=100&fit=crop&crop=faces',
@@ -89,28 +92,28 @@ export const CandidateWorkspace: React.FC = () => {
 
   // Reschedule Modal
   const [rescheduleModalOpen, setRescheduleModalOpen] = useState(false);
-  const [selectedRoundToReschedule, setSelectedRoundToReschedule] = useState<ConfirmedRound | null>(null);
+  const [selectedRoundId, setSelectedRoundId] = useState<string>('round-1');
   const [rescheduleReason, setRescheduleReason] = useState('Conflict with unexpected production on-call shift.');
   const [rescheduleSentBanner, setRescheduleSentBanner] = useState(false);
 
   // --- Slot Selection Calendar State (CandAvail) ---
   const days = ['Monday, Nov 2', 'Tuesday, Nov 3', 'Wednesday, Nov 4', 'Thursday, Nov 5', 'Friday, Nov 6'];
-  const slots = [
-    'Morning: 9:00 AM – 11:00 AM PST',
-    'Mid-Day: 11:30 AM – 1:30 PM PST',
-    'Afternoon: 2:00 PM – 4:00 PM PST',
-    'Late Afternoon: 4:00 PM – 5:30 PM PST'
+  const baseSlots = [
+    { label: 'Morning', pst: '9:00 AM – 11:00 AM PST' },
+    { label: 'Mid-Day', pst: '11:30 AM – 1:30 PM PST' },
+    { label: 'Afternoon', pst: '2:00 PM – 4:00 PM PST' },
+    { label: 'Late Afternoon', pst: '4:00 PM – 5:30 PM PST' }
   ];
 
   const [preferredSlots, setPreferredSlots] = useState<Record<string, boolean>>({
-    'Monday, Nov 2-Morning: 9:00 AM – 11:00 AM PST': true,
-    'Tuesday, Nov 3-Afternoon: 2:00 PM – 4:00 PM PST': true,
-    'Thursday, Nov 5-Morning: 9:00 AM – 11:00 AM PST': true,
+    'Monday, Nov 2-Morning': true,
+    'Tuesday, Nov 3-Afternoon': true,
+    'Thursday, Nov 5-Morning': true,
   });
   const [slotsSavedBanner, setSlotsSavedBanner] = useState(false);
 
-  const togglePreferredSlot = (day: string, slot: string) => {
-    const key = `${day}-${slot}`;
+  const togglePreferredSlot = (day: string, slotLabel: string) => {
+    const key = `${day}-${slotLabel}`;
     setPreferredSlots(prev => ({ ...prev, [key]: !prev[key] }));
   };
 
@@ -121,18 +124,37 @@ export const CandidateWorkspace: React.FC = () => {
 
   const handleSendReschedule = (e: React.FormEvent) => {
     e.preventDefault();
+    setConfirmedRounds(confirmedRounds.map(r => 
+      r.id === selectedRoundId ? { ...r, status: 'RESCHEDULE_REQUESTED' } : r
+    ));
     setRescheduleModalOpen(false);
     setRescheduleSentBanner(true);
-    setTimeout(() => setRescheduleSentBanner(false), 4000);
+    setTimeout(() => setRescheduleSentBanner(false), 5000);
   };
 
   const handleDownloadCalendarInvite = () => {
-    const icsContent = `BEGIN:VCALENDAR\nVERSION:2.0\nPRODID:-//Chakravyuh//Scheduling Engine//EN\nBEGIN:VEVENT\nSUMMARY:Distributed Systems Architecture Interview\nDESCRIPTION:Google Meet Link: https://meet.google.com/chk-dist-sys\nEND:VEVENT\nEND:VCALENDAR`;
-    const blob = new Blob([icsContent], { type: 'text/calendar' });
+    const icsContent = `BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//Chakravyuh//Scheduling Engine//EN
+CALSCALE:GREGORIAN
+METHOD:REQUEST
+${confirmedRounds.map((r) => `BEGIN:VEVENT
+UID:chakravyuh-${r.id}@chakravyuh.ai
+DTSTAMP:20261026T000000Z
+DTSTART:20261026T170000Z
+DTEND:20261026T180000Z
+SUMMARY:${r.roundName}
+DESCRIPTION:Interviewer: ${r.interviewerName}\\nMeeting Link: ${r.meetingLink}\\nLocation: ${r.location}
+LOCATION:${r.location}
+STATUS:CONFIRMED
+END:VEVENT`).join('\n')}
+END:VCALENDAR`;
+
+    const blob = new Blob([icsContent], { type: 'text/calendar;charset=utf-8' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = 'Chakravyuh_Interview_Loop.ics';
+    a.download = `Chakravyuh_Interview_Loop_${candidate.name.replace(/\s+/g, '_')}.ics`;
     a.click();
     URL.revokeObjectURL(url);
   };
@@ -158,8 +180,10 @@ export const CandidateWorkspace: React.FC = () => {
             </p>
           </div>
 
-          {/* Quick Action Buttons */}
-          <div className="flex items-center gap-3">
+          {/* Quick Action Buttons & Timezone */}
+          <div className="flex flex-wrap items-center gap-3">
+            <TimezoneSelector />
+
             <Button
               variant="secondary"
               onClick={handleDownloadCalendarInvite}
@@ -171,7 +195,7 @@ export const CandidateWorkspace: React.FC = () => {
             <Button
               variant="primary"
               onClick={() => {
-                setSelectedRoundToReschedule(confirmedRounds[0]);
+                setSelectedRoundId(confirmedRounds[0].id);
                 setRescheduleModalOpen(true);
               }}
               className="flex items-center gap-1.5 text-xs py-2 px-3.5 font-bold"
@@ -234,11 +258,11 @@ export const CandidateWorkspace: React.FC = () => {
 
         {/* Reschedule Sent Toast */}
         {rescheduleSentBanner && (
-          <div className="mt-4 p-3.5 rounded-lg bg-[#ecfdf3] border border-[#a6f4c5] flex items-center justify-between text-xs text-[#027a48] animate-in fade-in">
+          <div className="mt-4 p-3.5 rounded-xl bg-[#ecfdf3] border border-[#a6f4c5] flex items-center justify-between text-xs text-[#027a48] animate-in fade-in">
             <div className="flex items-center gap-2">
               <CheckCircle2 className="w-4 h-4 text-[#12b76a]" />
               <span className="font-semibold">
-                Reschedule request submitted! Coordinator Emma Watson will re-run the CP-SAT solver for minimal churn reassignment.
+                Reschedule request submitted for your session! Coordinator Emma Watson will trigger the minimal-churn delta solver to reassign a convenient time.
               </span>
             </div>
             <Badge variant="success">SUBMITTED</Badge>
@@ -247,11 +271,11 @@ export const CandidateWorkspace: React.FC = () => {
 
         {/* Slots Saved Toast */}
         {slotsSavedBanner && (
-          <div className="mt-4 p-3.5 rounded-lg bg-[#ecfdf3] border border-[#a6f4c5] flex items-center justify-between text-xs text-[#027a48] animate-in fade-in">
+          <div className="mt-4 p-3.5 rounded-xl bg-[#ecfdf3] border border-[#a6f4c5] flex items-center justify-between text-xs text-[#027a48] animate-in fade-in">
             <div className="flex items-center gap-2">
               <CheckCircle2 className="w-4 h-4 text-[#12b76a]" />
               <span className="font-semibold">
-                Preferred interview windows saved! The scheduling coordinator will schedule your panel during these times.
+                Preferred interview windows saved! The scheduling coordinator will schedule your panel during these times in {currentTimezone.label}.
               </span>
             </div>
             <Badge variant="success">CONFIRMED</Badge>
@@ -269,7 +293,9 @@ export const CandidateWorkspace: React.FC = () => {
             <div className="flex justify-between items-center">
               <div>
                 <h2 className="text-sm font-bold text-[#101828]">Confirmed Interview Schedule</h2>
-                <p className="text-xs text-[#667085] mt-0.5">Please test your microphone, camera, and join meeting links 5 minutes prior.</p>
+                <p className="text-xs text-[#667085] mt-0.5">
+                  All times displayed in your selected timezone: <strong className="text-[#101828]">{currentTimezone.label}</strong>.
+                </p>
               </div>
               <Badge variant="success">All Rounds Confirmed</Badge>
             </div>
@@ -289,11 +315,14 @@ export const CandidateWorkspace: React.FC = () => {
                       <div className="flex items-center gap-2">
                         <span className="font-bold text-sm text-[#101828]">{round.roundName}</span>
                         <Badge variant="info">{round.duration} mins</Badge>
+                        {round.status === 'RESCHEDULE_REQUESTED' && (
+                          <Badge variant="warning">Reschedule Requested</Badge>
+                        )}
                       </div>
                       <div className="flex items-center gap-4 text-xs text-[#475467]">
                         <span className="flex items-center gap-1 font-semibold text-[#101828]">
                           <Clock className="w-3.5 h-3.5 text-[#1668e8]" />
-                          {round.date} • {round.timeSlot}
+                          {round.date} • {convertTime(round.pstTimeSlot)}
                         </span>
                         <span className="flex items-center gap-1 text-[#667085]">
                           <MapPin className="w-3.5 h-3.5 text-[#98a2b3]" />
@@ -356,7 +385,7 @@ export const CandidateWorkspace: React.FC = () => {
               <div>
                 <h2 className="text-sm font-bold text-[#101828]">Select Preferred Interview Time Windows</h2>
                 <p className="text-xs text-[#667085] mt-0.5">
-                  Select at least 3 preferred blocks next week. The automated solver will guarantee panel availability during your choices.
+                  Select at least 3 preferred blocks next week in <strong className="text-[#101828]">{currentTimezone.label}</strong>. The automated solver will guarantee panel availability during your choices.
                 </p>
               </div>
 
@@ -387,13 +416,15 @@ export const CandidateWorkspace: React.FC = () => {
                     </div>
 
                     <div className="space-y-2">
-                      {slots.map((slot) => {
-                        const isSelected = preferredSlots[`${day}-${slot}`];
+                      {baseSlots.map((slot) => {
+                        const isSelected = preferredSlots[`${day}-${slot.label}`];
+                        const convertedSlotTime = convertTime(slot.pst);
+
                         return (
                           <button
-                            key={slot}
+                            key={slot.label}
                             type="button"
-                            onClick={() => togglePreferredSlot(day, slot)}
+                            onClick={() => togglePreferredSlot(day, slot.label)}
                             className={`w-full p-2.5 rounded-lg border text-left text-xs transition-all ${
                               isSelected
                                 ? 'bg-[#eff8ff] border-[#b2ddff] text-[#175cd3] font-bold shadow-2xs'
@@ -401,11 +432,11 @@ export const CandidateWorkspace: React.FC = () => {
                             }`}
                           >
                             <div className="flex items-center justify-between">
-                              <span className="text-[11px]">{slot.split(':')[0]}</span>
+                              <span className="text-[11px] font-bold">{slot.label}</span>
                               {isSelected && <span className="text-[#1668e8]">✓</span>}
                             </div>
                             <span className="text-[10px] text-[#667085] font-normal block mt-0.5">
-                              {slot.split(':')[1]}
+                              {convertedSlotTime}
                             </span>
                           </button>
                         );
@@ -436,14 +467,18 @@ export const CandidateWorkspace: React.FC = () => {
       >
         <form onSubmit={handleSendReschedule} className="space-y-4 text-xs">
           <p className="text-[#667085]">
-            Our scheduling engine uses minimal-churn delta solving to reschedule rounds with minimum disruption.
+            Our scheduling engine uses minimal-churn delta solving to reschedule rounds with minimum disruption across the interviewer panel.
           </p>
 
           <div className="space-y-1">
             <label className="font-semibold text-[#344054]">
-              Round to Reschedule {selectedRoundToReschedule && `(${selectedRoundToReschedule.roundName})`}
+              Round to Reschedule
             </label>
-            <select className="w-full border border-[#d0d5dd] rounded-lg p-2 text-xs bg-white text-[#101828]">
+            <select 
+              value={selectedRoundId}
+              onChange={(e) => setSelectedRoundId(e.target.value)}
+              className="w-full border border-[#d0d5dd] rounded-lg p-2 text-xs bg-white text-[#101828]"
+            >
               {confirmedRounds.map(r => (
                 <option key={r.id} value={r.id}>{r.roundName} ({r.date})</option>
               ))}
@@ -456,7 +491,8 @@ export const CandidateWorkspace: React.FC = () => {
               value={rescheduleReason}
               onChange={e => setRescheduleReason(e.target.value)}
               rows={3}
-              className="w-full border border-[#d0d5dd] rounded-lg p-2 text-xs text-[#101828]"
+              required
+              className="w-full border border-[#d0d5dd] rounded-lg p-2 text-xs text-[#101828] focus:border-[#1668e8] outline-none"
             />
           </div>
 

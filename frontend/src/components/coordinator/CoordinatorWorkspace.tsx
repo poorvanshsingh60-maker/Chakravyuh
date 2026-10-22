@@ -12,7 +12,8 @@ import {
   User, 
   Check, 
   Send,
-  Trash2
+  Trash2,
+  ShieldCheck
 } from 'lucide-react';
 import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
@@ -21,8 +22,25 @@ import { RoundForm } from '../forms/RoundForm';
 import { RoomForm } from '../forms/RoomForm';
 import { InterviewRound } from '../../types/interviewRound';
 import { Room } from '../../types/room';
+import { TimezoneSelector } from '../common/TimezoneSelector';
+import { useTimezone } from '../../context/TimezoneContext';
+
+interface CalendarEventItem {
+  id: string;
+  candidateName: string;
+  candidateRole: string;
+  roundName: string;
+  roundType: 'tech' | 'arch' | 'values';
+  interviewer: string;
+  interviewerAvatar: string;
+  room: string;
+  dayIndex: number; // 0 for Mon, 1 for Tue, etc.
+  pstHour: number; // 9 for 9 am, 10 for 10 am, 14 for 2 pm PST
+  durationMins: number;
+}
 
 export const CoordinatorWorkspace: React.FC = () => {
+  const { convertHourLabel, currentTimezone } = useTimezone();
   const [activeTab, setActiveTab] = useState<'solver' | 'config'>('solver');
   const [configSubTab, setConfigSubTab] = useState<'rounds' | 'rooms'>('rounds');
 
@@ -111,18 +129,23 @@ export const CoordinatorWorkspace: React.FC = () => {
   const [balanceWorkload, setBalanceWorkload] = useState(true);
   const [minimizeIdleGaps, setMinimizeIdleGaps] = useState(true);
 
+  // Selected event modal
+  const [selectedEvent, setSelectedEvent] = useState<CalendarEventItem | null>(null);
+
   // Master schedule calendar events
-  const [calendarEvents] = useState([
+  const [calendarEvents, setCalendarEvents] = useState<CalendarEventItem[]>([
     {
       id: 'inv-1',
       candidateName: 'Alex Mercer',
       candidateRole: 'Staff Distributed Systems',
-      roundName: 'Technical Screen',
+      roundName: 'Technical Screen (Coding)',
       roundType: 'tech',
       interviewer: 'Dr. Sarah Chen',
+      interviewerAvatar: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=100&auto=format&fit=crop&q=80',
       room: 'Virtual Pod Alpha',
-      day: 'Monday',
-      timeSlot: '10:00 AM – 11:00 AM'
+      dayIndex: 0, // Mon
+      pstHour: 10,
+      durationMins: 45
     },
     {
       id: 'inv-2',
@@ -131,20 +154,24 @@ export const CoordinatorWorkspace: React.FC = () => {
       roundName: 'System Architecture',
       roundType: 'arch',
       interviewer: 'Phil Dunphy',
+      interviewerAvatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=80',
       room: 'Turing Suite 402',
-      day: 'Monday',
-      timeSlot: '2:00 PM – 3:00 PM'
+      dayIndex: 0, // Mon
+      pstHour: 14,
+      durationMins: 60
     },
     {
       id: 'inv-3',
       candidateName: 'Marcus Vance',
       candidateRole: 'Platform Security Lead',
-      roundName: 'Technical Screen',
+      roundName: 'Technical Screen (Coding)',
       roundType: 'tech',
       interviewer: 'Manny Delgado',
+      interviewerAvatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&auto=format&fit=crop&q=80',
       room: 'Virtual Pod Alpha',
-      day: 'Tuesday',
-      timeSlot: '11:00 AM – 12:00 PM'
+      dayIndex: 1, // Tue
+      pstHour: 11,
+      durationMins: 45
     },
     {
       id: 'inv-4',
@@ -153,20 +180,24 @@ export const CoordinatorWorkspace: React.FC = () => {
       roundName: 'Distributed Systems & Architecture',
       roundType: 'arch',
       interviewer: 'Phil Dunphy',
+      interviewerAvatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=80',
       room: 'Lovelace Pod 2B',
-      day: 'Wednesday',
-      timeSlot: '1:00 PM – 2:00 PM'
+      dayIndex: 2, // Wed
+      pstHour: 13,
+      durationMins: 60
     },
     {
       id: 'inv-5',
       candidateName: 'Elena Rostova',
       candidateRole: 'Senior Backend Engineer',
-      roundName: 'Engineering Values',
+      roundName: 'Engineering Values & Culture',
       roundType: 'values',
       interviewer: 'Claire Pritchett',
+      interviewerAvatar: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=100&auto=format&fit=crop&q=80',
       room: 'Virtual Pod Alpha',
-      day: 'Thursday',
-      timeSlot: '3:00 PM – 4:00 PM'
+      dayIndex: 3, // Thu
+      pstHour: 15,
+      durationMins: 45
     },
     {
       id: 'inv-6',
@@ -175,11 +206,46 @@ export const CoordinatorWorkspace: React.FC = () => {
       roundName: 'Engineering Values & Leadership',
       roundType: 'values',
       interviewer: 'Claire Pritchett',
+      interviewerAvatar: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=100&auto=format&fit=crop&q=80',
       room: 'Turing Suite 402',
-      day: 'Friday',
-      timeSlot: '2:00 PM – 3:00 PM'
+      dayIndex: 4, // Fri
+      pstHour: 14,
+      durationMins: 45
     }
   ]);
+
+  // Compute dynamic day column headers based on startDate
+  const getDaysForWeek = (startStr: string) => {
+    try {
+      const base = new Date(startStr);
+      const days = [];
+      const dayNames = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'];
+      for (let i = 0; i < 5; i++) {
+        const d = new Date(base);
+        d.setDate(base.getDate() + i);
+        const dateStr = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+        days.push({
+          dayOfWeek: dayNames[i],
+          formattedDate: `${dayNames[i]} ${dateStr}`,
+          fullDate: d.toISOString().split('T')[0]
+        });
+      }
+      return days;
+    } catch {
+      return [
+        { dayOfWeek: 'Mon', formattedDate: 'Monday, Oct 26', fullDate: '2026-10-26' },
+        { dayOfWeek: 'Tue', formattedDate: 'Tuesday, Oct 27', fullDate: '2026-10-27' },
+        { dayOfWeek: 'Wed', formattedDate: 'Wednesday, Oct 28', fullDate: '2026-10-28' },
+        { dayOfWeek: 'Thu', formattedDate: 'Thursday, Oct 29', fullDate: '2026-10-29' },
+        { dayOfWeek: 'Fri', formattedDate: 'Friday, Oct 30', fullDate: '2026-10-30' }
+      ];
+    }
+  };
+
+  const weekDays = getDaysForWeek(startDate);
+
+  // PST reference hours
+  const pstHours = [9, 10, 11, 13, 14, 15, 16];
 
   // Handle Add Round
   const handleAddRound = (newRoundData: any) => {
@@ -206,7 +272,7 @@ export const CoordinatorWorkspace: React.FC = () => {
       capacity: newRoomData.capacity || 4,
       location: newRoomData.location || 'HQ West Campus',
       isActive: true,
-      meetingUrl: newRoomData.meetingUrl || 'https://meet.google.com'
+      meetingUrl: newRoomData.meetingUrl || 'https://meet.google.com/chk-new-pod'
     };
     setRooms([...rooms, roomItem]);
     setRoomModalOpen(false);
@@ -218,13 +284,13 @@ export const CoordinatorWorkspace: React.FC = () => {
     setSolverModalOpen(true);
     setSolverStep(1);
 
-    setTimeout(() => setSolverStep(2), 700);
-    setTimeout(() => setSolverStep(3), 1500);
+    setTimeout(() => setSolverStep(2), 600);
+    setTimeout(() => setSolverStep(3), 1300);
     setTimeout(() => {
       setSolverStep(4);
       setSolverRunning(false);
       setSelectedVersion('v2.4');
-    }, 2300);
+    }, 2000);
   };
 
   // Handle Publish
@@ -233,9 +299,6 @@ export const CoordinatorWorkspace: React.FC = () => {
     setPublishBanner(true);
     setTimeout(() => setPublishBanner(false), 5000);
   };
-
-  const daysOfWeek = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
-  const hours = ['9:00 AM', '10:00 AM', '11:00 AM', '1:00 PM', '2:00 PM', '3:00 PM', '4:00 PM'];
 
   return (
     <div className="flex-1 bg-[#f8f9fa] flex flex-col min-h-screen">
@@ -257,48 +320,57 @@ export const CoordinatorWorkspace: React.FC = () => {
             </h1>
           </div>
 
-          {/* Top Mode Switcher */}
-          <div className="flex items-center p-1 bg-[#f2f4f7] rounded-lg border border-[#eaecf0]">
-            <button
-              onClick={() => setActiveTab('solver')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold transition-all ${
-                activeTab === 'solver'
-                  ? 'bg-white text-[#101828] shadow-2xs border border-[#d0d5dd]'
-                  : 'text-[#667085] hover:text-[#101828]'
-              }`}
-            >
-              <Cpu className="w-3.5 h-3.5 text-[#1668e8]" />
-              <span>CP-SAT Solver & Master Calendar</span>
-            </button>
+          {/* Timezone Selector & Mode Switcher */}
+          <div className="flex flex-wrap items-center gap-3">
+            <TimezoneSelector />
 
-            <button
-              onClick={() => setActiveTab('config')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold transition-all ${
-                activeTab === 'config'
-                  ? 'bg-white text-[#101828] shadow-2xs border border-[#d0d5dd]'
-                  : 'text-[#667085] hover:text-[#101828]'
-              }`}
-            >
-              <Settings2 className="w-3.5 h-3.5 text-[#667085]" />
-              <span>Pipeline Config View</span>
-              <span className="ml-1 px-1.5 py-0.2 bg-[#e7f2fe] text-[#1668e8] text-[10px] font-bold rounded-full">
-                {rounds.length + rooms.length}
-              </span>
-            </button>
+            <div className="flex items-center p-1 bg-[#f2f4f7] rounded-lg border border-[#eaecf0]">
+              <button
+                onClick={() => setActiveTab('solver')}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold transition-all ${
+                  activeTab === 'solver'
+                    ? 'bg-white text-[#101828] shadow-2xs border border-[#d0d5dd]'
+                    : 'text-[#667085] hover:text-[#101828]'
+                }`}
+              >
+                <Cpu className="w-3.5 h-3.5 text-[#1668e8]" />
+                <span>CP-SAT Solver & Master Calendar</span>
+              </button>
+
+              <button
+                onClick={() => setActiveTab('config')}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold transition-all ${
+                  activeTab === 'config'
+                    ? 'bg-white text-[#101828] shadow-2xs border border-[#d0d5dd]'
+                    : 'text-[#667085] hover:text-[#101828]'
+                }`}
+              >
+                <Settings2 className="w-3.5 h-3.5 text-[#667085]" />
+                <span>Pipeline Config View</span>
+                <span className="ml-1 px-1.5 py-0.2 bg-[#e7f2fe] text-[#1668e8] text-[10px] font-bold rounded-full">
+                  {rounds.length + rooms.length}
+                </span>
+              </button>
+            </div>
           </div>
         </div>
 
         {/* Publish Banner */}
         {publishBanner && (
-          <div className="mt-4 p-3.5 rounded-lg bg-[#ecfdf3] border border-[#a6f4c5] flex items-center justify-between text-xs text-[#027a48] animate-in fade-in">
-            <div className="flex items-center gap-2">
-              <CheckCircle2 className="w-4 h-4 text-[#12b76a]" />
-              <span className="font-semibold">
-                Schedule version v2.4 successfully published! Calendar invites and meeting links dispatched to all candidates and interviewers.
-              </span>
+          <div className="mt-4 p-3.5 rounded-xl bg-[#ecfdf3] border border-[#a6f4c5] flex items-center justify-between text-xs text-[#027a48] animate-in fade-in">
+            <div className="flex items-center gap-2.5">
+              <CheckCircle2 className="w-5 h-5 text-[#12b76a]" />
+              <div>
+                <span className="font-bold block">
+                  Schedule version v2.4 successfully published!
+                </span>
+                <span className="text-[11px] font-normal text-[#065f46]">
+                  Calendar invites and meeting links dispatched to all candidates and interviewers in {currentTimezone.label}.
+                </span>
+              </div>
             </div>
-            <span className="text-[11px] font-mono font-bold bg-white px-2 py-0.5 rounded border border-[#a6f4c5]">
-              PUBLISHED
+            <span className="text-[11px] font-mono font-bold bg-white px-2.5 py-1 rounded border border-[#a6f4c5]">
+              PUBLISHED & LIVE
             </span>
           </div>
         )}
@@ -324,7 +396,7 @@ export const CoordinatorWorkspace: React.FC = () => {
                     <Badge variant="info">Batch Horizon Solver</Badge>
                   </div>
                   <p className="text-xs text-[#667085] mt-1">
-                    Select target schedule window and constraint weights to automatically schedule candidate loops without resource conflicts.
+                    Select target scheduling window and constraint parameters to automatically orchestrate candidate loops without resource conflicts.
                   </p>
                 </div>
 
@@ -441,7 +513,7 @@ export const CoordinatorWorkspace: React.FC = () => {
               
               {/* Calendar Action & Version Selector Header */}
               <div className="p-4 border-b border-[#eaecf0] bg-[#fafafa] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                <div className="flex items-center gap-3">
+                <div className="flex flex-wrap items-center gap-3">
                   <span className="font-bold text-sm text-[#101828]">
                     Master Schedule Calendar
                   </span>
@@ -473,7 +545,8 @@ export const CoordinatorWorkspace: React.FC = () => {
                     </div>
                   </div>
 
-                  <span className="px-2 py-0.5 rounded text-[11px] font-mono bg-[#ecfdf3] text-[#027a48] border border-[#a6f4c5] font-semibold">
+                  <span className="px-2 py-0.5 rounded text-[11px] font-mono bg-[#ecfdf3] text-[#027a48] border border-[#a6f4c5] font-semibold flex items-center gap-1">
+                    <ShieldCheck className="w-3 h-3 text-[#12b76a]" />
                     0 Conflicts Detected
                   </span>
                 </div>
@@ -481,9 +554,9 @@ export const CoordinatorWorkspace: React.FC = () => {
                 {/* Publish Schedule Action Button (PublishBtn) */}
                 <div className="flex items-center gap-2">
                   {isPublished ? (
-                    <Badge variant="success" className="px-3 py-1.5 text-xs flex items-center gap-1">
+                    <Badge variant="success" className="px-3 py-1.5 text-xs flex items-center gap-1 font-bold">
                       <Check className="w-3.5 h-3.5" />
-                      <span>Published & Live</span>
+                      <span>Published & Dispatched</span>
                     </Badge>
                   ) : (
                     <Button
@@ -500,77 +573,88 @@ export const CoordinatorWorkspace: React.FC = () => {
 
               {/* Master Calendar Matrix Grid */}
               <div className="p-4 overflow-x-auto">
-                <div className="min-w-[800px]">
+                <div className="min-w-[840px]">
                   {/* Day Headers */}
                   <div className="grid grid-cols-6 border-b border-[#eaecf0] pb-2 text-xs font-bold text-[#475467]">
-                    <div className="col-span-1 text-center text-[#98a2b3]">Time</div>
-                    {daysOfWeek.map((day) => (
-                      <div key={day} className="col-span-1 text-center py-1 bg-[#f9fafb] rounded border border-[#eaecf0] mx-1">
-                        {day}
+                    <div className="col-span-1 text-center text-[#98a2b3] flex items-center justify-center gap-1">
+                      <Clock className="w-3.5 h-3.5" />
+                      <span>Time ({currentTimezone.shortName})</span>
+                    </div>
+                    {weekDays.map((day) => (
+                      <div key={day.fullDate} className="col-span-1 text-center py-1.5 bg-[#f9fafb] rounded-lg border border-[#eaecf0] mx-1">
+                        <span className="block text-[11px] text-[#101828] font-bold">{day.formattedDate}</span>
                       </div>
                     ))}
                   </div>
 
                   {/* Grid Rows */}
                   <div className="divide-y divide-[#f2f4f7] text-xs">
-                    {hours.map((timeLabel) => (
-                      <div key={timeLabel} className="grid grid-cols-6 py-3 items-center min-h-[70px]">
-                        {/* Time Column */}
-                        <div className="col-span-1 text-center font-mono text-[#667085] text-[11px]">
-                          {timeLabel}
+                    {pstHours.map((pstH) => {
+                      const convertedTime = convertHourLabel(pstH);
+
+                      return (
+                        <div key={pstH} className="grid grid-cols-6 py-3 items-center min-h-[76px]">
+                          {/* Time Column Header */}
+                          <div className="col-span-1 text-center font-mono text-[#101828] font-bold text-xs">
+                            <span>{convertedTime.full}</span>
+                            <span className="text-[10px] text-[#98a2b3] block font-normal">
+                              ({pstH}:00 PT)
+                            </span>
+                          </div>
+
+                          {/* 5 Day Slots */}
+                          {weekDays.map((_, dayIdx) => {
+                            const matchingEvents = calendarEvents.filter(
+                              (e) => e.dayIndex === dayIdx && e.pstHour === pstH
+                            );
+
+                            return (
+                              <div key={dayIdx} className="col-span-1 px-1 h-full flex flex-col justify-center">
+                                {matchingEvents.map((evt) => (
+                                  <div
+                                    key={evt.id}
+                                    onClick={() => setSelectedEvent(evt)}
+                                    className={`p-2.5 rounded-lg border text-left space-y-1 shadow-2xs transition-transform hover:scale-[1.02] cursor-pointer ${
+                                      evt.roundType === 'tech'
+                                        ? 'bg-[#eff8ff] border-[#b2ddff] text-[#175cd3]'
+                                        : evt.roundType === 'arch'
+                                        ? 'bg-[#f9f5ff] border-[#e9d7fe] text-[#6941c6]'
+                                        : 'bg-[#ecfdf3] border-[#a6f4c5] text-[#027a48]'
+                                    }`}
+                                  >
+                                    <div className="font-bold text-[11px] truncate flex items-center justify-between">
+                                      <span>{evt.candidateName}</span>
+                                      <span className="text-[9px] uppercase px-1 rounded bg-white/70 font-bold">
+                                        {evt.roundType}
+                                      </span>
+                                    </div>
+                                    <div className="text-[10px] text-[#344054] font-medium truncate">
+                                      {evt.roundName}
+                                    </div>
+                                    <div className="text-[9px] text-[#667085] flex items-center gap-1 truncate">
+                                      <User className="w-2.5 h-2.5" />
+                                      <span>{evt.interviewer}</span>
+                                    </div>
+                                    <div className="text-[9px] text-[#667085] flex items-center gap-1 truncate">
+                                      <MapPin className="w-2.5 h-2.5" />
+                                      <span>{evt.room}</span>
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            );
+                          })}
                         </div>
-
-                        {/* Day Slots */}
-                        {daysOfWeek.map((day) => {
-                          const matchingEvents = calendarEvents.filter(
-                            (e) => e.day === day && e.timeSlot.startsWith(timeLabel.split(' ')[0])
-                          );
-
-                          return (
-                            <div key={day} className="col-span-1 px-1 h-full flex flex-col justify-center">
-                              {matchingEvents.map((evt) => (
-                                <div
-                                  key={evt.id}
-                                  className={`p-2 rounded-lg border text-left space-y-1 shadow-2xs transition-transform hover:scale-[1.02] cursor-pointer ${
-                                    evt.roundType === 'tech'
-                                      ? 'bg-[#eff8ff] border-[#b2ddff] text-[#175cd3]'
-                                      : evt.roundType === 'arch'
-                                      ? 'bg-[#f9f5ff] border-[#e9d7fe] text-[#6941c6]'
-                                      : 'bg-[#ecfdf3] border-[#a6f4c5] text-[#027a48]'
-                                  }`}
-                                >
-                                  <div className="font-bold text-[11px] truncate flex items-center justify-between">
-                                    <span>{evt.candidateName}</span>
-                                    <span className="text-[9px] uppercase px-1 rounded bg-white/70">
-                                      {evt.roundType}
-                                    </span>
-                                  </div>
-                                  <div className="text-[10px] text-[#344054] truncate">
-                                    {evt.roundName}
-                                  </div>
-                                  <div className="text-[9px] text-[#667085] flex items-center gap-1 truncate">
-                                    <User className="w-2.5 h-2.5" />
-                                    <span>{evt.interviewer}</span>
-                                  </div>
-                                  <div className="text-[9px] text-[#667085] flex items-center gap-1 truncate">
-                                    <MapPin className="w-2.5 h-2.5" />
-                                    <span>{evt.room}</span>
-                                  </div>
-                                </div>
-                              ))}
-                            </div>
-                          );
-                        })}
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 </div>
               </div>
 
               {/* Legend Footer */}
-              <div className="p-3 bg-[#fafafa] border-t border-[#eaecf0] flex items-center justify-between text-xs text-[#667085]">
-                <div className="flex items-center gap-4">
-                  <span className="font-semibold text-[#344054]">Round Color Key:</span>
+              <div className="p-3 bg-[#fafafa] border-t border-[#eaecf0] flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs text-[#667085]">
+                <div className="flex flex-wrap items-center gap-4">
+                  <span className="font-semibold text-[#344054]">Round Types:</span>
                   <div className="flex items-center gap-1.5">
                     <span className="w-3 h-3 rounded bg-[#eff8ff] border border-[#b2ddff]"></span>
                     <span>Technical Screen</span>
@@ -585,7 +669,7 @@ export const CoordinatorWorkspace: React.FC = () => {
                   </div>
                 </div>
                 <span className="font-mono text-[11px]">
-                  Total Scheduled: {calendarEvents.length} Sessions
+                  Total Scheduled: {calendarEvents.length} Sessions (Click any session to inspect)
                 </span>
               </div>
             </div>
@@ -709,6 +793,7 @@ export const CoordinatorWorkspace: React.FC = () => {
                           <button 
                             onClick={() => setRounds(rounds.filter(r => r.id !== round.id))}
                             className="p-1 hover:text-red-600 text-[#98a2b3] transition-colors"
+                            title="Delete round"
                           >
                             <Trash2 className="w-4 h-4" />
                           </button>
@@ -776,6 +861,7 @@ export const CoordinatorWorkspace: React.FC = () => {
                           <button 
                             onClick={() => setRooms(rooms.filter(rm => rm.id !== room.id))}
                             className="p-1 hover:text-red-600 text-[#98a2b3] transition-colors"
+                            title="Delete room"
                           >
                             <Trash2 className="w-4 h-4" />
                           </button>
@@ -791,6 +877,79 @@ export const CoordinatorWorkspace: React.FC = () => {
         )}
 
       </div>
+
+      {/* ============================================================== */}
+      {/* MODAL: INTERVIEW SESSION INSPECTION */}
+      {/* ============================================================== */}
+      {selectedEvent && (
+        <Dialog
+          isOpen={!!selectedEvent}
+          onClose={() => setSelectedEvent(null)}
+          title={`Session Details: ${selectedEvent.roundName}`}
+        >
+          <div className="space-y-4 text-xs">
+            <div className="p-3 rounded-lg bg-[#f9fafb] border border-[#eaecf0] space-y-2">
+              <div className="flex items-center justify-between">
+                <div>
+                  <span className="font-bold text-[#101828] text-sm block">{selectedEvent.candidateName}</span>
+                  <span className="text-[#667085]">{selectedEvent.candidateRole}</span>
+                </div>
+                <Badge variant={selectedEvent.roundType === 'tech' ? 'info' : 'success'}>
+                  {selectedEvent.durationMins} mins
+                </Badge>
+              </div>
+
+              <div className="pt-2 border-t border-[#eaecf0] space-y-1 text-[#475467]">
+                <div className="flex items-center gap-2">
+                  <Clock className="w-3.5 h-3.5 text-[#1668e8]" />
+                  <span className="font-semibold text-[#101828]">
+                    Time: {convertHourLabel(selectedEvent.pstHour).full} in {currentTimezone.label}
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <User className="w-3.5 h-3.5 text-[#667085]" />
+                  <span>Interviewer: <strong>{selectedEvent.interviewer}</strong></span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <MapPin className="w-3.5 h-3.5 text-[#667085]" />
+                  <span>Assigned Location: <strong>{selectedEvent.room}</strong></span>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between pt-2">
+              <a
+                href="https://meet.google.com/chk-dist-sys"
+                target="_blank"
+                rel="noreferrer"
+                className="px-4 py-2 rounded-lg bg-[#1668e8] text-white font-bold flex items-center gap-1.5 shadow-2xs hover:bg-[#145ac7]"
+              >
+                <Video className="w-3.5 h-3.5" />
+                <span>Join Google Meet Call</span>
+              </a>
+
+              <div className="flex gap-2">
+                <Button
+                  variant="secondary"
+                  onClick={() => setSelectedEvent(null)}
+                >
+                  Close
+                </Button>
+                <Button
+                  variant="primary"
+                  onClick={() => {
+                    setCalendarEvents(calendarEvents.filter(e => e.id !== selectedEvent.id));
+                    setSelectedEvent(null);
+                  }}
+                  className="bg-[#d92d20] hover:bg-[#b42318] text-white"
+                >
+                  Cancel Session
+                </Button>
+              </div>
+            </div>
+          </div>
+        </Dialog>
+      )}
 
       {/* ============================================================== */}
       {/* SOLVER PROGRESS & DIAGNOSTIC MODAL (SolverModal) */}

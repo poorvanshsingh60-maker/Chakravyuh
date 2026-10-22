@@ -1,6 +1,5 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { 
-  Menu, 
   Search, 
   CheckSquare, 
   List, 
@@ -13,14 +12,18 @@ import {
   HelpCircle,
   Calendar,
   MessageSquare,
-  GraduationCap
+  GraduationCap,
+  X,
+  ChevronRight
 } from 'lucide-react';
 import { NavTab } from '../types';
+import { INITIAL_CANDIDATES, INITIAL_DIRECTORY, INITIAL_JOBS } from '../data/mockDatabase';
 
 interface SidebarProps {
   currentTab: NavTab;
   onSelectTab: (tab: NavTab) => void;
   pendingTasksCount?: number;
+  onSelectCandidate?: (candidateName: string) => void;
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({ 
@@ -28,15 +31,36 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onSelectTab,
   pendingTasksCount = 3 
 }) => {
+  const [searchTerm, setSearchTerm] = useState('');
+  const [searchFocused, setSearchFocused] = useState(false);
+
+  // Quick search results
+  const matchingCandidates = INITIAL_CANDIDATES.filter(c => 
+    c.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    c.role.toLowerCase().includes(searchTerm.toLowerCase())
+  ).slice(0, 3);
+
+  const matchingInterviewers = INITIAL_DIRECTORY.filter(i => 
+    i.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    i.skills.some(s => s.toLowerCase().includes(searchTerm.toLowerCase()))
+  ).slice(0, 3);
+
+  const matchingJobs = INITIAL_JOBS.filter(j => 
+    j.title.toLowerCase().includes(searchTerm.toLowerCase())
+  ).slice(0, 2);
+
+  const hasResults = searchTerm.trim().length > 0 && 
+    (matchingCandidates.length > 0 || matchingInterviewers.length > 0 || matchingJobs.length > 0);
+
   return (
-    <aside className="w-60 bg-white border-r border-[#eaecf0] flex flex-col h-screen sticky top-0 flex-shrink-0 select-none">
+    <aside className="w-60 bg-white border-r border-[#eaecf0] flex flex-col h-screen sticky top-0 shrink-0 select-none">
       
       {/* Top Organization Header */}
       <div className="p-4 flex items-center justify-between border-b border-[#f1f3f5]">
         <div className="flex items-center gap-2.5">
-          <button className="text-[#344054] hover:text-black">
-            <Menu className="w-5 h-5" />
-          </button>
+          <div className="w-7 h-7 rounded-lg bg-[#1668e8] text-white flex items-center justify-center font-bold text-xs shadow-xs">
+            Ch
+          </div>
           <div className="flex items-center gap-1.5">
             <span className="font-bold text-[15px] text-[#101828] tracking-tight">
               Chakravyuh
@@ -44,20 +68,105 @@ export const Sidebar: React.FC<SidebarProps> = ({
           </div>
         </div>
         <span className="text-[11px] font-medium text-[#667085] bg-[#f2f4f7] px-1.5 py-0.5 rounded font-mono">
-          OP
+          PROD
         </span>
       </div>
 
-      {/* Search Input */}
-      <div className="p-3">
+      {/* Search Input with Live Quick-Results Popover */}
+      <div className="p-3 relative">
         <div className="relative">
           <Search className="w-4 h-4 text-[#98a2b3] absolute left-3 top-1/2 -translate-y-1/2" />
           <input 
             type="text" 
-            placeholder="Search..."
-            className="w-full bg-white border border-[#d0d5dd] rounded-lg pl-9 pr-3 py-1.5 text-xs text-[#344054] placeholder-[#98a2b3] focus:outline-none focus:border-[#1668e8] focus:ring-1 focus:ring-[#1668e8]"
+            placeholder="Search everything..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            onFocus={() => setSearchFocused(true)}
+            className="w-full bg-white border border-[#d0d5dd] rounded-lg pl-9 pr-7 py-1.5 text-xs text-[#344054] placeholder-[#98a2b3] focus:outline-none focus:border-[#1668e8] focus:ring-1 focus:ring-[#1668e8]"
           />
+          {searchTerm && (
+            <button 
+              onClick={() => setSearchTerm('')} 
+              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#98a2b3] hover:text-[#344054]"
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
+          )}
         </div>
+
+        {/* Live Search Results Popup */}
+        {searchFocused && hasResults && (
+          <div className="absolute left-3 right-3 top-12 bg-white rounded-xl border border-[#eaecf0] shadow-xl z-50 p-2 text-xs space-y-2 animate-in fade-in duration-100">
+            {matchingCandidates.length > 0 && (
+              <div>
+                <span className="text-[10px] font-bold text-[#98a2b3] uppercase tracking-wider px-2">Candidates</span>
+                {matchingCandidates.map(c => (
+                  <button
+                    key={c.id}
+                    onClick={() => {
+                      onSelectTab('candidates');
+                      setSearchFocused(false);
+                      setSearchTerm('');
+                    }}
+                    className="w-full p-1.5 rounded-lg hover:bg-[#f9fafb] text-left flex items-center justify-between"
+                  >
+                    <div>
+                      <span className="font-semibold text-[#101828] block">{c.name}</span>
+                      <span className="text-[10px] text-[#667085]">{c.role}</span>
+                    </div>
+                    <ChevronRight className="w-3.5 h-3.5 text-[#98a2b3]" />
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {matchingInterviewers.length > 0 && (
+              <div className="pt-1 border-t border-[#f2f4f7]">
+                <span className="text-[10px] font-bold text-[#98a2b3] uppercase tracking-wider px-2">Interviewers</span>
+                {matchingInterviewers.map(i => (
+                  <button
+                    key={i.id}
+                    onClick={() => {
+                      onSelectTab('directory');
+                      setSearchFocused(false);
+                      setSearchTerm('');
+                    }}
+                    className="w-full p-1.5 rounded-lg hover:bg-[#f9fafb] text-left flex items-center justify-between"
+                  >
+                    <div>
+                      <span className="font-semibold text-[#101828] block">{i.name}</span>
+                      <span className="text-[10px] text-[#667085]">{i.team}</span>
+                    </div>
+                    <ChevronRight className="w-3.5 h-3.5 text-[#98a2b3]" />
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {matchingJobs.length > 0 && (
+              <div className="pt-1 border-t border-[#f2f4f7]">
+                <span className="text-[10px] font-bold text-[#98a2b3] uppercase tracking-wider px-2">Jobs</span>
+                {matchingJobs.map(j => (
+                  <button
+                    key={j.id}
+                    onClick={() => {
+                      onSelectTab('jobs');
+                      setSearchFocused(false);
+                      setSearchTerm('');
+                    }}
+                    className="w-full p-1.5 rounded-lg hover:bg-[#f9fafb] text-left flex items-center justify-between"
+                  >
+                    <div>
+                      <span className="font-semibold text-[#101828] block">{j.title}</span>
+                      <span className="text-[10px] text-[#667085]">{j.department}</span>
+                    </div>
+                    <ChevronRight className="w-3.5 h-3.5 text-[#98a2b3]" />
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Main Navigation Links */}

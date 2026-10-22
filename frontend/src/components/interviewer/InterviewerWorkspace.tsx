@@ -12,6 +12,8 @@ import {
 import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
 import { Dialog } from '../ui/dialog';
+import { TimezoneSelector } from '../common/TimezoneSelector';
+import { useTimezone } from '../../context/TimezoneContext';
 
 interface AssignedInterview {
   id: string;
@@ -21,15 +23,18 @@ interface AssignedInterview {
   roundName: string;
   duration: number;
   date: string;
-  timeSlot: string;
+  pstTimeSlot: string;
   meetingLink: string;
   roomName: string;
   status: 'PENDING_EVALUATION' | 'EVALUATED';
   decision?: 'STRONG_HIRE' | 'HIRE' | 'NO_HIRE' | 'STRONG_NO_HIRE';
   rating?: number;
+  strengths?: string;
+  growthAreas?: string;
 }
 
 export const InterviewerWorkspace: React.FC = () => {
+  const { convertTime, convertHourLabel, currentTimezone } = useTimezone();
   const [activeTab, setActiveTab] = useState<'dashboard' | 'availability'>('dashboard');
 
   // --- Assigned Interviews State ---
@@ -42,7 +47,7 @@ export const InterviewerWorkspace: React.FC = () => {
       roundName: 'Distributed Systems & Architecture',
       duration: 60,
       date: 'Today, Oct 26',
-      timeSlot: '10:00 AM – 11:00 AM PST',
+      pstTimeSlot: '10:00 AM – 11:00 AM PST',
       meetingLink: 'https://meet.google.com/chk-dist-sys',
       roomName: 'Virtual Pod Alpha',
       status: 'PENDING_EVALUATION'
@@ -55,7 +60,7 @@ export const InterviewerWorkspace: React.FC = () => {
       roundName: 'Distributed Storage & Raft Consensus',
       duration: 60,
       date: 'Tomorrow, Oct 27',
-      timeSlot: '2:00 PM – 3:00 PM PST',
+      pstTimeSlot: '2:00 PM – 3:00 PM PST',
       meetingLink: 'https://meet.google.com/chk-raft-cons',
       roomName: 'Turing Suite 402',
       status: 'PENDING_EVALUATION'
@@ -68,12 +73,13 @@ export const InterviewerWorkspace: React.FC = () => {
       roundName: 'Fault Tolerance & Disaster Recovery',
       duration: 45,
       date: 'Thursday, Oct 29',
-      timeSlot: '11:00 AM – 11:45 AM PST',
+      pstTimeSlot: '11:00 AM – 11:45 AM PST',
       meetingLink: 'https://meet.google.com/chk-dr-eval',
       roomName: 'Virtual Pod Alpha',
       status: 'EVALUATED',
       decision: 'STRONG_HIRE',
-      rating: 5
+      rating: 5,
+      strengths: 'Outstanding grasp of distributed consensus and failure zones.'
     }
   ]);
 
@@ -91,35 +97,27 @@ export const InterviewerWorkspace: React.FC = () => {
 
   // --- Availability Grid State ---
   const daysOfWeek = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
-  const hours = [
-    '9:00 AM - 10:00 AM',
-    '10:00 AM - 11:00 AM',
-    '11:00 AM - 12:00 PM',
-    '1:00 PM - 2:00 PM',
-    '2:00 PM - 3:00 PM',
-    '3:00 PM - 4:00 PM',
-    '4:00 PM - 5:00 PM'
-  ];
+  const pstHours = [9, 10, 11, 13, 14, 15, 16];
 
-  // Map of `day-hour` -> boolean (available or busy)
+  // Map of `day-pstHour` -> boolean (available or busy)
   const [availableSlots, setAvailableSlots] = useState<Record<string, boolean>>({
-    'Monday-10:00 AM - 11:00 AM': true,
-    'Monday-11:00 AM - 12:00 PM': true,
-    'Tuesday-9:00 AM - 10:00 AM': true,
-    'Tuesday-10:00 AM - 11:00 AM': true,
-    'Tuesday-1:00 PM - 2:00 PM': true,
-    'Wednesday-2:00 PM - 3:00 PM': true,
-    'Wednesday-3:00 PM - 4:00 PM': true,
-    'Thursday-10:00 AM - 11:00 AM': true,
-    'Thursday-11:00 AM - 12:00 PM': true,
-    'Friday-1:00 PM - 2:00 PM': true,
-    'Friday-2:00 PM - 3:00 PM': true,
+    'Monday-10': true,
+    'Monday-11': true,
+    'Tuesday-9': true,
+    'Tuesday-10': true,
+    'Tuesday-13': true,
+    'Wednesday-14': true,
+    'Wednesday-15': true,
+    'Thursday-10': true,
+    'Thursday-11': true,
+    'Friday-13': true,
+    'Friday-14': true,
   });
 
   const [availabilitySaved, setAvailabilitySaved] = useState(false);
 
   // Toggle slot availability
-  const toggleSlot = (day: string, hour: string) => {
+  const toggleSlot = (day: string, hour: number) => {
     const key = `${day}-${hour}`;
     setAvailableSlots(prev => ({ ...prev, [key]: !prev[key] }));
   };
@@ -128,9 +126,9 @@ export const InterviewerWorkspace: React.FC = () => {
   const applyMorningPreset = () => {
     const next = { ...availableSlots };
     daysOfWeek.forEach(day => {
-      next[`${day}-9:00 AM - 10:00 AM`] = true;
-      next[`${day}-10:00 AM - 11:00 AM`] = true;
-      next[`${day}-11:00 AM - 12:00 PM`] = true;
+      next[`${day}-9`] = true;
+      next[`${day}-10`] = true;
+      next[`${day}-11`] = true;
     });
     setAvailableSlots(next);
   };
@@ -139,10 +137,10 @@ export const InterviewerWorkspace: React.FC = () => {
   const applyAfternoonPreset = () => {
     const next = { ...availableSlots };
     daysOfWeek.forEach(day => {
-      next[`${day}-1:00 PM - 2:00 PM`] = true;
-      next[`${day}-2:00 PM - 3:00 PM`] = true;
-      next[`${day}-3:00 PM - 4:00 PM`] = true;
-      next[`${day}-4:00 PM - 5:00 PM`] = true;
+      next[`${day}-13`] = true;
+      next[`${day}-14`] = true;
+      next[`${day}-15`] = true;
+      next[`${day}-16`] = true;
     });
     setAvailableSlots(next);
   };
@@ -155,6 +153,11 @@ export const InterviewerWorkspace: React.FC = () => {
   // Open Scorecard Modal
   const openScorecard = (interview: AssignedInterview) => {
     setActiveInterview(interview);
+    if (interview.status === 'EVALUATED') {
+      setRecommendation(interview.decision || 'STRONG_HIRE');
+      setProblemSolvingRating(interview.rating || 5);
+      if (interview.strengths) setStrengths(interview.strengths);
+    }
     setEvalDialogOpen(true);
   };
 
@@ -165,7 +168,14 @@ export const InterviewerWorkspace: React.FC = () => {
 
     setInterviews(interviews.map(inv => 
       inv.id === activeInterview.id 
-        ? { ...inv, status: 'EVALUATED', decision: recommendation, rating: problemSolvingRating } 
+        ? { 
+            ...inv, 
+            status: 'EVALUATED', 
+            decision: recommendation, 
+            rating: problemSolvingRating,
+            strengths,
+            growthAreas
+          } 
         : inv
     ));
 
@@ -207,16 +217,20 @@ export const InterviewerWorkspace: React.FC = () => {
             </div>
           </div>
 
-          {/* Workload Fatigue Meter */}
-          <div className="w-full md:w-64 bg-[#f8f9fa] p-3 rounded-xl border border-[#eaecf0] space-y-1.5">
-            <div className="flex justify-between text-xs font-semibold">
-              <span className="text-[#344054]">Weekly Interview Load</span>
-              <span className="text-[#1668e8] font-bold font-mono">3 / 6 sessions</span>
+          {/* Timezone & Workload Fatigue Meter */}
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+            <TimezoneSelector />
+
+            <div className="w-full sm:w-64 bg-[#f8f9fa] p-3 rounded-xl border border-[#eaecf0] space-y-1.5">
+              <div className="flex justify-between text-xs font-semibold">
+                <span className="text-[#344054]">Weekly Interview Load</span>
+                <span className="text-[#1668e8] font-bold font-mono">3 / 6 sessions</span>
+              </div>
+              <div className="w-full bg-[#eaecf0] h-2 rounded-full overflow-hidden">
+                <div className="bg-[#1668e8] h-full rounded-full transition-all" style={{ width: '50%' }}></div>
+              </div>
+              <span className="text-[10px] text-[#667085] block font-mono">Optimal workload • No burnout risk</span>
             </div>
-            <div className="w-full bg-[#eaecf0] h-2 rounded-full overflow-hidden">
-              <div className="bg-[#1668e8] h-full rounded-full transition-all" style={{ width: '50%' }}></div>
-            </div>
-            <span className="text-[10px] text-[#667085] block font-mono">Optimal workload • No burnout risk</span>
           </div>
         </div>
 
@@ -252,7 +266,7 @@ export const InterviewerWorkspace: React.FC = () => {
 
         {/* Success Banner */}
         {evalSuccessBanner && (
-          <div className="mt-4 p-3.5 rounded-lg bg-[#ecfdf3] border border-[#a6f4c5] flex items-center justify-between text-xs text-[#027a48] animate-in fade-in">
+          <div className="mt-4 p-3.5 rounded-xl bg-[#ecfdf3] border border-[#a6f4c5] flex items-center justify-between text-xs text-[#027a48] animate-in fade-in">
             <div className="flex items-center gap-2">
               <CheckCircle2 className="w-4 h-4 text-[#12b76a]" />
               <span className="font-semibold">
@@ -264,11 +278,11 @@ export const InterviewerWorkspace: React.FC = () => {
         )}
 
         {availabilitySaved && (
-          <div className="mt-4 p-3.5 rounded-lg bg-[#ecfdf3] border border-[#a6f4c5] flex items-center justify-between text-xs text-[#027a48] animate-in fade-in">
+          <div className="mt-4 p-3.5 rounded-xl bg-[#ecfdf3] border border-[#a6f4c5] flex items-center justify-between text-xs text-[#027a48] animate-in fade-in">
             <div className="flex items-center gap-2">
               <CheckCircle2 className="w-4 h-4 text-[#12b76a]" />
               <span className="font-semibold">
-                Availability preferences saved and synchronized with CP-SAT solver batch horizon!
+                Availability preferences saved and synchronized with CP-SAT solver batch horizon in {currentTimezone.label}!
               </span>
             </div>
             <Badge variant="success">SYNCED</Badge>
@@ -286,7 +300,9 @@ export const InterviewerWorkspace: React.FC = () => {
             <div className="flex justify-between items-center">
               <div>
                 <h2 className="text-sm font-bold text-[#101828]">Upcoming Assigned Loop Interviews</h2>
-                <p className="text-xs text-[#667085] mt-0.5">Complete scorecards promptly within 24 hours of session conclusion.</p>
+                <p className="text-xs text-[#667085] mt-0.5">
+                  Times shown in <strong className="text-[#101828]">{currentTimezone.label}</strong>. Complete scorecards promptly within 24 hours.
+                </p>
               </div>
               <span className="text-xs font-mono text-[#667085]">
                 Pending Feedback: {interviews.filter(i => i.status === 'PENDING_EVALUATION').length}
@@ -326,8 +342,8 @@ export const InterviewerWorkspace: React.FC = () => {
                         <span className="text-[11px] font-mono text-[#667085]">{inv.duration}m</span>
                       </div>
                       <div className="text-[#475467] flex items-center gap-1.5 text-[11px]">
-                        <Clock className="w-3.5 h-3.5 text-[#98a2b3]" />
-                        <span>{inv.date} • {inv.timeSlot}</span>
+                        <Clock className="w-3.5 h-3.5 text-[#1668e8]" />
+                        <span className="font-medium text-[#101828]">{inv.date} • {convertTime(inv.pstTimeSlot)}</span>
                       </div>
                       <div className="text-[#475467] flex items-center gap-1.5 text-[11px]">
                         <Video className="w-3.5 h-3.5 text-[#98a2b3]" />
@@ -383,17 +399,17 @@ export const InterviewerWorkspace: React.FC = () => {
               <div>
                 <h2 className="text-sm font-bold text-[#101828]">Weekly Availability Matrix</h2>
                 <p className="text-xs text-[#667085] mt-0.5">
-                  Click or drag time slots to paint free hours for candidate interview matching.
+                  Click or drag time slots to paint free hours for candidate interview matching in <strong className="text-[#101828]">{currentTimezone.label}</strong>.
                 </p>
               </div>
 
               {/* Presets and Save */}
               <div className="flex flex-wrap items-center gap-2">
                 <Button size="sm" variant="secondary" onClick={applyMorningPreset}>
-                  + Quick Set 9 AM – 1 PM
+                  + Set Morning Block
                 </Button>
                 <Button size="sm" variant="secondary" onClick={applyAfternoonPreset}>
-                  + Quick Set 1 PM – 5 PM
+                  + Set Afternoon Block
                 </Button>
                 <Button size="sm" variant="secondary" onClick={clearAllSlots}>
                   Clear All
@@ -408,7 +424,7 @@ export const InterviewerWorkspace: React.FC = () => {
             {/* TimeGrid Weekly Calendar */}
             <div className="bg-white rounded-xl border border-[#eaecf0] shadow-2xs overflow-hidden">
               <div className="p-4 bg-[#fafafa] border-b border-[#eaecf0] flex justify-between items-center text-xs">
-                <span className="font-bold text-[#101828]">Week of October 26 – October 30, 2026</span>
+                <span className="font-bold text-[#101828]">Week of October 26 – October 30, 2026 ({currentTimezone.shortName})</span>
                 <span className="font-mono text-[#667085]">{totalAvailableCount} slots available</span>
               </div>
 
@@ -427,31 +443,39 @@ export const InterviewerWorkspace: React.FC = () => {
 
                   {/* Hourly Rows */}
                   <div className="divide-y divide-[#f2f4f7] text-xs">
-                    {hours.map(hour => (
-                      <div key={hour} className="grid grid-cols-6 py-2.5 items-center">
-                        <div className="col-span-1 text-center font-mono text-[11px] text-[#667085]">
-                          {hour}
-                        </div>
+                    {pstHours.map(hour => {
+                      const conv = convertHourLabel(hour);
 
-                        {daysOfWeek.map(day => {
-                          const isFree = availableSlots[`${day}-${hour}`];
-                          return (
-                            <div key={day} className="col-span-1 px-1">
-                              <button
-                                onClick={() => toggleSlot(day, hour)}
-                                className={`w-full py-2.5 px-2 rounded-lg text-xs font-semibold border transition-all text-center ${
-                                  isFree
-                                    ? 'bg-[#ecfdf3] border-[#a6f4c5] text-[#027a48] shadow-2xs hover:bg-[#d1fadf]'
-                                    : 'bg-white border-[#eaecf0] text-[#98a2b3] hover:border-[#1668e8]/50 hover:bg-[#f9fafb]'
-                                }`}
-                              >
-                                {isFree ? '✓ Available' : 'Busy'}
-                              </button>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    ))}
+                      return (
+                        <div key={hour} className="grid grid-cols-6 py-2.5 items-center">
+                          <div className="col-span-1 text-center font-mono text-[11px] text-[#101828] font-semibold">
+                            <span>{conv.full}</span>
+                            <span className="text-[10px] text-[#98a2b3] block font-normal">
+                              ({hour}:00 PT)
+                            </span>
+                          </div>
+
+                          {daysOfWeek.map(day => {
+                            const isFree = availableSlots[`${day}-${hour}`];
+                            return (
+                              <div key={day} className="col-span-1 px-1">
+                                <button
+                                  type="button"
+                                  onClick={() => toggleSlot(day, hour)}
+                                  className={`w-full py-2.5 px-2 rounded-lg text-xs font-semibold border transition-all text-center ${
+                                    isFree
+                                      ? 'bg-[#ecfdf3] border-[#a6f4c5] text-[#027a48] shadow-2xs hover:bg-[#d1fadf]'
+                                      : 'bg-white border-[#eaecf0] text-[#98a2b3] hover:border-[#1668e8]/50 hover:bg-[#f9fafb]'
+                                  }`}
+                                >
+                                  {isFree ? '✓ Available' : 'Busy'}
+                                </button>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      );
+                    })}
                   </div>
 
                 </div>

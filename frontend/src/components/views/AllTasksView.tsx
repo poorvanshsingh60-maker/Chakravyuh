@@ -1,6 +1,9 @@
 import React, { useState } from 'react';
 import { Task } from '../../types';
-import { Search } from 'lucide-react';
+import { Search, CheckCircle2 } from 'lucide-react';
+import { Dialog } from '../ui/dialog';
+import { Button } from '../ui/button';
+import { Badge } from '../ui/badge';
 
 interface AllTasksViewProps {
   tasks: Task[];
@@ -10,13 +13,28 @@ interface AllTasksViewProps {
 export const AllTasksView: React.FC<AllTasksViewProps> = ({ tasks, onSelectTaskToSchedule }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [typeFilter, setTypeFilter] = useState<string>('ALL');
+  const [taskList, setTaskList] = useState<Task[]>(tasks);
+  const [selectedTask, setSelectedTask] = useState<Task | null>(null);
+  const [reminderToast, setReminderToast] = useState<string | null>(null);
 
-  const filtered = tasks.filter(t => {
+  const filtered = taskList.filter(t => {
     const matchesSearch = t.candidateName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                          t.title.toLowerCase().includes(searchTerm.toLowerCase());
+                          t.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                          t.interviewerName.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesType = typeFilter === 'ALL' || t.type === typeFilter;
     return matchesSearch && matchesType;
   });
+
+  const handleSendReminder = (task: Task) => {
+    setReminderToast(`Automated reminder dispatched to ${task.interviewerName} for ${task.roundName}!`);
+    setTimeout(() => setReminderToast(null), 4000);
+    setSelectedTask(null);
+  };
+
+  const handleMarkResolved = (taskId: string) => {
+    setTaskList(taskList.map(t => t.id === taskId ? { ...t, status: 'COMPLETED' } : t));
+    setSelectedTask(null);
+  };
 
   return (
     <div className="flex-1 flex flex-col min-h-screen bg-white">
@@ -29,22 +47,29 @@ export const AllTasksView: React.FC<AllTasksViewProps> = ({ tasks, onSelectTaskT
         </p>
       </div>
 
+      {reminderToast && (
+        <div className="mx-8 mt-4 p-3.5 rounded-xl bg-[#ecfdf3] text-[#0b7c3e] border border-[#abefc6] text-xs font-semibold flex items-center gap-2 animate-in fade-in">
+          <CheckCircle2 className="w-4 h-4 text-[#0b7c3e]" />
+          <span>{reminderToast}</span>
+        </div>
+      )}
+
       <div className="p-8 max-w-5xl space-y-6">
         
         {/* Search & Filter Toolbar */}
-        <div className="flex items-center gap-3">
-          <div className="relative w-72">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="relative w-full sm:w-72">
             <Search className="w-4 h-4 text-[#98a2b3] absolute left-3 top-1/2 -translate-y-1/2" />
             <input 
               type="text" 
-              placeholder="Search by candidate or task..."
+              placeholder="Search by candidate, interviewer, or task..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="w-full bg-white border border-[#d0d5dd] rounded-lg pl-9 pr-3 py-1.5 text-xs text-[#344054] placeholder-[#98a2b3] focus:outline-none focus:border-[#1668e8]"
             />
           </div>
 
-          <div className="flex items-center gap-1.5 text-xs font-medium bg-[#f2f4f7] p-1 rounded-lg">
+          <div className="flex flex-wrap items-center gap-1.5 text-xs font-medium bg-[#f2f4f7] p-1 rounded-lg">
             {['ALL', 'SCORECARD', 'SHADOW_REVIEW', 'RESCHEDULE'].map((t) => (
               <button
                 key={t}
@@ -97,16 +122,22 @@ export const AllTasksView: React.FC<AllTasksViewProps> = ({ tasks, onSelectTaskT
                       {task.status}
                     </span>
                   </td>
-                  <td className="p-3.5 pr-6 text-right">
+                  <td className="p-3.5 pr-6 text-right space-x-2">
                     {task.type === 'RESCHEDULE' ? (
                       <button 
-                        onClick={onSelectTaskToSchedule}
+                        onClick={() => {
+                          handleMarkResolved(task.id);
+                          if (onSelectTaskToSchedule) onSelectTaskToSchedule();
+                        }}
                         className="px-3 py-1 rounded bg-[#1668e8] hover:bg-[#145ac7] text-white font-medium shadow-2xs"
                       >
                         Auto-Resolve
                       </button>
                     ) : (
-                      <button className="px-3 py-1 rounded border border-[#d0d5dd] text-[#344054] hover:bg-white font-medium">
+                      <button 
+                        onClick={() => setSelectedTask(task)}
+                        className="px-3 py-1 rounded border border-[#d0d5dd] text-[#344054] hover:bg-white font-medium shadow-2xs transition-colors"
+                      >
                         View Details
                       </button>
                     )}
@@ -118,6 +149,61 @@ export const AllTasksView: React.FC<AllTasksViewProps> = ({ tasks, onSelectTaskT
         </div>
 
       </div>
+
+      {/* Task Inspection Dialog */}
+      {selectedTask && (
+        <Dialog
+          isOpen={!!selectedTask}
+          onClose={() => setSelectedTask(null)}
+          title={`Task: ${selectedTask.title}`}
+        >
+          <div className="space-y-4 text-xs">
+            <div className="p-3.5 bg-[#f9fafb] rounded-xl border border-[#eaecf0] space-y-2">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="font-bold text-sm text-[#101828]">{selectedTask.candidateName}</h3>
+                  <p className="text-xs text-[#667085]">{selectedTask.role}</p>
+                </div>
+                <Badge variant={selectedTask.priority === 'HIGH' ? 'warning' : 'neutral'}>
+                  {selectedTask.priority} Priority
+                </Badge>
+              </div>
+
+              <div className="pt-2 border-t border-[#eaecf0] space-y-1 text-[#344054]">
+                <p><strong>Associated Round:</strong> {selectedTask.roundName}</p>
+                <p><strong>Assigned Evaluator:</strong> {selectedTask.interviewerName}</p>
+                <p><strong>Due Window:</strong> {selectedTask.dueDate} at {selectedTask.dueTime}</p>
+                <p><strong>Current Status:</strong> {selectedTask.status}</p>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between pt-2">
+              <Button
+                variant="primary"
+                onClick={() => handleSendReminder(selectedTask)}
+                className="flex items-center gap-1.5 font-bold"
+              >
+                <span>Send Slack / Email Ping</span>
+              </Button>
+
+              <div className="flex gap-2">
+                <Button variant="secondary" onClick={() => setSelectedTask(null)}>
+                  Close
+                </Button>
+                {selectedTask.status !== 'COMPLETED' && (
+                  <Button
+                    variant="primary"
+                    onClick={() => handleMarkResolved(selectedTask.id)}
+                    className="bg-[#0b7c3e] hover:bg-[#096a34] text-white font-bold"
+                  >
+                    Mark as Done
+                  </Button>
+                )}
+              </div>
+            </div>
+          </div>
+        </Dialog>
+      )}
 
     </div>
   );

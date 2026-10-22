@@ -25,6 +25,7 @@ import { MetricsView } from './components/views/MetricsView';
 import { SettingsView } from './components/views/SettingsView';
 import { HelpSupportView } from './components/views/HelpSupportView';
 import { LogOut, Layers } from 'lucide-react';
+import { TimezoneSelector } from './components/common/TimezoneSelector';
 
 interface AuthUser {
   id: string;
@@ -181,8 +182,12 @@ export function App() {
               </button>
             </nav>
 
-            {/* User Profile & Sign Out */}
+            {/* Global Timezone Switcher & User Profile */}
             <div className="flex items-center gap-3">
+              <div className="hidden md:flex items-center">
+                <TimezoneSelector variant="compact" />
+              </div>
+
               <div className="flex items-center gap-2">
                 <div className="w-7 h-7 rounded-full bg-[#1668e8] text-white flex items-center justify-center font-bold text-[11px]">
                   {currentUser.full_name.charAt(0)}
