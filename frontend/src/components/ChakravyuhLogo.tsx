@@ -4,74 +4,60 @@ interface LogoProps {
   className?: string;
   size?: number;
   showText?: boolean;
+  strokeColor?: string;
 }
 
-export const ChakravyuhLogo: React.FC<LogoProps> = ({ className = '', size = 28, showText = true }) => {
+export const ChakravyuhLogo: React.FC<LogoProps> = ({ 
+  className = '', 
+  size = 32, 
+  showText = true,
+  strokeColor = '#1668e8'
+}) => {
   return (
     <div className={`flex items-center gap-2.5 ${className}`}>
-      {/* Precision Concentric Labyrinth Glyph */}
+      {/* Authentic Hindu Chakravyuha Labyrinth Glyph */}
       <div 
-        className="relative flex items-center justify-center bg-slate-900 rounded-lg shadow-sm border border-slate-700/60 overflow-hidden flex-shrink-0"
+        className="relative flex items-center justify-center bg-white rounded-lg shadow-2xs border border-[#d0d5dd] overflow-hidden shrink-0 p-1"
         style={{ width: size + 8, height: size + 8 }}
       >
         <svg 
           width={size} 
           height={size} 
-          viewBox="0 0 100 100" 
+          viewBox="0 0 605 597" 
           fill="none" 
           xmlns="http://www.w3.org/2000/svg"
         >
-          {/* Outer Layer Arc */}
-          <circle 
-            cx="50" 
-            cy="50" 
-            r="42" 
-            stroke="#38bdf8" 
-            strokeWidth="5" 
-            strokeDasharray="210 50" 
-            strokeLinecap="round" 
-            className="opacity-90"
-          />
-          {/* Middle Layer Arc */}
-          <circle 
-            cx="50" 
-            cy="50" 
-            r="28" 
-            stroke="#60a5fa" 
-            strokeWidth="5" 
-            strokeDasharray="130 40" 
-            strokeDashoffset="30"
-            strokeLinecap="round" 
-            className="opacity-95"
-          />
-          {/* Inner Layer Arc */}
-          <circle 
-            cx="50" 
-            cy="50" 
-            r="15" 
-            stroke="#93c5fd" 
-            strokeWidth="5" 
-            strokeDasharray="60 30" 
-            strokeDashoffset="15"
-            strokeLinecap="round" 
-          />
-          {/* Central Optimization Convergence Node */}
-          <circle cx="50" cy="50" r="5" fill="#ffffff" />
+          <g transform="translate(308,300) scale(-2,-2)">
+            {/* Labyrinth Outer Boundary */}
+            <path 
+              fill="#ffffff" 
+              d="M-41.6666,-121.372 C-44.4057,-121.373,-47.1185,-120.832,-49.6481,-119.782 C-86.6623,-105.059,-132.55,-65.0111,-132.55,3.81911 C-132.55,66.9253,-81.5599,136.299,3.84806,136.299 C69.0541,136.299,140.047,83.6235,140.047,-3.87542 C140.047,-40.7176,120.584,-103.556,53.8173,-132.237 C49.1352,-134.155,44.123,-135.141,39.0625,-135.141 C27.136,-135.141,16.4578,-129.796,9.2927,-121.372Z"
+            />
+            {/* Authentic Concentric Labyrinth Formation Lines */}
+            <path 
+              fill="none" 
+              stroke={strokeColor} 
+              strokeWidth="11" 
+              strokeLinecap="round" 
+              strokeLinejoin="round" 
+              d="M39.0625,-96.0784 C86.9278,-75.1606,100.063,-29.0089,100.063,-3.6064 C100.063,58.8072,49.6519,96.3156,3.56312,96.3156 C-56.5808,96.3156,-92.5685,47.7152,-92.5685,3.51693 C-92.5685,-45.086,-59.5433,-71.2667,-33.6851,-81.2969 C-25.9056,-84.5228,-20.8333,-92.1168,-20.8333,-100.539 C-20.8333,-112.045,-30.1607,-121.373,-41.6666,-121.373 C-44.4057,-121.373,-47.1185,-120.832,-49.6481,-119.782 C-86.6623,-105.059,-132.55,-65.0111,-132.55,3.81911 C-132.55,66.9253,-81.5599,136.299,3.84806,136.299 C69.0541,136.299,140.047,83.6235,140.047,-3.87542 C140.047,-40.7176,120.584,-103.556,53.8173,-132.237 C49.1352,-134.155,44.123,-135.141,39.0625,-135.141 C17.489,-135.141,0,-117.653,0,-96.0785 V-65.625 M-1.13233,-6.10089 C-5.47843,-6.80391,-12.4353,-4.47364,-12.852,2.40896 C-12.852,9.85277,-6.34287,16.504,2.14604,16.504 C11.761,16.504,20.2078,8.61526,20.2078,-2.2613 C20.2078,-13.6863,11.859,-25.8032,-2.40709,-25.8032 C-17.3497,-25.8032,-32.6569,-15.1004,-32.6569,2.54688 C-32.6569,20.3215,-18.018,36.3907,2.67467,36.3907 C22.2595,36.3907,40.1277,20.23,40.1277,-2.79067 C40.1277,-23.7829,23.503,-45.7422,-2.89525,-45.7422 C-27.3849,-45.7422,-52.6084,-26.9881,-52.6084,2.99074 C-52.6084,26.3531,-33.5299,56.3508,3.0773,56.3508 C28.3187,56.3508,60.0944,35.7442,60.0944,-3.15636 C60.0944,-30.5438,38.7536,-65.7137,-3.22916,-65.7137 C-34.3313,-65.7137,-72.5837,-41.9038,-72.5837,3.29546 C-72.5837,37.0322,-45.066,76.3294,3.35801,76.3294 C38.6761,76.3294,80.0753,47.5611,80.0753,-3.41462 C80.0753,-23.6603,70.2556,-60.9005,31.685,-77.999 C24.3366,-80.994,19.5313,-88.1412,19.5313,-96.0785 C19.5313,-106.865,28.2757,-115.61,39.0625,-115.61 C41.5928,-115.61,44.0989,-115.116,46.4398,-114.158 C103.743,-89.363,120.054,-34.4757,120.054,-3.75655 C120.054,70.5594,60.0381,116.306,3.72236,116.306 C-68.375,116.306,-112.558,58.0584,-112.558,3.68643 C-112.558,-55.5234,-73.1055,-88.1594,-41.6668,-100.539"
+            />
+          </g>
         </svg>
       </div>
 
       {showText && (
         <div className="flex flex-col">
           <div className="flex items-center gap-1.5">
-            <span className="font-bold tracking-tight text-slate-900 text-base leading-none">
-              CHAKRAVYUH
+            <span className="font-extrabold tracking-tight text-[#101828] text-base leading-none">
+              Chakravyuh
             </span>
-            <span className="px-1.5 py-0.5 rounded text-[10px] font-mono font-medium tracking-wide bg-blue-50 text-blue-700 border border-blue-200/80 leading-none">
-              OR-TOOLS
+            <span className="px-1.5 py-0.5 rounded text-[10px] font-mono font-semibold bg-[#e7f2fe] text-[#1668e8] border border-[#bcd7fd] leading-none">
+              CP-SAT
             </span>
           </div>
-          <span className="text-[11px] font-medium text-slate-500 tracking-tight leading-tight mt-0.5">
-            Combinatorial Interview Orchestration
+          <span className="text-[10px] font-medium text-[#667085] tracking-tight leading-tight mt-0.5">
+            Labyrinth Constraint Optimization
           </span>
         </div>
       )}

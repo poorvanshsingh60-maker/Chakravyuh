@@ -5,6 +5,7 @@ import { CoordinatorWorkspace } from './components/coordinator/CoordinatorWorksp
 import { InterviewerWorkspace } from './components/interviewer/InterviewerWorkspace';
 import { CandidateWorkspace } from './components/candidate/CandidateWorkspace';
 import { Sidebar } from './components/Sidebar';
+import { ChakravyuhLogo } from './components/ChakravyuhLogo';
 import { NavTab, Task, CandidateItem, JobPosition, InterviewerDirectoryItem } from './types';
 import { 
   INITIAL_TASKS, 
@@ -12,6 +13,7 @@ import {
   INITIAL_JOBS, 
   INITIAL_DIRECTORY 
 } from './data/mockDatabase';
+import { HomeDashboardView } from './components/views/HomeDashboardView';
 import { MyTasksView } from './components/views/MyTasksView';
 import { AllTasksView } from './components/views/AllTasksView';
 import { UpcomingEventsView } from './components/views/UpcomingEventsView';
@@ -24,7 +26,7 @@ import { DirectoryView } from './components/views/DirectoryView';
 import { MetricsView } from './components/views/MetricsView';
 import { SettingsView } from './components/views/SettingsView';
 import { HelpSupportView } from './components/views/HelpSupportView';
-import { LogOut, Layers } from 'lucide-react';
+import { LogOut } from 'lucide-react';
 import { TimezoneSelector } from './components/common/TimezoneSelector';
 
 interface AuthUser {
@@ -43,23 +45,20 @@ export function App() {
     role: 'COORDINATOR'
   });
 
-  // App mode: 'flowmap' (executes the exact flowchart) or 'sidebar-modules'
-  const [appMode, setAppMode] = useState<'flowmap' | 'sidebar-modules'>('flowmap');
-
-  // Sidebar modules state
-  const [currentTab, setCurrentTab] = useState<NavTab>('scheduling');
+  // Current active navigation tab (defaults to Home dashboard with Moodle-style Red Alerts)
+  const [currentTab, setCurrentTab] = useState<NavTab>('home');
   const [tasks, setTasks] = useState<Task[]>(INITIAL_TASKS);
   const [candidates, setCandidates] = useState<CandidateItem[]>(INITIAL_CANDIDATES);
   const [jobs] = useState<JobPosition[]>(INITIAL_JOBS);
   const [directory] = useState<InterviewerDirectoryItem[]>(INITIAL_DIRECTORY);
   const [activeCandidate, setActiveCandidate] = useState<CandidateItem>(INITIAL_CANDIDATES[0]);
 
-  // If logged out, render 1. Login Page
+  // If logged out, render Login Page with 1-click persona demo logins
   if (!currentUser) {
     return <LoginPage onLogin={(user) => setCurrentUser(user)} />;
   }
 
-  // Switch role handler (allows testing all 3 branches of flowchart with 1 click)
+  // Switch role handler (allows testing all 3 branches of the system with 1 click)
   const switchRole = (newRole: UserRole) => {
     if (newRole === 'COORDINATOR') {
       setCurrentUser({
@@ -96,89 +95,59 @@ export function App() {
   };
 
   const pendingCount = tasks.filter(t => t.status === 'PENDING').length;
+  const urgentCount = 2; // Active high-priority alerts for current role
 
   return (
     <div className="min-h-screen bg-[#f8f9fa] flex flex-col font-['Inter',-apple-system,BlinkMacSystemFont,'Segoe_UI',Roboto,sans-serif]">
       
       {/* ============================================================== */}
-      {/* TOP FLOWMAP PERSPECTIVE SWITCHER & APP BAR */}
+      {/* TOP UNIFIED APP BAR WITH AUTHENTIC LOGO & ROLE SWITCHER       */}
       {/* ============================================================== */}
       <header className="sticky top-0 z-50 bg-white border-b border-[#eaecf0] shadow-2xs">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-14">
             
-            {/* Brand Logo & Tag */}
+            {/* Authentic Chakravyuh Logo & Solver Badge */}
             <div className="flex items-center gap-3">
-              <div className="flex items-center gap-2">
-                <div className="w-7 h-7 rounded-lg bg-[#1668e8] text-white flex items-center justify-center font-bold text-xs shadow-xs">
-                  Ch
-                </div>
-                <span className="font-extrabold text-[15px] text-[#101828] tracking-tight">
-                  Chakravyuh
-                </span>
-              </div>
-              <span className="hidden md:inline-block text-[10px] font-mono px-2 py-0.5 rounded bg-[#f2f4f7] text-[#475467] border border-[#eaecf0]">
-                OR-Tools CP-SAT
-              </span>
+              <ChakravyuhLogo size={24} showText={true} />
             </div>
 
-            {/* FLOWCHART ACTIVE PERSONA SWITCHER */}
+            {/* Role Persona Switcher (Instant 1-Click Role Perspective Test) */}
             <nav className="flex items-center p-1 bg-[#f2f4f7] rounded-lg border border-[#eaecf0] text-xs font-semibold">
               <button
-                onClick={() => {
-                  setAppMode('flowmap');
-                  switchRole('COORDINATOR');
-                }}
+                onClick={() => switchRole('COORDINATOR')}
                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md transition-all ${
-                  appMode === 'flowmap' && currentUser.role === 'COORDINATOR'
+                  currentUser.role === 'COORDINATOR'
                     ? 'bg-white text-[#101828] shadow-2xs font-bold border border-[#d0d5dd]'
                     : 'text-[#667085] hover:text-[#101828]'
                 }`}
               >
                 <span>👑</span>
-                <span>Coordinator Flow</span>
+                <span>Coordinator</span>
               </button>
 
               <button
-                onClick={() => {
-                  setAppMode('flowmap');
-                  switchRole('INTERVIEWER');
-                }}
+                onClick={() => switchRole('INTERVIEWER')}
                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md transition-all ${
-                  appMode === 'flowmap' && currentUser.role === 'INTERVIEWER'
+                  currentUser.role === 'INTERVIEWER'
                     ? 'bg-white text-[#101828] shadow-2xs font-bold border border-[#d0d5dd]'
                     : 'text-[#667085] hover:text-[#101828]'
                 }`}
               >
                 <span>💼</span>
-                <span>Interviewer Flow</span>
+                <span>Interviewer</span>
               </button>
 
               <button
-                onClick={() => {
-                  setAppMode('flowmap');
-                  switchRole('CANDIDATE');
-                }}
+                onClick={() => switchRole('CANDIDATE')}
                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md transition-all ${
-                  appMode === 'flowmap' && currentUser.role === 'CANDIDATE'
+                  currentUser.role === 'CANDIDATE'
                     ? 'bg-white text-[#101828] shadow-2xs font-bold border border-[#d0d5dd]'
                     : 'text-[#667085] hover:text-[#101828]'
                 }`}
               >
                 <span>🎓</span>
-                <span>Candidate Flow</span>
-              </button>
-
-              <button
-                onClick={() => setAppMode(appMode === 'sidebar-modules' ? 'flowmap' : 'sidebar-modules')}
-                className={`hidden lg:flex items-center gap-1 px-2.5 py-1.5 rounded-md text-[11px] border border-transparent transition-all ${
-                  appMode === 'sidebar-modules'
-                    ? 'bg-[#1668e8] text-white font-bold'
-                    : 'text-[#667085] hover:text-[#101828]'
-                }`}
-              >
-                <Layers className="w-3 h-3" />
-                <span>ModernLoop Menu</span>
+                <span>Candidate</span>
               </button>
             </nav>
 
@@ -198,13 +167,14 @@ export function App() {
                 </div>
               </div>
 
-              {/* Sign out button -> returns to Login Page */}
+              {/* Sign out button -> returns to Login Page with demo logins */}
               <button
                 onClick={() => setCurrentUser(null)}
-                title="Sign Out / Back to Login Page"
-                className="p-1.5 rounded-lg border border-[#eaecf0] hover:bg-[#f9fafb] text-[#667085] hover:text-red-600 transition-colors"
+                title="Sign Out to Login Page / Switch Credentials"
+                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-[#eaecf0] hover:bg-[#f9fafb] text-[#667085] hover:text-red-600 transition-colors text-xs font-semibold"
               >
-                <LogOut className="w-4 h-4" />
+                <LogOut className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">Sign Out</span>
               </button>
             </div>
 
@@ -213,86 +183,118 @@ export function App() {
       </header>
 
       {/* ============================================================== */}
-      {/* FLOWMAP VIEW (Executes exact flowchart) */}
+      {/* UNIFIED SIDEBAR + WORKSPACE LAYOUT                             */}
       {/* ============================================================== */}
-      {appMode === 'flowmap' && (
-        <main className="flex-1 flex flex-col">
-          {currentUser.role === 'COORDINATOR' && <CoordinatorWorkspace />}
-          {currentUser.role === 'INTERVIEWER' && <InterviewerWorkspace />}
-          {currentUser.role === 'CANDIDATE' && <CandidateWorkspace />}
+      <div className="flex-1 flex font-['Inter',-apple-system,BlinkMacSystemFont,'Segoe_UI',Roboto,sans-serif]">
+        <Sidebar 
+          currentTab={currentTab} 
+          onSelectTab={setCurrentTab}
+          pendingTasksCount={pendingCount} 
+          urgentAlertsCount={urgentCount}
+        />
+
+        <main className="flex-1 flex flex-col min-w-0 overflow-y-auto">
+          {/* 1. Home Dashboard View with Moodle-style Red Urgent Alert Banners */}
+          {currentTab === 'home' && (
+            <HomeDashboardView
+              currentUser={currentUser}
+              tasks={tasks}
+              candidates={candidates}
+              onNavigate={setCurrentTab}
+              onSwitchRole={switchRole}
+              onCompleteTask={handleCompleteTask}
+            />
+          )}
+
+          {/* 2. Interactive Flowmap Workspace (Coordinator / Interviewer / Candidate) */}
+          {currentTab === 'flowchart' && (
+            <div className="flex-1 overflow-y-auto">
+              {currentUser.role === 'COORDINATOR' && <CoordinatorWorkspace />}
+              {currentUser.role === 'INTERVIEWER' && <InterviewerWorkspace />}
+              {currentUser.role === 'CANDIDATE' && <CandidateWorkspace />}
+            </div>
+          )}
+
+          {/* 3. My Tasks */}
+          {currentTab === 'my-tasks' && (
+            <MyTasksView 
+              tasks={tasks} 
+              onCompleteTask={handleCompleteTask} 
+            />
+          )}
+
+          {/* 4. All Tasks */}
+          {currentTab === 'all-tasks' && (
+            <AllTasksView 
+              tasks={tasks} 
+              onSelectTaskToSchedule={() => setCurrentTab('scheduling')} 
+            />
+          )}
+
+          {/* 5. Upcoming Events */}
+          {currentTab === 'upcoming' && (
+            <UpcomingEventsView />
+          )}
+
+          {/* 6. Candidates View */}
+          {currentTab === 'candidates' && (
+            <CandidatesView 
+              candidates={candidates} 
+              onScheduleCandidate={(c) => {
+                setActiveCandidate(c);
+                setCurrentTab('scheduling');
+              }}
+              onAddCandidate={handleAddCandidate}
+            />
+          )}
+
+          {/* 7. Jobs View */}
+          {currentTab === 'jobs' && (
+            <JobsView jobs={jobs} />
+          )}
+
+          {/* 8. Automate Scheduling (CP-SAT Solver) */}
+          {currentTab === 'scheduling' && (
+            <AutomateSchedulingView 
+              onGoToCommunications={() => setCurrentTab('communications')}
+              candidateName={activeCandidate.name}
+              roleName={activeCandidate.role}
+            />
+          )}
+
+          {/* 9. Interviewer Training */}
+          {currentTab === 'training' && (
+            <InterviewerTrainingView />
+          )}
+
+          {/* 10. Communications & Invitations */}
+          {currentTab === 'communications' && (
+            <CommunicationsView 
+              onGoToScheduling={() => setCurrentTab('scheduling')} 
+            />
+          )}
+
+          {/* 11. Panel Directory */}
+          {currentTab === 'directory' && (
+            <DirectoryView interviewers={directory} />
+          )}
+
+          {/* 12. Metrics & Analytics */}
+          {currentTab === 'metrics' && (
+            <MetricsView />
+          )}
+
+          {/* 13. Settings */}
+          {currentTab === 'settings' && (
+            <SettingsView />
+          )}
+
+          {/* 14. Help & Support */}
+          {currentTab === 'help' && (
+            <HelpSupportView />
+          )}
         </main>
-      )}
-
-      {/* ============================================================== */}
-      {/* MODERNLOOP SIDEBAR MODULES VIEW */}
-      {/* ============================================================== */}
-      {appMode === 'sidebar-modules' && (
-        <div className="flex-1 flex font-['Inter',-apple-system,BlinkMacSystemFont,'Segoe_UI',Roboto,sans-serif]">
-          <Sidebar 
-            currentTab={currentTab} 
-            onSelectTab={setCurrentTab}
-            pendingTasksCount={pendingCount} 
-          />
-
-          <main className="flex-1 flex flex-col min-w-0 overflow-y-auto">
-            {currentTab === 'my-tasks' && (
-              <MyTasksView 
-                tasks={tasks} 
-                onCompleteTask={handleCompleteTask} 
-              />
-            )}
-            {currentTab === 'all-tasks' && (
-              <AllTasksView 
-                tasks={tasks} 
-                onSelectTaskToSchedule={() => setCurrentTab('scheduling')} 
-              />
-            )}
-            {currentTab === 'upcoming' && (
-              <UpcomingEventsView />
-            )}
-            {currentTab === 'candidates' && (
-              <CandidatesView 
-                candidates={candidates} 
-                onScheduleCandidate={(c) => {
-                  setActiveCandidate(c);
-                  setCurrentTab('scheduling');
-                }}
-                onAddCandidate={handleAddCandidate}
-              />
-            )}
-            {currentTab === 'jobs' && (
-              <JobsView jobs={jobs} />
-            )}
-            {currentTab === 'scheduling' && (
-              <AutomateSchedulingView 
-                onGoToCommunications={() => setCurrentTab('communications')}
-                candidateName={activeCandidate.name}
-                roleName={activeCandidate.role}
-              />
-            )}
-            {currentTab === 'training' && (
-              <InterviewerTrainingView />
-            )}
-            {currentTab === 'communications' && (
-              <CommunicationsView 
-                onGoToScheduling={() => setCurrentTab('scheduling')} 
-              />
-            )}
-            {currentTab === 'directory' && (
-              <DirectoryView interviewers={directory} />
-            )}
-            {currentTab === 'metrics' && (
-              <MetricsView />
-            )}
-            {currentTab === 'settings' && (
-              <SettingsView />
-            )}
-            {currentTab === 'help' && (
-              <HelpSupportView />
-            )}
-          </main>
-        </div>
-      )}
+      </div>
 
     </div>
   );

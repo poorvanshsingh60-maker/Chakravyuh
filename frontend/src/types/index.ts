@@ -1,4 +1,6 @@
 export type NavTab = 
+  | 'home'
+  | 'flowchart'
   | 'my-tasks'
   | 'all-tasks'
   | 'upcoming'

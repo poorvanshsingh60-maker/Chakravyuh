@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { 
+  Home,
+  GitBranch,
   Search, 
   CheckSquare, 
   List, 
@@ -18,18 +20,21 @@ import {
 } from 'lucide-react';
 import { NavTab } from '../types';
 import { INITIAL_CANDIDATES, INITIAL_DIRECTORY, INITIAL_JOBS } from '../data/mockDatabase';
+import { ChakravyuhLogo } from './ChakravyuhLogo';
 
 interface SidebarProps {
   currentTab: NavTab;
   onSelectTab: (tab: NavTab) => void;
   pendingTasksCount?: number;
+  urgentAlertsCount?: number;
   onSelectCandidate?: (candidateName: string) => void;
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({ 
   currentTab, 
   onSelectTab,
-  pendingTasksCount = 3 
+  pendingTasksCount = 3,
+  urgentAlertsCount = 2
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [searchFocused, setSearchFocused] = useState(false);
@@ -56,20 +61,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
     <aside className="w-60 bg-white border-r border-[#eaecf0] flex flex-col h-screen sticky top-0 shrink-0 select-none">
       
       {/* Top Organization Header */}
-      <div className="p-4 flex items-center justify-between border-b border-[#f1f3f5]">
-        <div className="flex items-center gap-2.5">
-          <div className="w-7 h-7 rounded-lg bg-[#1668e8] text-white flex items-center justify-center font-bold text-xs shadow-xs">
-            Ch
-          </div>
-          <div className="flex items-center gap-1.5">
-            <span className="font-bold text-[15px] text-[#101828] tracking-tight">
-              Chakravyuh
-            </span>
-          </div>
+      <div className="p-3.5 flex items-center justify-between border-b border-[#f1f3f5]">
+        <div className="flex items-center gap-2">
+          <ChakravyuhLogo size={20} showText={true} />
         </div>
-        <span className="text-[11px] font-medium text-[#667085] bg-[#f2f4f7] px-1.5 py-0.5 rounded font-mono">
-          PROD
-        </span>
       </div>
 
       {/* Search Input with Live Quick-Results Popover */}
@@ -172,6 +167,53 @@ export const Sidebar: React.FC<SidebarProps> = ({
       {/* Main Navigation Links */}
       <nav className="flex-1 px-2.5 py-1 space-y-0.5 overflow-y-auto text-xs">
         
+        {/* Home / Summary Dashboard with Moodle-style Red Alerts */}
+        <button 
+          onClick={() => onSelectTab('home')}
+          className={`w-full flex items-center justify-between px-3 py-2 rounded-lg font-medium transition-colors text-left ${
+            currentTab === 'home' 
+              ? 'bg-[#1668e8] text-white shadow-xs' 
+              : 'text-[#344054] hover:bg-[#f9fafb]'
+          }`}
+        >
+          <div className="flex items-center gap-2.5">
+            <Home className={`w-4 h-4 ${currentTab === 'home' ? 'text-white' : 'text-[#667085]'}`} />
+            <span className="font-semibold">Home</span>
+          </div>
+          {urgentAlertsCount > 0 && (
+            <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-bold flex items-center gap-1 ${
+              currentTab === 'home' 
+                ? 'bg-red-500 text-white' 
+                : 'bg-red-100 text-red-700 border border-red-200'
+            }`}>
+              <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
+              <span>{urgentAlertsCount} urgent</span>
+            </span>
+          )}
+        </button>
+
+        {/* Flowmap Interactive Workspace */}
+        <button 
+          onClick={() => onSelectTab('flowchart')}
+          className={`w-full flex items-center justify-between px-3 py-2 rounded-lg font-medium transition-colors text-left ${
+            currentTab === 'flowchart' 
+              ? 'bg-[#1668e8] text-white shadow-xs' 
+              : 'text-[#344054] hover:bg-[#f9fafb]'
+          }`}
+        >
+          <div className="flex items-center gap-2.5">
+            <GitBranch className={`w-4 h-4 ${currentTab === 'flowchart' ? 'text-white' : 'text-[#667085]'}`} />
+            <span>Flowmap Workspace</span>
+          </div>
+          <span className={`text-[9px] px-1.5 py-0.2 rounded font-mono ${
+            currentTab === 'flowchart' ? 'bg-white/20 text-white' : 'bg-[#f2f4f7] text-[#667085]'
+          }`}>
+            INTERACTIVE
+          </span>
+        </button>
+
+        <div className="my-1 border-t border-[#f2f4f7]" />
+
         {/* My Tasks */}
         <button 
           onClick={() => onSelectTab('my-tasks')}
