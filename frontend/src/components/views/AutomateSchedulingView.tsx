@@ -12,10 +12,13 @@ import {
   CheckCircle2,
   User,
   MapPin,
-  Sparkles
+  Sparkles,
+  Loader2,
+  X
 } from 'lucide-react';
-import { TimezoneSelector } from '../common/TimezoneSelector';
 import { useTimezone } from '../../context/TimezoneContext';
+import { scheduleService } from '../../services/scheduleService';
+import { AvatarBadge } from '../common/AvatarBadge';
 
 interface AutomateSchedulingViewProps {
   onGoToCommunications: () => void;
@@ -51,6 +54,13 @@ export const AutomateSchedulingView: React.FC<AutomateSchedulingViewProps> = ({
   const [currentDateIndex, setCurrentDateIndex] = useState(0);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [activeInterviewerModal, setActiveInterviewerModal] = useState<any | null>(null);
+  const [isSolving, setIsSolving] = useState(false);
+  const [_solverMetrics, setSolverMetrics] = useState<{
+    status: string;
+    runtime: number;
+    objectiveScore: number;
+    isValidated: boolean;
+  } | null>(null);
 
   // Available dates for navigation
   const availableDates = [
@@ -69,7 +79,7 @@ export const AutomateSchedulingView: React.FC<AutomateSchedulingViewProps> = ({
         id: 'sess-1',
         title: 'Design Exercise 1',
         interviewer: 'Claire Pritchett',
-        interviewerAvatar: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=100&auto=format&fit=crop&q=80',
+        interviewerAvatar: '',
         interviewerRole: 'Principal Designer & Bar Raiser',
         pstTimeSlot: '9-9:30 am PST',
         pstRowHour: 9,
@@ -81,7 +91,7 @@ export const AutomateSchedulingView: React.FC<AutomateSchedulingViewProps> = ({
         id: 'sess-2',
         title: 'Company Values',
         interviewer: 'Phil Dunphy',
-        interviewerAvatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=80',
+        interviewerAvatar: '',
         interviewerRole: 'Senior Product Manager',
         pstTimeSlot: '9:30-10 am PST',
         pstRowHour: 9,
@@ -93,7 +103,7 @@ export const AutomateSchedulingView: React.FC<AutomateSchedulingViewProps> = ({
         id: 'sess-3',
         title: 'Design Presentation',
         interviewer: 'Manny Delgado',
-        interviewerAvatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&auto=format&fit=crop&q=80',
+        interviewerAvatar: '',
         interviewerRole: 'Staff Systems Architect',
         pstTimeSlot: '10-11 am PST',
         pstRowHour: 10,
@@ -107,7 +117,7 @@ export const AutomateSchedulingView: React.FC<AutomateSchedulingViewProps> = ({
         id: 'sess-b1',
         title: 'Design Exercise 1',
         interviewer: 'Claire Pritchett',
-        interviewerAvatar: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=100&auto=format&fit=crop&q=80',
+        interviewerAvatar: '',
         interviewerRole: 'Principal Designer & Bar Raiser',
         pstTimeSlot: '1-1:45 pm PST',
         pstRowHour: 13,
@@ -119,7 +129,7 @@ export const AutomateSchedulingView: React.FC<AutomateSchedulingViewProps> = ({
         id: 'sess-b2',
         title: 'Executive Calibration',
         interviewer: 'Phil Dunphy',
-        interviewerAvatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=80',
+        interviewerAvatar: '',
         interviewerRole: 'Director of Engineering',
         pstTimeSlot: '1:45-2:30 pm PST',
         pstRowHour: 13,
@@ -131,7 +141,7 @@ export const AutomateSchedulingView: React.FC<AutomateSchedulingViewProps> = ({
         id: 'sess-b3',
         title: 'Design Presentation',
         interviewer: 'Manny Delgado',
-        interviewerAvatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&auto=format&fit=crop&q=80',
+        interviewerAvatar: '',
         interviewerRole: 'Staff Systems Architect',
         pstTimeSlot: '2:30-3:30 pm PST',
         pstRowHour: 14,
@@ -145,7 +155,7 @@ export const AutomateSchedulingView: React.FC<AutomateSchedulingViewProps> = ({
         id: 'sess-c1',
         title: 'Design Exercise 1 & Values (Part 1)',
         interviewer: 'Claire Pritchett',
-        interviewerAvatar: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=100&auto=format&fit=crop&q=80',
+        interviewerAvatar: '',
         interviewerRole: 'Principal Designer',
         pstTimeSlot: '10-11 am PST',
         pstRowHour: 10,
@@ -157,7 +167,7 @@ export const AutomateSchedulingView: React.FC<AutomateSchedulingViewProps> = ({
         id: 'sess-c2',
         title: 'Portfolio & System Presentation (Part 2)',
         interviewer: 'Manny Delgado',
-        interviewerAvatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&auto=format&fit=crop&q=80',
+        interviewerAvatar: '',
         interviewerRole: 'Staff Architect',
         pstTimeSlot: '11 am-12 pm PST',
         pstRowHour: 11,
@@ -195,11 +205,7 @@ export const AutomateSchedulingView: React.FC<AutomateSchedulingViewProps> = ({
       id: `sess-${Date.now()}`,
       title: newTitle,
       interviewer: newInterviewer,
-      interviewerAvatar: newInterviewer.includes('Claire') 
-        ? 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=100&auto=format&fit=crop&q=80'
-        : newInterviewer.includes('Phil')
-        ? 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=80'
-        : 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&auto=format&fit=crop&q=80',
+      interviewerAvatar: '',
       interviewerRole: 'Calibrated Interviewer',
       pstTimeSlot: pstSlot,
       pstRowHour: hourNum,
@@ -219,7 +225,7 @@ export const AutomateSchedulingView: React.FC<AutomateSchedulingViewProps> = ({
     {
       name: 'Claire Pritchett',
       role: 'Principal Designer & Bar Raiser',
-      avatar: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=100&auto=format&fit=crop&q=80',
+      avatar: '',
       hoursBooked: '0.5h',
       feedbackCount: 2,
       pins: 2,
@@ -229,7 +235,7 @@ export const AutomateSchedulingView: React.FC<AutomateSchedulingViewProps> = ({
     {
       name: 'Phil Dunphy',
       role: 'Senior Product Manager',
-      avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=80',
+      avatar: '',
       hoursBooked: '0.5h',
       feedbackCount: 3,
       pins: 0,
@@ -239,7 +245,7 @@ export const AutomateSchedulingView: React.FC<AutomateSchedulingViewProps> = ({
     {
       name: 'Manny Delgado',
       role: 'Staff Systems Architect',
-      avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&auto=format&fit=crop&q=80',
+      avatar: '',
       hoursBooked: '1h',
       feedbackCount: 0,
       pins: 0,
@@ -252,7 +258,7 @@ export const AutomateSchedulingView: React.FC<AutomateSchedulingViewProps> = ({
   const basePstHours = [8, 9, 10, 11, 13, 14, 15];
 
   return (
-    <div className={`flex-1 flex flex-col min-h-screen bg-white ${isFullscreen ? 'fixed inset-0 z-50 overflow-y-auto' : ''}`}>
+    <div className={`flex-1 flex flex-col h-full bg-white overflow-hidden ${isFullscreen ? 'fixed inset-0 z-50' : ''}`}>
       
       {/* Top Header / Breadcrumb Bar */}
       <div className="px-8 pt-6 pb-2 border-b border-[#eaecf0] bg-white">
@@ -260,21 +266,15 @@ export const AutomateSchedulingView: React.FC<AutomateSchedulingViewProps> = ({
           <div>
             <div className="flex items-center gap-2">
               <span className="text-[11px] font-bold px-2 py-0.5 rounded bg-[#e7f2fe] text-[#1668e8] border border-[#bcd7fd] uppercase">
-                Active Optimization Loop
+                Active Schedule Matrix
               </span>
               <span className="text-xs text-[#667085]">
-                • Google OR-Tools CP-SAT Zero-Conflict Solver
+                • Multi-Round Timetable
               </span>
             </div>
             <h1 className="text-lg font-semibold text-[#101828] mt-1">
               Scheduled <span className="font-bold">{candidateName}</span> for <span className="font-bold">{roleName}</span>
             </h1>
-          </div>
-
-          {/* Timezone Selector Component */}
-          <div className="flex items-center gap-2">
-            <span className="text-xs text-[#667085] hidden md:inline">Viewing in:</span>
-            <TimezoneSelector />
           </div>
         </div>
 
@@ -309,9 +309,64 @@ export const AutomateSchedulingView: React.FC<AutomateSchedulingViewProps> = ({
             </span>
           </button>
 
-          <span className="text-xs text-[#667085] hidden sm:inline">
-            3 Zero-Conflict combinations computed
-          </span>
+          <button
+            onClick={async () => {
+              setIsSolving(true);
+              try {
+                const res = await scheduleService.generateSchedule();
+                if (res.status === 'OPTIMAL' || res.status === 'FEASIBLE') {
+                  setSolverMetrics({
+                    status: res.status,
+                    runtime: res.runtime_seconds || 0.08,
+                    objectiveScore: res.objective_score || 39600,
+                    isValidated: res.is_validated ?? true,
+                  });
+                  if (res.schedule && res.schedule.length > 0) {
+                    const solverSessions: InterviewSession[] = res.schedule.map((item, idx) => {
+                      const startHour = 9 + Math.floor(item.start_time / 60);
+                      const startMin = item.start_time % 60;
+                      const endHour = 9 + Math.floor(item.end_time / 60);
+                      const endMin = item.end_time % 60;
+                      const formatTime = (h: number, m: number) => {
+                        const displayH = h > 12 ? h - 12 : h;
+                        const ampm = h >= 12 ? 'pm' : 'am';
+                        return m === 0 ? `${displayH} ${ampm}` : `${displayH}:${m < 10 ? '0' : ''}${m} ${ampm}`;
+                      };
+                      return {
+                        id: item.interview_id || `sess-opt-${idx}`,
+                        title: item.interview_id.includes('R1') ? 'Algorithm & Coding Screen' : 'System Architecture Assessment',
+                        interviewer: item.interviewer_id === 'INT_DSA' ? 'Dr. Sarah Chen' : 'Manny Delgado',
+                        interviewerAvatar: item.interviewer_id === 'INT_DSA'
+                          ? 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=100&auto=format&fit=crop&q=80'
+                          : 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&auto=format&fit=crop&q=80',
+                        interviewerRole: item.interviewer_id === 'INT_DSA' ? 'Staff Distributed Systems' : 'Staff Systems Architect',
+                        pstTimeSlot: `${formatTime(startHour, startMin)} - ${formatTime(endHour, endMin)} PST`,
+                        pstRowHour: startHour,
+                        durationMins: item.end_time - item.start_time,
+                        room: item.room_id === 'R101' ? 'Conference Suite 402' : 'Virtual Pod Alpha',
+                        type: item.interview_id.includes('R1') ? 'design' : 'presentation'
+                      };
+                    });
+                    setActiveSessions(solverSessions);
+                  }
+                  setScheduleApplied(true);
+                }
+              } catch (err) {
+                console.error('Solver run failed:', err);
+              } finally {
+                setIsSolving(false);
+              }
+            }}
+            disabled={isSolving}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[#eaecf0] hover:bg-[#f9fafb] text-xs font-semibold text-[#1668e8] shadow-2xs transition-colors disabled:opacity-50"
+          >
+            {isSolving ? (
+              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+            ) : (
+              <Sparkles className="w-3.5 h-3.5" />
+            )}
+            <span>{isSolving ? 'Optimizing...' : 'Auto-Schedule'}</span>
+          </button>
         </div>
 
         <div className="flex items-center gap-2.5">
@@ -346,7 +401,7 @@ export const AutomateSchedulingView: React.FC<AutomateSchedulingViewProps> = ({
         <div className="mx-8 mt-4 p-3.5 rounded-xl bg-[#ecfdf3] text-[#0b7c3e] border border-[#abefc6] text-xs font-semibold flex flex-col sm:flex-row sm:items-center justify-between gap-2 animate-in fade-in">
           <span className="flex items-center gap-2">
             <CheckCircle2 className="w-4 h-4 text-[#0b7c3e] shrink-0" />
-            Schedule Option {selectedOption} locked into CP-SAT calendar for {candidateName} in {currentTimezone.shortName}!
+            Schedule Option {selectedOption} locked into calendar for {candidateName} in {currentTimezone.shortName}!
           </span>
           <button 
             onClick={onGoToCommunications}
@@ -416,7 +471,7 @@ export const AutomateSchedulingView: React.FC<AutomateSchedulingViewProps> = ({
       </div>
 
       {/* Calendar Matrix View */}
-      <div className="flex-1 overflow-x-auto">
+      <div className="flex-1 min-h-0 overflow-auto">
         <div className="min-w-[980px]">
           
           {/* Column Headers */}
@@ -443,19 +498,15 @@ export const AutomateSchedulingView: React.FC<AutomateSchedulingViewProps> = ({
                 }`}
               >
                 <div className="flex items-center gap-2.5 mb-2">
-                  <img 
-                    src={int.avatar} 
-                    alt={int.name}
-                    className="w-7 h-7 rounded-full object-cover border border-[#eaecf0]" 
-                  />
+                  <AvatarBadge name={int.name} size="sm" />
                   <div className="min-w-0">
                     <h4 className="font-semibold text-xs text-[#101828] leading-tight truncate">{int.name}</h4>
                     <p className="text-[11px] text-[#667085] truncate">{int.role.split('&')[0]}</p>
                   </div>
                 </div>
                 <div className="flex items-center justify-between text-[11px] text-[#475467] font-medium pt-1 border-t border-[#f2f4f7]">
-                  <span>📅 {int.hoursBooked}</span>
-                  <span>📋 {int.feedbackCount}</span>
+                  <span>{int.hoursBooked} booked</span>
+                  <span>{int.feedbackCount} reviews</span>
                   <span className="text-[#1668e8] font-bold text-[10px] underline">Details</span>
                 </div>
               </div>
@@ -570,7 +621,9 @@ export const AutomateSchedulingView: React.FC<AutomateSchedulingViewProps> = ({
                   Google OR-Tools CP-SAT formulated 3 feasible, zero-conflict round assignments.
                 </p>
               </div>
-              <button onClick={() => setOptionsModalOpen(false)} className="text-[#98a2b3] hover:text-[#101828]">✕</button>
+              <button onClick={() => setOptionsModalOpen(false)} className="text-[#98a2b3] hover:text-[#101828]">
+                <X className="w-4 h-4" />
+              </button>
             </div>
 
             <div className="space-y-3 text-xs">
@@ -664,7 +717,9 @@ export const AutomateSchedulingView: React.FC<AutomateSchedulingViewProps> = ({
           <div className="bg-white rounded-xl border border-[#eaecf0] shadow-xl max-w-md w-full p-6 space-y-4 animate-in fade-in zoom-in-95 duration-150 text-xs">
             <div className="flex items-center justify-between border-b border-[#eaecf0] pb-3">
               <h3 className="text-base font-bold text-[#101828]">Add Interview Round</h3>
-              <button onClick={() => setAddModalOpen(false)} className="text-[#98a2b3] hover:text-[#101828]">✕</button>
+              <button onClick={() => setAddModalOpen(false)} className="text-[#98a2b3] hover:text-[#101828]">
+                <X className="w-4 h-4" />
+              </button>
             </div>
 
             <form onSubmit={handleAddSession} className="space-y-3">
@@ -751,24 +806,25 @@ export const AutomateSchedulingView: React.FC<AutomateSchedulingViewProps> = ({
           <div className="bg-white rounded-xl border border-[#eaecf0] shadow-xl max-w-md w-full p-6 space-y-4 animate-in fade-in zoom-in-95 duration-150 text-xs">
             <div className="flex items-start justify-between border-b border-[#eaecf0] pb-3">
               <div className="flex items-center gap-3">
-                <img 
-                  src={activeInterviewerModal.avatar} 
-                  alt={activeInterviewerModal.name}
-                  className="w-12 h-12 rounded-full object-cover border-2 border-[#1668e8]"
-                />
+                <AvatarBadge name={activeInterviewerModal.name} size="lg" />
                 <div>
                   <h3 className="text-base font-bold text-[#101828]">{activeInterviewerModal.name}</h3>
                   <p className="text-xs text-[#667085]">{activeInterviewerModal.role}</p>
                 </div>
               </div>
-              <button onClick={() => setActiveInterviewerModal(null)} className="text-[#98a2b3] hover:text-[#101828]">✕</button>
+              <button onClick={() => setActiveInterviewerModal(null)} className="text-[#98a2b3] hover:text-[#101828]">
+                <X className="w-4 h-4" />
+              </button>
             </div>
 
             <div className="space-y-3">
               <div className="p-3 bg-[#fafafa] rounded-lg border border-[#eaecf0] space-y-1">
                 <span className="font-semibold text-[#344054] block">Weekly Burnout Status</span>
                 <p className="text-[#101828] font-bold">{activeInterviewerModal.load}</p>
-                <span className="text-[11px] text-[#0b7c3e]">✓ Within safe CP-SAT fatigue threshold</span>
+                <span className="text-[11px] text-[#0b7c3e] flex items-center gap-1">
+                  <Check className="w-3 h-3" />
+                  Within safe CP-SAT fatigue threshold
+                </span>
               </div>
 
               <div className="space-y-1">

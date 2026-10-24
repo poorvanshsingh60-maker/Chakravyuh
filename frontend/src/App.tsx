@@ -26,6 +26,8 @@ import { MetricsView } from './components/views/MetricsView';
 import { SettingsView } from './components/views/SettingsView';
 import { HelpSupportView } from './components/views/HelpSupportView';
 import { TimezoneSelector } from './components/common/TimezoneSelector';
+import { authService } from './services/authService';
+import { CoordinationProvider } from './context/CoordinationContext';
 
 interface AuthUser {
   id: string;
@@ -35,15 +37,17 @@ interface AuthUser {
 }
 
 export function App() {
-  // Current logged in user (defaults to Coordinator)
-  const [currentUser, setCurrentUser] = useState<AuthUser | null>({
-    id: 'coord-1',
-    email: 'emma.watson@chakravyuh.ai',
-    full_name: 'Emma Watson',
-    role: 'COORDINATOR'
+  // Current logged in user (defaults to null if not stored -> opens Sign Up page)
+  const [currentUser, setCurrentUser] = useState<AuthUser | null>(() => {
+    try {
+      const saved = localStorage.getItem('chakravyuh_user');
+      return saved ? JSON.parse(saved) : null;
+    } catch {
+      return null;
+    }
   });
 
-  // Active navigation tab
+  // Active navigation tab (default to Home Dashboard)
   const [currentTab, setCurrentTab] = useState<NavTab>('home');
   const [tasks, setTasks] = useState<Task[]>(INITIAL_TASKS);
   const [candidates, setCandidates] = useState<CandidateItem[]>(INITIAL_CANDIDATES);
@@ -51,9 +55,61 @@ export function App() {
   const [directory] = useState<InterviewerDirectoryItem[]>(INITIAL_DIRECTORY);
   const [activeCandidate, setActiveCandidate] = useState<CandidateItem>(INITIAL_CANDIDATES[0]);
 
-  // If logged out, render Google-style Sign In page
+  const handleLogin = (user: AuthUser) => {
+    setCurrentUser(user);
+    try {
+      localStorage.setItem('chakravyuh_user', JSON.stringify(user));
+    } catch (e) {
+      console.error('Failed to save session:', e);
+    }
+    setCurrentTab('home');
+  };
+
+  const handleLogout = () => {
+    authService.logout();
+    setCurrentUser(null);
+  };
+
+  const handleSwitchRole = (newRole: UserRole) => {
+    let updated: AuthUser;
+    if (newRole === 'COORDINATOR') {
+      updated = {
+        id: 'coord-1',
+        email: 'admin@chakravyuh.ai',
+        full_name: 'Emma Watson (Lead Scheduler)',
+        role: 'COORDINATOR'
+      };
+    } else if (newRole === 'INTERVIEWER') {
+      updated = {
+        id: 'int-1',
+        email: 'sarah.chen@google.com',
+        full_name: 'Dr. Sarah Chen (Google Lead)',
+        role: 'INTERVIEWER'
+      };
+    } else {
+      updated = {
+        id: 'cand-1',
+        email: 'marcus.vance@candidate.com',
+        full_name: 'Marcus Vance (Candidate)',
+        role: 'CANDIDATE'
+      };
+    }
+    setCurrentUser(updated);
+    try {
+      localStorage.setItem('chakravyuh_user', JSON.stringify(updated));
+    } catch (e) {
+      console.error('Failed to update session:', e);
+    }
+    setCurrentTab('home');
+  };
+
+  // If logged out, render Sign Up / Log In page (starts on SIGN UP by default)
   if (!currentUser) {
-    return <LoginPage onLogin={(user) => setCurrentUser(user)} />;
+    return (
+      <CoordinationProvider>
+        <LoginPage onLogin={handleLogin} initialMode="SIGNUP" />
+      </CoordinationProvider>
+    );
   }
 
   const handleCompleteTask = (taskId: string) => {
@@ -71,166 +127,218 @@ export function App() {
 
   const getTabTitle = (tab: NavTab) => {
     switch (tab) {
-      case 'home': return 'Home';
-      case 'flowchart': return 'Workflow Workspace';
-      case 'my-tasks': return 'My Tasks';
-      case 'all-tasks': return 'All Tasks';
-      case 'upcoming': return 'Upcoming Events';
-      case 'candidates': return 'Candidates';
-      case 'jobs': return 'Job Openings';
-      case 'scheduling': return 'Automate Scheduling';
-      case 'training': return 'Interviewer Training';
-      case 'communications': return 'Communications';
-      case 'directory': return 'Interviewer Directory';
-      case 'metrics': return 'Metrics & Analytics';
+      case 'home': return 'Home Command Center';
+      case 'flowchart': 
+        return currentUser?.role === 'INTERVIEWER' 
+          ? 'My Interview Loops' 
+          : currentUser?.role === 'CANDIDATE' 
+          ? 'My Confirmed Schedule' 
+          : 'Master Schedule Grid';
+      case 'scheduling': return 'Automate Scheduling Matrix';
+      case 'candidates': return 'Candidate Loops';
+      case 'all-tasks': return 'Tasks & Approvals';
+      case 'my-tasks': return 'My Task Checklist';
+      case 'directory': return 'Panels & Rooms Directory';
+      case 'training': return 'Interviewer Training & Shadows';
+      case 'communications': return 'Candidate Communications';
+      case 'metrics': return 'Placement Metrics & Analytics';
       case 'settings': return 'Settings';
-      case 'help': return 'Help & Support';
       default: return 'Overview';
     }
   };
 
   return (
-    <div className="h-screen bg-[#f8f9fa] flex overflow-hidden font-['Inter',-apple-system,BlinkMacSystemFont,'Segoe_UI',Roboto,sans-serif]">
-      
-      {/* Left Persistent Sidebar */}
-      <Sidebar 
-        currentTab={currentTab} 
-        onSelectTab={setCurrentTab}
-        pendingTasksCount={pendingCount} 
-        urgentAlertsCount={urgentCount}
-        currentUser={currentUser}
-        onSignOut={() => setCurrentUser(null)}
-      />
-
-      {/* Main Area with Clean, Aligned Header */}
-      <div className="flex-1 flex flex-col min-w-0 h-screen overflow-hidden">
+    <CoordinationProvider>
+      <div className="h-screen w-screen overflow-hidden bg-[#f8f9fa] flex font-['Inter',-apple-system,BlinkMacSystemFont,'Segoe_UI',Roboto,sans-serif]">
         
-        {/* Top Header Bar - Clean, Aligned, Professional */}
-        <header className="h-14 bg-white border-b border-[#eaecf0] px-6 flex items-center justify-between shrink-0 select-none">
-          <div className="flex items-center gap-3">
-            <h2 className="font-semibold text-sm text-[#101828] tracking-tight">
-              {getTabTitle(currentTab)}
-            </h2>
-          </div>
+        {/* Left Persistent Sidebar */}
+        <Sidebar 
+          currentTab={currentTab} 
+          onSelectTab={setCurrentTab}
+          pendingTasksCount={pendingCount} 
+          urgentAlertsCount={urgentCount}
+          currentUser={currentUser}
+          onSignOut={handleLogout}
+        />
 
-          <div className="flex items-center gap-4">
-            <TimezoneSelector variant="compact" />
-            <div className="h-4 w-px bg-[#eaecf0]" />
-            <div className="flex items-center gap-2">
-              <div className="w-7 h-7 rounded-full bg-[#1668e8] text-white flex items-center justify-center font-semibold text-xs select-none">
-                {currentUser.full_name.charAt(0)}
-              </div>
-              <span className="text-xs font-semibold text-[#344054]">
-                {currentUser.full_name}
+        {/* Main Area with Clean, Aligned Header */}
+        <div className="flex-1 flex flex-col min-w-0 h-screen overflow-hidden">
+          
+          {/* Top Header Bar with 1-Click Role Demo Switcher */}
+          <header className="h-14 bg-white border-b border-[#eaecf0] px-5 flex items-center justify-between shrink-0 select-none">
+            <div className="flex items-center gap-3 min-w-0">
+              <h2 className="font-semibold text-sm text-[#101828] tracking-tight truncate">
+                {getTabTitle(currentTab)}
+              </h2>
+            </div>
+
+            {/* Middle: 1-Click Role Demo Switcher */}
+            <div className="flex items-center gap-1 bg-[#f0f4f9] p-1 rounded-xl border border-[#dadce0]">
+              <span className="text-[10px] font-bold text-[#5f6368] uppercase px-1.5 tracking-wider hidden lg:inline">
+                Role Demo:
               </span>
+              <button
+                type="button"
+                onClick={() => handleSwitchRole('COORDINATOR')}
+                className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all ${
+                  currentUser.role === 'COORDINATOR'
+                    ? 'bg-[#1668e8] text-white shadow-xs'
+                    : 'text-[#444746] hover:bg-white hover:text-[#1f1f1f]'
+                }`}
+              >
+                Coordinator (Scheduler)
+              </button>
+              <button
+                type="button"
+                onClick={() => handleSwitchRole('INTERVIEWER')}
+                className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all ${
+                  currentUser.role === 'INTERVIEWER'
+                    ? 'bg-[#1668e8] text-white shadow-xs'
+                    : 'text-[#444746] hover:bg-white hover:text-[#1f1f1f]'
+                }`}
+              >
+                Interviewer (Google Panel)
+              </button>
+              <button
+                type="button"
+                onClick={() => handleSwitchRole('CANDIDATE')}
+                className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all ${
+                  currentUser.role === 'CANDIDATE'
+                    ? 'bg-[#1668e8] text-white shadow-xs'
+                    : 'text-[#444746] hover:bg-white hover:text-[#1f1f1f]'
+                }`}
+              >
+                Candidate (Marcus Vance)
+              </button>
             </div>
-          </div>
-        </header>
 
-        {/* Scrollable View Content */}
-        <main className="flex-1 overflow-y-auto">
-          {/* Home Dashboard */}
-          {currentTab === 'home' && (
-            <HomeDashboardView
-              currentUser={currentUser}
-              tasks={tasks}
-              candidates={candidates}
-              onNavigate={setCurrentTab}
-              onCompleteTask={handleCompleteTask}
-            />
-          )}
-
-          {/* Workflow Interactive Workspace */}
-          {currentTab === 'flowchart' && (
-            <div className="flex-1 overflow-y-auto">
-              {currentUser.role === 'COORDINATOR' && <CoordinatorWorkspace />}
-              {currentUser.role === 'INTERVIEWER' && <InterviewerWorkspace />}
-              {currentUser.role === 'CANDIDATE' && <CandidateWorkspace />}
+            {/* Right: Timezone & Active Profile */}
+            <div className="flex items-center gap-3 shrink-0">
+              <TimezoneSelector variant="compact" />
+              <div className="h-4 w-px bg-[#eaecf0]" />
+              <div className="flex items-center gap-2">
+                <div className="w-7 h-7 rounded-full bg-[#1668e8] text-white flex items-center justify-center font-bold text-xs select-none">
+                  {currentUser.full_name.charAt(0)}
+                </div>
+                <span className="text-xs font-semibold text-[#344054] hidden sm:inline max-w-[120px] truncate">
+                  {currentUser.full_name.split(' ')[0]}
+                </span>
+              </div>
             </div>
-          )}
+          </header>
 
-          {/* My Tasks */}
-          {currentTab === 'my-tasks' && (
-            <MyTasksView 
-              tasks={tasks} 
-              onCompleteTask={handleCompleteTask} 
-            />
-          )}
+          {/* View Content (Strictly fitted within viewport) */}
+          <main className="flex-1 min-h-0 overflow-hidden flex flex-col">
+            
+            {/* Home Dashboard */}
+            {currentTab === 'home' && (
+              <HomeDashboardView
+                currentUser={currentUser}
+                tasks={tasks}
+                candidates={candidates}
+                onNavigate={setCurrentTab}
+                onCompleteTask={handleCompleteTask}
+              />
+            )}
 
-          {/* All Tasks */}
-          {currentTab === 'all-tasks' && (
-            <AllTasksView 
-              tasks={tasks} 
-              onSelectTaskToSchedule={() => setCurrentTab('scheduling')} 
-            />
-          )}
+            {/* Master Schedule Table with Time (Flowchart) */}
+            {currentTab === 'flowchart' && (
+              <div className="flex-1 min-h-0 overflow-hidden flex flex-col">
+                {currentUser.role === 'COORDINATOR' && (
+                  <CoordinatorWorkspace 
+                    onSimulateCandidate={() => handleSwitchRole('CANDIDATE')}
+                  />
+                )}
+                {currentUser.role === 'INTERVIEWER' && <InterviewerWorkspace />}
+                {currentUser.role === 'CANDIDATE' && <CandidateWorkspace />}
+              </div>
+            )}
 
-          {/* Upcoming Events */}
-          {currentTab === 'upcoming' && (
-            <UpcomingEventsView />
-          )}
+            {/* My Tasks */}
+            {currentTab === 'my-tasks' && (
+              <MyTasksView 
+                tasks={tasks} 
+                onCompleteTask={handleCompleteTask} 
+                currentUser={currentUser}
+              />
+            )}
 
-          {/* Candidates View */}
-          {currentTab === 'candidates' && (
-            <CandidatesView 
-              candidates={candidates} 
-              onScheduleCandidate={(c) => {
-                setActiveCandidate(c);
-                setCurrentTab('scheduling');
-              }}
-              onAddCandidate={handleAddCandidate}
-            />
-          )}
+            {/* All Tasks */}
+            {currentTab === 'all-tasks' && (
+              <AllTasksView 
+                tasks={tasks} 
+                onCompleteTask={handleCompleteTask}
+                onSelectTaskToSchedule={() => setCurrentTab('scheduling')} 
+              />
+            )}
 
-          {/* Jobs View */}
-          {currentTab === 'jobs' && (
-            <JobsView jobs={jobs} />
-          )}
+            {/* Upcoming Events */}
+            {currentTab === 'upcoming' && (
+              <UpcomingEventsView />
+            )}
 
-          {/* Automate Scheduling */}
-          {currentTab === 'scheduling' && (
-            <AutomateSchedulingView 
-              onGoToCommunications={() => setCurrentTab('communications')}
-              candidateName={activeCandidate.name}
-              roleName={activeCandidate.role}
-            />
-          )}
+            {/* Candidates View */}
+            {currentTab === 'candidates' && (
+              <CandidatesView 
+                candidates={candidates} 
+                onScheduleCandidate={(c) => {
+                  setActiveCandidate(c);
+                  setCurrentTab('scheduling');
+                }}
+                onAddCandidate={handleAddCandidate}
+              />
+            )}
 
-          {/* Interviewer Training */}
-          {currentTab === 'training' && (
-            <InterviewerTrainingView />
-          )}
+            {/* Jobs View */}
+            {currentTab === 'jobs' && (
+              <JobsView jobs={jobs} />
+            )}
 
-          {/* Communications */}
-          {currentTab === 'communications' && (
-            <CommunicationsView 
-              onGoToScheduling={() => setCurrentTab('scheduling')} 
-            />
-          )}
+            {/* Automate Scheduling */}
+            {currentTab === 'scheduling' && (
+              <AutomateSchedulingView 
+                onGoToCommunications={() => setCurrentTab('communications')}
+                candidateName={activeCandidate.name}
+                roleName={activeCandidate.role}
+              />
+            )}
 
-          {/* Panel Directory */}
-          {currentTab === 'directory' && (
-            <DirectoryView interviewers={directory} />
-          )}
+            {/* Interviewer Training */}
+            {currentTab === 'training' && (
+              <InterviewerTrainingView />
+            )}
 
-          {/* Metrics & Analytics */}
-          {currentTab === 'metrics' && (
-            <MetricsView />
-          )}
+            {/* Communications */}
+            {currentTab === 'communications' && (
+              <CommunicationsView 
+                onGoToScheduling={() => setCurrentTab('scheduling')} 
+              />
+            )}
 
-          {/* Settings */}
-          {currentTab === 'settings' && (
-            <SettingsView />
-          )}
+            {/* Panel Directory */}
+            {currentTab === 'directory' && (
+              <DirectoryView interviewers={directory} />
+            )}
 
-          {/* Help & Support */}
-          {currentTab === 'help' && (
-            <HelpSupportView />
-          )}
-        </main>
+            {/* Metrics & Analytics */}
+            {currentTab === 'metrics' && (
+              <MetricsView />
+            )}
+
+            {/* Settings */}
+            {currentTab === 'settings' && (
+              <SettingsView />
+            )}
+
+            {/* Help & Support */}
+            {currentTab === 'help' && (
+              <HelpSupportView />
+            )}
+          </main>
+        </div>
+
       </div>
-
-    </div>
+    </CoordinationProvider>
   );
 }
 

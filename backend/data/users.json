@@ -1,0 +1,47 @@
+{
+  "admin@mnnit.ac.in": {
+    "id": "coord-1",
+    "email": "admin@mnnit.ac.in",
+    "full_name": "Prof. Emma Watson (T&P)",
+    "role": "COORDINATOR",
+    "salt": "66ca24937c84d263437e15bfe754fe20",
+    "password_hash": "35a93d2ce44fdf839e06d94657c1b87b0056ad1947b89bf37a961fb9b9c96098",
+    "created_at": "2026-10-24T19:24:31.182432+00:00"
+  },
+  "sarah.chen@google.com": {
+    "id": "int-1",
+    "email": "sarah.chen@google.com",
+    "full_name": "Dr. Sarah Chen (Google)",
+    "role": "INTERVIEWER",
+    "salt": "0d5335a5d3dc6b50a8f5c2b03af47dd8",
+    "password_hash": "d2f04e121ee34feaf0b1f5323e7b35f209e1f3f44261d622224fec2026de84d6",
+    "created_at": "2026-10-24T19:24:31.230523+00:00"
+  },
+  "aditya.singh@mnnit.ac.in": {
+    "id": "cand-1",
+    "email": "aditya.singh@mnnit.ac.in",
+    "full_name": "Aditya Singh (20214012)",
+    "role": "CANDIDATE",
+    "salt": "11e070a43572fb6ddbc81c89138b06de",
+    "password_hash": "6498861b15a2278454a2a0e2002304bce12692abe0c651b754f57a7b483251c3",
+    "created_at": "2026-10-24T19:24:31.279360+00:00"
+  },
+  "student.adit@mnnit.ac.in": {
+    "id": "user-00f057c8",
+    "email": "student.adit@mnnit.ac.in",
+    "full_name": "Adit Sharma",
+    "role": "CANDIDATE",
+    "salt": "74a87adfc3e205bc63aadc1f595da9ca",
+    "password_hash": "ad808350bf200cd7aed6b4cd0664170bad32165aef234b4ab853eeeaa0c48eb2",
+    "created_at": "2026-10-24T19:24:42.366824+00:00"
+  },
+  "aditya@gmail.com": {
+    "id": "user-9308d74d",
+    "email": "aditya@gmail.com",
+    "full_name": "aditya",
+    "role": "COORDINATOR",
+    "salt": "5eb6334e23d5c15cc66072c21a3c977c",
+    "password_hash": "bf2775a886ffa970a86dbf93162b21f6a9c05eaaf30f55c972a34e72e8081128",
+    "created_at": "2026-10-24T19:41:48.298274+00:00"
+  }
+}

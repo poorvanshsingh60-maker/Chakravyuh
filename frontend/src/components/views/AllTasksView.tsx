@@ -1,21 +1,32 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Task } from '../../types';
-import { Search, CheckCircle2 } from 'lucide-react';
+import { Search, CheckCircle2, Check, Calendar } from 'lucide-react';
 import { Dialog } from '../ui/dialog';
 import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
+import { useCoordination } from '../../context/CoordinationContext';
 
 interface AllTasksViewProps {
   tasks: Task[];
+  onCompleteTask?: (taskId: string) => void;
   onSelectTaskToSchedule?: () => void;
 }
 
-export const AllTasksView: React.FC<AllTasksViewProps> = ({ tasks, onSelectTaskToSchedule }) => {
+export const AllTasksView: React.FC<AllTasksViewProps> = ({ 
+  tasks, 
+  onCompleteTask, 
+  onSelectTaskToSchedule 
+}) => {
+  const { nudgeInterviewer } = useCoordination();
   const [searchTerm, setSearchTerm] = useState('');
   const [typeFilter, setTypeFilter] = useState<string>('ALL');
   const [taskList, setTaskList] = useState<Task[]>(tasks);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [reminderToast, setReminderToast] = useState<string | null>(null);
+
+  useEffect(() => {
+    setTaskList(tasks);
+  }, [tasks]);
 
   const filtered = taskList.filter(t => {
     const matchesSearch = t.candidateName.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -26,25 +37,44 @@ export const AllTasksView: React.FC<AllTasksViewProps> = ({ tasks, onSelectTaskT
   });
 
   const handleSendReminder = (task: Task) => {
-    setReminderToast(`Automated reminder dispatched to ${task.interviewerName} for ${task.roundName}!`);
+    nudgeInterviewer();
+    setReminderToast(`Automated reminder & high-priority nudge dispatched to ${task.interviewerName} for ${task.roundName}!`);
     setTimeout(() => setReminderToast(null), 4000);
     setSelectedTask(null);
   };
 
   const handleMarkResolved = (taskId: string) => {
-    setTaskList(taskList.map(t => t.id === taskId ? { ...t, status: 'COMPLETED' } : t));
+    const target = taskList.find(t => t.id === taskId);
+    setTaskList(prev => prev.map(t => t.id === taskId ? { ...t, status: 'COMPLETED' } : t));
+    if (onCompleteTask) {
+      onCompleteTask(taskId);
+    }
+    setReminderToast(`Task "${target?.title || 'Selected item'}" marked resolved!`);
+    setTimeout(() => setReminderToast(null), 4000);
     setSelectedTask(null);
   };
 
   return (
-    <div className="flex-1 flex flex-col min-h-screen bg-white">
+    <div className="flex-1 flex flex-col min-h-screen bg-white font-['Inter',-apple-system,BlinkMacSystemFont,'Segoe_UI',Roboto,sans-serif]">
       
-      {/* Header */}
-      <div className="px-8 pt-6 pb-4 border-b border-[#eaecf0]">
-        <h1 className="text-xl font-bold text-[#101828]">All tasks</h1>
-        <p className="text-xs text-[#667085] mt-1">
-          System-wide queue of coordinator actions, pending feedback loops, and scheduling conflicts.
-        </p>
+      {/* Header with Direct Link to Automate Schedule */}
+      <div className="px-8 pt-6 pb-4 border-b border-[#eaecf0] flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-xl font-bold text-[#101828]">Tasks & Approvals</h1>
+          <p className="text-xs text-[#667085] mt-1">
+            System-wide queue of coordinator actions, pending feedback loops, and scheduling conflicts.
+          </p>
+        </div>
+
+        {onSelectTaskToSchedule && (
+          <button
+            onClick={onSelectTaskToSchedule}
+            className="px-4 py-2 bg-[#1668e8] hover:bg-[#145ac7] text-white text-xs font-bold rounded-lg shadow-xs flex items-center gap-2 transition-colors shrink-0"
+          >
+            <Calendar className="w-3.5 h-3.5" />
+            <span>Go to Automate Schedule →</span>
+          </button>
+        )}
       </div>
 
       {reminderToast && (
@@ -123,23 +153,28 @@ export const AllTasksView: React.FC<AllTasksViewProps> = ({ tasks, onSelectTaskT
                     </span>
                   </td>
                   <td className="p-3.5 pr-6 text-right space-x-2">
-                    {task.type === 'RESCHEDULE' ? (
-                      <button 
-                        onClick={() => {
-                          handleMarkResolved(task.id);
-                          if (onSelectTaskToSchedule) onSelectTaskToSchedule();
-                        }}
-                        className="px-3 py-1 rounded bg-[#1668e8] hover:bg-[#145ac7] text-white font-medium shadow-2xs"
-                      >
-                        Auto-Resolve
-                      </button>
+                    {task.status === 'COMPLETED' ? (
+                      <span className="inline-flex items-center gap-1 text-xs font-semibold text-[#0b7c3e] bg-[#ecfdf3] px-2.5 py-1 rounded-md border border-[#abefc6]">
+                        <Check className="w-3.5 h-3.5" />
+                        <span>Resolved</span>
+                      </span>
                     ) : (
-                      <button 
-                        onClick={() => setSelectedTask(task)}
-                        className="px-3 py-1 rounded border border-[#d0d5dd] text-[#344054] hover:bg-white font-medium shadow-2xs transition-colors"
-                      >
-                        View Details
-                      </button>
+                      <div className="inline-flex items-center gap-2">
+                        {onSelectTaskToSchedule && (
+                          <button 
+                            onClick={onSelectTaskToSchedule}
+                            className="px-3 py-1.5 rounded-lg bg-[#1668e8] hover:bg-[#145ac7] text-white font-semibold text-xs shadow-2xs transition-colors inline-flex items-center gap-1"
+                          >
+                            <span>Go to Automate Schedule →</span>
+                          </button>
+                        )}
+                        <button 
+                          onClick={() => setSelectedTask(task)}
+                          className="px-2.5 py-1.5 rounded-lg border border-[#d0d5dd] text-[#344054] hover:bg-[#f9fafb] font-medium text-xs shadow-2xs transition-colors"
+                        >
+                          Details
+                        </button>
+                      </div>
                     )}
                   </td>
                 </tr>
@@ -190,13 +225,25 @@ export const AllTasksView: React.FC<AllTasksViewProps> = ({ tasks, onSelectTaskT
                 <Button variant="secondary" onClick={() => setSelectedTask(null)}>
                   Close
                 </Button>
+                {selectedTask.status !== 'COMPLETED' && onSelectTaskToSchedule && (
+                  <Button
+                    variant="primary"
+                    onClick={() => {
+                      setSelectedTask(null);
+                      onSelectTaskToSchedule();
+                    }}
+                    className="bg-[#1668e8] hover:bg-[#145ac7] text-white font-bold flex items-center gap-1.5"
+                  >
+                    <span>Go to Automate Schedule →</span>
+                  </Button>
+                )}
                 {selectedTask.status !== 'COMPLETED' && (
                   <Button
                     variant="primary"
                     onClick={() => handleMarkResolved(selectedTask.id)}
                     className="bg-[#0b7c3e] hover:bg-[#096a34] text-white font-bold"
                   >
-                    Mark as Done
+                    Mark Done
                   </Button>
                 )}
               </div>

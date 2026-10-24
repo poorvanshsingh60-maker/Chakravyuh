@@ -169,10 +169,12 @@ function parsePstFragment(fragment: string, defaultPeriod?: 'AM' | 'PM'): { tota
  */
 export function convertPstStringToTarget(timeStr: string, targetTz: TimezoneInfo): string {
   if (!timeStr) return '';
-  if (targetTz.id === 'PST') return timeStr;
 
-  // Handle range like "9-9:30 am PST" or "9:30-10 am PST" or "10-11 am PST"
-  const shortRangeMatch = timeStr.match(/^(\d+(?::\d+)?)\s*-\s*(\d+(?::\d+)?)\s*(am|pm)(?:\s*pst)?$/i);
+  // Strip existing timezone suffix (PST, EST, IST, etc.) so we can parse base numbers
+  const cleaned = timeStr.replace(/\b(PST|EST|IST|UTC|GMT|MST|CST|CET|SGT|JST|AEST|PT|ET|CT|MT)\b/gi, '').trim();
+
+  // Handle range like "9-9:30 am" or "9:30-10 am" or "10-11 am"
+  const shortRangeMatch = cleaned.match(/^(\d+(?::\d+)?)\s*-\s*(\d+(?::\d+)?)\s*(am|pm)$/i);
   if (shortRangeMatch) {
     const endPeriod = shortRangeMatch[3].toUpperCase() as 'AM' | 'PM';
     const startParsed = parsePstFragment(shortRangeMatch[1], endPeriod);
@@ -190,8 +192,8 @@ export function convertPstStringToTarget(timeStr: string, targetTz: TimezoneInfo
     }
   }
 
-  // Handle standard range like "9:00 AM – 10:00 AM PST" or "9:00 AM - 10:00 AM" or "10:00 AM – 11:00 AM"
-  const standardRangeMatch = timeStr.match(/^(\d+(?::\d+)?\s*(?:am|pm)?)\s*[–-]\s*(\d+(?::\d+)?\s*(?:am|pm)?)(?:\s*pst)?/i);
+  // Handle standard range like "9:00 AM – 10:00 AM" or "9:00 AM - 10:00 AM" or "10:00 AM – 11:00 AM"
+  const standardRangeMatch = cleaned.match(/^(\d+(?::\d+)?\s*(?:am|pm)?)\s*[–-]\s*(\d+(?::\d+)?\s*(?:am|pm)?)/i);
   if (standardRangeMatch) {
     const startRaw = standardRangeMatch[1].trim();
     const endRaw = standardRangeMatch[2].trim();
@@ -221,7 +223,7 @@ export function convertPstStringToTarget(timeStr: string, targetTz: TimezoneInfo
   }
 
   // Handle single hour label like "8 am" or "9 am" or "10 am"
-  const singleAmPmMatch = timeStr.match(/^(\d+)\s*(am|pm)$/i);
+  const singleAmPmMatch = cleaned.match(/^(\d+)\s*(am|pm)$/i);
   if (singleAmPmMatch) {
     const hour = parseInt(singleAmPmMatch[1], 10);
     const period = singleAmPmMatch[2].toUpperCase() as 'AM' | 'PM';

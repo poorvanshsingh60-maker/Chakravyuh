@@ -1,47 +1,112 @@
-import api from './api';
-import { User, AuthTokens } from '../types/user';
+import { UserRole } from '../types/user';
+
+export interface AuthUser {
+  id: string;
+  email: string;
+  full_name: string;
+  name?: string;
+  role: UserRole;
+  isActive?: boolean;
+}
+
+export interface AuthResponse {
+  access_token: string;
+  token_type: string;
+  user: AuthUser;
+}
+
+const TOKEN_KEY = 'chakravyuh_jwt_token';
+const USER_KEY = 'chakravyuh_user';
 
 export const authService = {
-  login: async (email: string, _password: string): Promise<{ user: User; tokens: AuthTokens }> => {
+  getToken(): string | null {
+    return localStorage.getItem(TOKEN_KEY);
+  },
+
+  getStoredUser(): AuthUser | null {
     try {
-      const res = await api.post('/auth/login', { email, password: _password });
-      return res.data;
+      const stored = localStorage.getItem(USER_KEY);
+      return stored ? JSON.parse(stored) : null;
     } catch {
-      // Fallback mock session
-      const mockUser: User = {
-        id: 'usr-1',
-        email,
-        name: 'Aditya Singh',
-        role: 'COORDINATOR',
-        isActive: true,
-        avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80',
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      };
-      const mockTokens: AuthTokens = { accessToken: 'mock_jwt_token', tokenType: 'bearer' };
-      localStorage.setItem('chakravyuh_access_token', mockTokens.accessToken);
-      return { user: mockUser, tokens: mockTokens };
+      return null;
     }
   },
 
-  getCurrentUser: async (): Promise<User> => {
+  async getCurrentUser(): Promise<AuthUser | null> {
+    return this.verifySession();
+  },
+
+  async login(email: string, password: string): Promise<AuthResponse> {
+    const res = await fetch('/auth/login', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ email: email.trim(), password }),
+    });
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ detail: 'Failed to sign in' }));
+      throw new Error(err.detail || 'Invalid email or password');
+    }
+
+    const data: AuthResponse = await res.json();
+    localStorage.setItem(TOKEN_KEY, data.access_token);
+    localStorage.setItem(USER_KEY, JSON.stringify(data.user));
+    return data;
+  },
+
+  async signup(email: string, password: string, fullName: string, role: UserRole): Promise<AuthResponse> {
+    const res = await fetch('/auth/signup', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        email: email.trim(),
+        password,
+        full_name: fullName.trim() || email.split('@')[0],
+        role,
+      }),
+    });
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ detail: 'Failed to create account' }));
+      throw new Error(err.detail || 'Account registration failed');
+    }
+
+    const data: AuthResponse = await res.json();
+    localStorage.setItem(TOKEN_KEY, data.access_token);
+    localStorage.setItem(USER_KEY, JSON.stringify(data.user));
+    return data;
+  },
+
+  async verifySession(): Promise<AuthUser | null> {
+    const token = this.getToken();
+    if (!token) return null;
+
     try {
-      const res = await api.get('/auth/me');
-      return res.data;
+      const res = await fetch('/auth/me', {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!res.ok) {
+        this.logout();
+        return null;
+      }
+
+      const user: AuthUser = await res.json();
+      localStorage.setItem(USER_KEY, JSON.stringify(user));
+      return user;
     } catch {
-      return {
-        id: 'usr-1',
-        email: 'aditya@chakravyuh.ai',
-        name: 'Aditya Singh',
-        role: 'COORDINATOR',
-        isActive: true,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      };
+      return this.getStoredUser();
     }
   },
 
-  logout: () => {
-    localStorage.removeItem('chakravyuh_access_token');
-  }
+  logout(): void {
+    localStorage.removeItem(TOKEN_KEY);
+    localStorage.removeItem(USER_KEY);
+  },
 };

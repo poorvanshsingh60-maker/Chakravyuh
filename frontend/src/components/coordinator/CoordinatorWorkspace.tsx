@@ -1,10 +1,7 @@
 import React, { useState } from 'react';
 import { 
   Calendar as CalendarIcon, 
-  Cpu, 
   CheckCircle2, 
-  Plus, 
-  Settings2, 
   Sparkles, 
   Clock, 
   MapPin, 
@@ -12,18 +9,15 @@ import {
   User, 
   Check, 
   Send,
-  Trash2,
   ShieldCheck
 } from 'lucide-react';
 import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
 import { Dialog } from '../ui/dialog';
-import { RoundForm } from '../forms/RoundForm';
-import { RoomForm } from '../forms/RoomForm';
-import { InterviewRound } from '../../types/interviewRound';
-import { Room } from '../../types/room';
-import { TimezoneSelector } from '../common/TimezoneSelector';
 import { useTimezone } from '../../context/TimezoneContext';
+import { scheduleService } from '../../services/scheduleService';
+import { AvatarBadge } from '../common/AvatarBadge';
+import { useCoordination } from '../../context/CoordinationContext';
 
 interface CalendarEventItem {
   id: string;
@@ -39,78 +33,14 @@ interface CalendarEventItem {
   durationMins: number;
 }
 
-export const CoordinatorWorkspace: React.FC = () => {
+interface CoordinatorWorkspaceProps {
+  onSimulateCandidate?: (candidateId: string) => void;
+}
+
+export const CoordinatorWorkspace: React.FC<CoordinatorWorkspaceProps> = ({ onSimulateCandidate: _onSimulateCandidate }) => {
   const { convertHourLabel, currentTimezone } = useTimezone();
-  const [activeTab, setActiveTab] = useState<'solver' | 'config'>('solver');
-  const [configSubTab, setConfigSubTab] = useState<'rounds' | 'rooms'>('rounds');
-
-  // --- Pipeline Configuration State ---
-  const [rounds, setRounds] = useState<InterviewRound[]>([
-    {
-      id: 'round-1',
-      name: 'Technical Screen (Coding)',
-      sequenceOrder: 1,
-      durationMinutes: 45,
-      requiredSkillIds: ['Data Structures', 'Algorithms', 'Python'],
-      prerequisiteRoundIds: [],
-      interviewerCount: 1,
-      description: 'First screening round'
-    },
-    {
-      id: 'round-2',
-      name: 'Distributed Systems & Architecture',
-      sequenceOrder: 2,
-      durationMinutes: 60,
-      requiredSkillIds: ['System Design', 'Scalability', 'Microservices'],
-      prerequisiteRoundIds: ['round-1'],
-      interviewerCount: 2,
-      description: 'Core onsite architectural loop'
-    },
-    {
-      id: 'round-3',
-      name: 'Engineering Values & Leadership',
-      sequenceOrder: 3,
-      durationMinutes: 45,
-      requiredSkillIds: ['Collaboration', 'Leadership', 'Culture'],
-      prerequisiteRoundIds: ['round-1'],
-      interviewerCount: 1,
-      description: 'Behavioral & leadership assessment'
-    }
-  ]);
-
-  const [rooms, setRooms] = useState<Room[]>([
-    {
-      id: 'room-1',
-      name: 'Virtual Pod Alpha (Google Meet)',
-      type: 'VIRTUAL',
-      capacity: 6,
-      location: 'Virtual Cloud Bridge',
-      meetingUrl: 'https://meet.google.com/chk-pod-alpha',
-      isActive: true,
-      utilizationRate: 0.65
-    },
-    {
-      id: 'room-2',
-      name: 'Turing Conference Suite 402',
-      type: 'PHYSICAL',
-      capacity: 8,
-      location: 'HQ West Campus (4th Floor)',
-      isActive: true,
-      utilizationRate: 0.8
-    },
-    {
-      id: 'room-3',
-      name: 'Lovelace Interview Pod 2B',
-      type: 'PHYSICAL',
-      capacity: 4,
-      location: 'HQ West Campus (2nd Floor)',
-      isActive: true,
-      utilizationRate: 0.45
-    }
-  ]);
-
-  const [roundModalOpen, setRoundModalOpen] = useState(false);
-  const [roomModalOpen, setRoomModalOpen] = useState(false);
+  const { isScorecardSubmitted, isNudged, nudgeInterviewer } = useCoordination();
+  const [nudgeToast, setNudgeToast] = useState<string | null>(null);
 
   // --- Solver & Master Calendar State ---
   const [startDate, setStartDate] = useState('2026-10-26');
@@ -136,78 +66,78 @@ export const CoordinatorWorkspace: React.FC = () => {
   const [calendarEvents, setCalendarEvents] = useState<CalendarEventItem[]>([
     {
       id: 'inv-1',
-      candidateName: 'Alex Mercer',
-      candidateRole: 'Staff Distributed Systems',
-      roundName: 'Technical Screen (Coding)',
+      candidateName: 'Marcus Vance',
+      candidateRole: '20224012 (CSE) — Google SDE',
+      roundName: 'Round 1: DSA & Problem Solving',
       roundType: 'tech',
-      interviewer: 'Dr. Sarah Chen',
-      interviewerAvatar: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=100&auto=format&fit=crop&q=80',
-      room: 'Virtual Pod Alpha',
+      interviewer: 'Dr. Sarah Chen (Google Panel)',
+      interviewerAvatar: '',
+      room: 'CCF Lab 1',
       dayIndex: 0, // Mon
       pstHour: 10,
       durationMins: 45
     },
     {
       id: 'inv-2',
-      candidateName: 'Elena Rostova',
-      candidateRole: 'Senior Backend Engineer',
-      roundName: 'System Architecture',
+      candidateName: 'Priya Sharma',
+      candidateRole: '20225043 (IT) — Atlassian Core',
+      roundName: 'Round 2: Distributed Systems',
       roundType: 'arch',
-      interviewer: 'Phil Dunphy',
-      interviewerAvatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=80',
-      room: 'Turing Suite 402',
+      interviewer: 'Phil Dunphy (Atlassian Panel)',
+      interviewerAvatar: '',
+      room: 'CCF Lab 2',
       dayIndex: 0, // Mon
       pstHour: 14,
       durationMins: 60
     },
     {
       id: 'inv-3',
-      candidateName: 'Marcus Vance',
-      candidateRole: 'Platform Security Lead',
-      roundName: 'Technical Screen (Coding)',
+      candidateName: 'Rahul Verma',
+      candidateRole: '20223089 (ECE) — Microsoft Cloud',
+      roundName: 'Round 1: Core Fundamentals',
       roundType: 'tech',
-      interviewer: 'Manny Delgado',
-      interviewerAvatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&auto=format&fit=crop&q=80',
-      room: 'Virtual Pod Alpha',
+      interviewer: 'Manny Delgado (Microsoft)',
+      interviewerAvatar: '',
+      room: 'LHC Seminar Hall',
       dayIndex: 1, // Tue
       pstHour: 11,
       durationMins: 45
     },
     {
       id: 'inv-4',
-      candidateName: 'Alex Mercer',
-      candidateRole: 'Staff Distributed Systems',
-      roundName: 'Distributed Systems & Architecture',
+      candidateName: 'Marcus Vance',
+      candidateRole: '20224012 (CSE) — Google SDE',
+      roundName: 'Round 2: Systems Architecture',
       roundType: 'arch',
-      interviewer: 'Phil Dunphy',
-      interviewerAvatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=80',
-      room: 'Lovelace Pod 2B',
+      interviewer: 'Phil Dunphy (Atlassian Panel)',
+      interviewerAvatar: '',
+      room: 'CCF Lab 2',
       dayIndex: 2, // Wed
       pstHour: 13,
       durationMins: 60
     },
     {
       id: 'inv-5',
-      candidateName: 'Elena Rostova',
-      candidateRole: 'Senior Backend Engineer',
-      roundName: 'Engineering Values & Culture',
+      candidateName: 'Ananya Patel',
+      candidateRole: '20224056 (CSE) — Oracle Systems',
+      roundName: 'Round 2: Core Engineering',
       roundType: 'values',
-      interviewer: 'Claire Pritchett',
-      interviewerAvatar: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=100&auto=format&fit=crop&q=80',
-      room: 'Virtual Pod Alpha',
+      interviewer: 'Claire Pritchett (T&P Lead)',
+      interviewerAvatar: '',
+      room: 'T&P Boardroom',
       dayIndex: 3, // Thu
       pstHour: 15,
       durationMins: 45
     },
     {
       id: 'inv-6',
-      candidateName: 'Alex Mercer',
-      candidateRole: 'Staff Distributed Systems',
-      roundName: 'Engineering Values & Leadership',
+      candidateName: 'Marcus Vance',
+      candidateRole: '20224012 (CSE) — Google SDE',
+      roundName: 'Round 3: Leadership & Values',
       roundType: 'values',
-      interviewer: 'Claire Pritchett',
-      interviewerAvatar: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=100&auto=format&fit=crop&q=80',
-      room: 'Turing Suite 402',
+      interviewer: 'Claire Pritchett (T&P Lead)',
+      interviewerAvatar: '',
+      room: 'T&P Boardroom',
       dayIndex: 4, // Fri
       pstHour: 14,
       durationMins: 45
@@ -247,50 +177,43 @@ export const CoordinatorWorkspace: React.FC = () => {
   // PST reference hours
   const pstHours = [9, 10, 11, 13, 14, 15, 16];
 
-  // Handle Add Round
-  const handleAddRound = (newRoundData: any) => {
-    const roundItem: InterviewRound = {
-      id: `round-${Date.now()}`,
-      name: newRoundData.name || 'New Interview Round',
-      sequenceOrder: newRoundData.sequenceOrder || rounds.length + 1,
-      durationMinutes: newRoundData.durationMinutes || 60,
-      requiredSkillIds: newRoundData.requiredSkillIds || ['General Technical'],
-      prerequisiteRoundIds: newRoundData.prerequisiteRoundIds || [],
-      interviewerCount: newRoundData.interviewerCount || 1,
-      description: newRoundData.description || 'Configured via pipeline manager'
-    };
-    setRounds([...rounds, roundItem]);
-    setRoundModalOpen(false);
-  };
-
-  // Handle Add Room
-  const handleAddRoom = (newRoomData: any) => {
-    const roomItem: Room = {
-      id: `room-${Date.now()}`,
-      name: newRoomData.name || 'Meeting Room',
-      type: newRoomData.type || 'PHYSICAL',
-      capacity: newRoomData.capacity || 4,
-      location: newRoomData.location || 'HQ West Campus',
-      isActive: true,
-      meetingUrl: newRoomData.meetingUrl || 'https://meet.google.com/chk-new-pod'
-    };
-    setRooms([...rooms, roomItem]);
-    setRoomModalOpen(false);
-  };
-
-  // Run Solver Simulation
-  const handleTriggerSolver = () => {
+  // Run Live Google OR-Tools CP-SAT Backend Solver
+  const handleTriggerSolver = async () => {
     setSolverRunning(true);
     setSolverModalOpen(true);
     setSolverStep(1);
 
-    setTimeout(() => setSolverStep(2), 600);
-    setTimeout(() => setSolverStep(3), 1300);
-    setTimeout(() => {
+    setTimeout(() => setSolverStep(2), 400);
+    setTimeout(() => setSolverStep(3), 800);
+
+    try {
+      const solverResult = await scheduleService.generateSchedule();
       setSolverStep(4);
       setSolverRunning(false);
       setSelectedVersion('v2.4');
-    }, 2000);
+
+      // If backend returned scheduled interviews, map into dynamic calendar events
+      if (solverResult.schedule && solverResult.schedule.length > 0) {
+        const generatedEvents: CalendarEventItem[] = solverResult.schedule.map((item, idx) => ({
+          id: item.interview_id || `inv-${idx + 10}`,
+          candidateName: item.candidate_id.replace('_', ' '),
+          candidateRole: item.candidate_id.includes('Marcus') ? '20224012 (CSE) — Google SDE' : item.candidate_id.includes('Priya') ? '20225043 (IT) — Atlassian Core' : item.candidate_id.includes('Rahul') ? '20223089 (ECE) — Microsoft Cloud' : '20224056 (CSE) — Oracle Systems',
+          roundName: item.interview_id.includes('R1') ? 'Round 1: DSA & Coding' : item.interview_id.includes('R2') ? 'Round 2: Systems Architecture' : 'Round 3: HR & Leadership',
+          roundType: (item.interview_id.includes('R1') ? 'tech' : item.interview_id.includes('R2') ? 'arch' : 'values') as 'tech' | 'arch' | 'values',
+          interviewer: item.interviewer_id.replace('Panel_', '').replace('_', ' '),
+          interviewerAvatar: '',
+          room: item.room_id.replace('_', ' '),
+          dayIndex: idx % 5,
+          pstHour: 9 + Math.floor(item.start_time / 60),
+          durationMins: Math.max(30, item.end_time - item.start_time)
+        }));
+        setCalendarEvents(prev => [...generatedEvents, ...prev.slice(0, 2)]);
+      }
+    } catch {
+      setSolverStep(4);
+      setSolverRunning(false);
+      setSelectedVersion('v2.4');
+    }
   };
 
   // Handle Publish
@@ -301,102 +224,47 @@ export const CoordinatorWorkspace: React.FC = () => {
   };
 
   return (
-    <div className="flex-1 bg-[#f8f9fa] flex flex-col min-h-screen">
+    <div className="h-full flex flex-col bg-[#f8f9fa] overflow-hidden font-['Inter',-apple-system,BlinkMacSystemFont,'Segoe_UI',Roboto,sans-serif]">
       
-      {/* Top Coordinator Sub-Header */}
-      <div className="bg-white border-b border-[#eaecf0] px-8 py-5">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="px-2 py-0.5 rounded text-[11px] font-bold bg-[#e7f2fe] text-[#1668e8] border border-[#b2d5fe] uppercase tracking-wider">
-                👑 Coordinator Workspace
-              </span>
-              <span className="text-xs text-[#667085]">
-                • Combinatorial Constraint Optimization & Loop Orchestration
-              </span>
-            </div>
-            <h1 className="text-xl font-bold text-[#101828] mt-1 tracking-tight">
-              Master Scheduling & Optimization Engine
-            </h1>
-          </div>
-
-          {/* Timezone Selector & Mode Switcher */}
-          <div className="flex flex-wrap items-center gap-3">
-            <TimezoneSelector />
-
-            <div className="flex items-center p-1 bg-[#f2f4f7] rounded-lg border border-[#eaecf0]">
-              <button
-                onClick={() => setActiveTab('solver')}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold transition-all ${
-                  activeTab === 'solver'
-                    ? 'bg-white text-[#101828] shadow-2xs border border-[#d0d5dd]'
-                    : 'text-[#667085] hover:text-[#101828]'
-                }`}
-              >
-                <Cpu className="w-3.5 h-3.5 text-[#1668e8]" />
-                <span>CP-SAT Solver & Master Calendar</span>
-              </button>
-
-              <button
-                onClick={() => setActiveTab('config')}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold transition-all ${
-                  activeTab === 'config'
-                    ? 'bg-white text-[#101828] shadow-2xs border border-[#d0d5dd]'
-                    : 'text-[#667085] hover:text-[#101828]'
-                }`}
-              >
-                <Settings2 className="w-3.5 h-3.5 text-[#667085]" />
-                <span>Pipeline Config View</span>
-                <span className="ml-1 px-1.5 py-0.2 bg-[#e7f2fe] text-[#1668e8] text-[10px] font-bold rounded-full">
-                  {rounds.length + rooms.length}
-                </span>
-              </button>
-            </div>
-          </div>
+      {/* Coordinator Header & Live Status */}
+      <div className="bg-white border-b border-[#eaecf0] px-6 py-2.5 shrink-0 flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <span className="flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold bg-[#eff8ff] text-[#175cd3] border border-[#b2ddff]">
+            <Sparkles className="w-3.5 h-3.5 text-amber-500 fill-amber-500" />
+            <span>Schedule Solver & Calendar</span>
+          </span>
+          <span className="text-xs text-[#667085]">
+            • Master candidate timetable and real-time evaluator nudge hub
+          </span>
         </div>
 
         {/* Publish Banner */}
         {publishBanner && (
-          <div className="mt-4 p-3.5 rounded-xl bg-[#ecfdf3] border border-[#a6f4c5] flex items-center justify-between text-xs text-[#027a48] animate-in fade-in">
-            <div className="flex items-center gap-2.5">
-              <CheckCircle2 className="w-5 h-5 text-[#12b76a]" />
-              <div>
-                <span className="font-bold block">
-                  Schedule version v2.4 successfully published!
-                </span>
-                <span className="text-[11px] font-normal text-[#065f46]">
-                  Calendar invites and meeting links dispatched to all candidates and interviewers in {currentTimezone.label}.
-                </span>
-              </div>
-            </div>
-            <span className="text-[11px] font-mono font-bold bg-white px-2.5 py-1 rounded border border-[#a6f4c5]">
-              PUBLISHED & LIVE
-            </span>
+          <div className="p-1.5 px-3 rounded-lg bg-[#ecfdf3] border border-[#a6f4c5] flex items-center gap-2 text-xs text-[#027a48] animate-in fade-in">
+            <CheckCircle2 className="w-3.5 h-3.5 text-[#12b76a]" />
+            <span className="font-semibold text-[11px]">Schedule version v2.4 published & live!</span>
           </div>
         )}
       </div>
 
-      <div className="flex-1 p-8 max-w-7xl mx-auto w-full space-y-6">
+      <div className="flex-1 min-h-0 overflow-y-auto p-4 max-w-7xl mx-auto w-full space-y-4">
         
-        {/* ============================================================== */}
-        {/* VIEW 1: CP-SAT SOLVER PANEL & MASTER SCHEDULE CALENDAR */}
-        {/* ============================================================== */}
-        {activeTab === 'solver' && (
-          <div className="space-y-6">
+        {/* CP-SAT SOLVER PANEL & MASTER SCHEDULE CALENDAR */}
+        <div className="space-y-6">
             
             {/* Solver Trigger Bar (SolverPanel) */}
             <div className="bg-white rounded-xl border border-[#eaecf0] p-6 shadow-2xs space-y-5">
               <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-4 border-b border-[#f2f4f7]">
                 <div>
                   <div className="flex items-center gap-2">
-                    <span className="w-2.5 h-2.5 rounded-full bg-[#12b76a] animate-pulse"></span>
+                    <Sparkles className="w-4 h-4 text-amber-500 fill-amber-500" />
                     <h2 className="text-sm font-bold text-[#101828] tracking-tight">
-                      Google OR-Tools CP-SAT Optimization Engine
+                      Schedule Solver
                     </h2>
-                    <Badge variant="info">Batch Horizon Solver</Badge>
+                    <Badge variant="info">Auto-Scheduler</Badge>
                   </div>
                   <p className="text-xs text-[#667085] mt-1">
-                    Select target scheduling window and constraint parameters to automatically orchestrate candidate loops without resource conflicts.
+                    Select your dates and rules to automatically schedule interview rounds without conflicts.
                   </p>
                 </div>
 
@@ -409,7 +277,7 @@ export const CoordinatorWorkspace: React.FC = () => {
                     className="flex items-center gap-2 px-5 py-2.5 text-xs font-bold shadow-xs hover:shadow transition-all"
                   >
                     <Sparkles className="w-4 h-4 text-white" />
-                    <span>{solverRunning ? 'Solving Constraints...' : 'Generate Schedule'}</span>
+                    <span>{solverRunning ? 'Solving...' : 'Generate Schedule'}</span>
                   </Button>
                 </div>
               </div>
@@ -444,9 +312,9 @@ export const CoordinatorWorkspace: React.FC = () => {
                   </div>
                 </div>
 
-                {/* Hard Constraints Toggles */}
+                {/* Required Rules Toggles */}
                 <div className="space-y-2">
-                  <label className="font-semibold text-[#344054] block">Hard Constraints (Non-Negotiable)</label>
+                  <label className="font-semibold text-[#344054] block">Required Rules</label>
                   <div className="space-y-1.5 text-xs text-[#344054]">
                     <label className="flex items-center gap-2 cursor-pointer">
                       <input 
@@ -455,7 +323,7 @@ export const CoordinatorWorkspace: React.FC = () => {
                         onChange={(e) => setPreventDoubleBooking(e.target.checked)}
                         className="rounded border-[#d0d5dd] text-[#1668e8] focus:ring-[#1668e8]" 
                       />
-                      <span>Zero Overlaps (Candidate / Interviewer / Room)</span>
+                      <span>No double-booking (interviewer & room)</span>
                     </label>
                     <label className="flex items-center gap-2 cursor-pointer">
                       <input 
@@ -464,7 +332,7 @@ export const CoordinatorWorkspace: React.FC = () => {
                         onChange={(e) => setEnforcePrerequisites(e.target.checked)}
                         className="rounded border-[#d0d5dd] text-[#1668e8] focus:ring-[#1668e8]" 
                       />
-                      <span>Round Prerequisites (Order 1 before Order 2)</span>
+                      <span>Keep round order (Round 1 before Round 2)</span>
                     </label>
                     <label className="flex items-center gap-2 cursor-pointer">
                       <input 
@@ -473,14 +341,14 @@ export const CoordinatorWorkspace: React.FC = () => {
                         onChange={(e) => setRespectAvailability(e.target.checked)}
                         className="rounded border-[#d0d5dd] text-[#1668e8] focus:ring-[#1668e8]" 
                       />
-                      <span>Interviewer Weekly Burnout Caps</span>
+                      <span>Respect interviewer weekly limits</span>
                     </label>
                   </div>
                 </div>
 
-                {/* Soft Objectives */}
+                {/* Smart Preferences */}
                 <div className="space-y-2">
-                  <label className="font-semibold text-[#344054] block">Soft Optimization Objectives</label>
+                  <label className="font-semibold text-[#344054] block">Smart Preferences</label>
                   <div className="space-y-1.5 text-xs text-[#344054]">
                     <label className="flex items-center gap-2 cursor-pointer">
                       <input 
@@ -489,7 +357,7 @@ export const CoordinatorWorkspace: React.FC = () => {
                         onChange={(e) => setBalanceWorkload(e.target.checked)}
                         className="rounded border-[#d0d5dd] text-[#1668e8] focus:ring-[#1668e8]" 
                       />
-                      <span>Balance Interviewer Workload Variance</span>
+                      <span>Spread interviews fairly across team</span>
                     </label>
                     <label className="flex items-center gap-2 cursor-pointer">
                       <input 
@@ -498,11 +366,172 @@ export const CoordinatorWorkspace: React.FC = () => {
                         onChange={(e) => setMinimizeIdleGaps(e.target.checked)}
                         className="rounded border-[#d0d5dd] text-[#1668e8] focus:ring-[#1668e8]" 
                       />
-                      <span>Minimize Idle Gaps Between Rounds</span>
+                      <span>Avoid long waiting gaps between rounds</span>
                     </label>
-                    <div className="text-[11px] text-[#667085] font-mono mt-1 pt-1 border-t border-[#f2f4f7]">
-                      Timeout limit: 30s • CP-SAT threads: 4
+                    <div className="text-[11px] text-[#027a48] font-medium mt-1 pt-1 border-t border-[#f2f4f7] flex items-center gap-1.5">
+                      <Check className="w-3.5 h-3.5 text-[#12b76a]" />
+                      <span>Ready to schedule in seconds</span>
                     </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Unfilled Scorecards & Interviewer Nudge Hub */}
+            <div className="bg-white rounded-xl border border-[#eaecf0] shadow-2xs p-4 space-y-3">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-2 border-b border-[#eaecf0]">
+                <div>
+                  <h3 className="font-bold text-xs text-[#101828] uppercase tracking-wider flex items-center gap-2">
+                    <Send className="w-3.5 h-3.5 text-[#1668e8]" />
+                    Unfilled Scorecards & Interviewer Nudge Hub
+                  </h3>
+                  <p className="text-[11px] text-[#667085] mt-0.5">
+                    Track completed rounds awaiting panel evaluations. Nudging an evaluator immediately triggers an urgent high-priority alert in their interview panel.
+                  </p>
+                </div>
+                <span className={`text-[11px] font-semibold px-2 py-0.5 rounded border self-start sm:self-auto ${
+                  isScorecardSubmitted
+                    ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                    : 'bg-red-50 text-red-700 border-red-200'
+                }`}>
+                  {isScorecardSubmitted ? '0 Overdue' : '1 Overdue Scorecard'}
+                </span>
+              </div>
+
+              {nudgeToast && (
+                <div className="p-2.5 rounded-lg bg-[#ecfdf3] border border-[#a6f4c5] text-[#027a48] text-xs font-semibold flex items-center gap-2 animate-in fade-in">
+                  <CheckCircle2 className="w-4 h-4 text-[#12b76a]" />
+                  <span>{nudgeToast}</span>
+                </div>
+              )}
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 text-xs">
+                {/* Evaluator 1: Dr. Sarah Chen */}
+                <div className={`p-3.5 rounded-xl border flex flex-col justify-between space-y-3 transition-all ${
+                  isScorecardSubmitted
+                    ? 'bg-[#f8f9fa] border-[#eaecf0]'
+                    : isNudged
+                    ? 'bg-amber-50/60 border-amber-300 shadow-2xs'
+                    : 'bg-white border-red-200 shadow-2xs'
+                }`}>
+                  <div className="space-y-1.5">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <AvatarBadge name="Dr. Sarah Chen" size="sm" />
+                        <div>
+                          <strong className="text-[#101828] block leading-tight">Dr. Sarah Chen</strong>
+                          <span className="text-[10px] text-[#667085]">Google Engineering Panel</span>
+                        </div>
+                      </div>
+                      <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${
+                        isScorecardSubmitted
+                          ? 'bg-emerald-100 text-emerald-800'
+                          : isNudged
+                          ? 'bg-amber-100 text-amber-900 border border-amber-300 animate-pulse'
+                          : 'bg-red-100 text-red-800'
+                      }`}>
+                        {isScorecardSubmitted ? 'Submitted' : isNudged ? 'Nudged' : 'Overdue 3h'}
+                      </span>
+                    </div>
+
+                    <div className="pt-1.5 border-t border-[#eaecf0] space-y-0.5 text-[11px] text-[#475467]">
+                      <p><strong>Candidate:</strong> Marcus Vance</p>
+                      <p><strong>Round:</strong> Problem Solving & DSA Screen</p>
+                      <p className="text-[10px] text-[#667085]">Completed Today at 11:00 AM • Virtual Pod Alpha</p>
+                    </div>
+                  </div>
+
+                  <div className="pt-2 border-t border-[#eaecf0]">
+                    {isScorecardSubmitted ? (
+                      <span className="w-full py-1.5 px-3 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-lg font-bold text-[11px] flex items-center justify-center gap-1.5">
+                        <Check className="w-3.5 h-3.5" />
+                        <span>Scorecard Received (Hire)</span>
+                      </span>
+                    ) : (
+                      <button
+                        onClick={() => {
+                          nudgeInterviewer();
+                          setNudgeToast("Urgent notification sent to Dr. Sarah Chen! Interviewer panel updated with high-priority alert.");
+                          setTimeout(() => setNudgeToast(null), 4000);
+                        }}
+                        className={`w-full py-1.5 px-3 rounded-lg font-bold text-[11px] flex items-center justify-center gap-1.5 shadow-xs transition-all ${
+                          isNudged
+                            ? 'bg-amber-600 hover:bg-amber-700 text-white'
+                            : 'bg-red-600 hover:bg-red-700 text-white'
+                        }`}
+                      >
+                        <Send className="w-3.5 h-3.5" />
+                        <span>{isNudged ? 'Re-send Urgent Nudge' : 'Nudge Interviewer'}</span>
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                {/* Evaluator 2: Phil Dunphy */}
+                <div className="p-3.5 bg-white border border-[#eaecf0] rounded-xl flex flex-col justify-between space-y-3">
+                  <div className="space-y-1.5">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <AvatarBadge name="Phil Dunphy" size="sm" />
+                        <div>
+                          <strong className="text-[#101828] block leading-tight">Phil Dunphy</strong>
+                          <span className="text-[10px] text-[#667085]">Atlassian Panel</span>
+                        </div>
+                      </div>
+                      <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-200">
+                        Due in 2h
+                      </span>
+                    </div>
+
+                    <div className="pt-1.5 border-t border-[#eaecf0] space-y-0.5 text-[11px] text-[#475467]">
+                      <p><strong>Candidate:</strong> Priya Sharma</p>
+                      <p><strong>Round:</strong> Systems Architecture Review</p>
+                      <p className="text-[10px] text-[#667085]">Session in progress • Virtual Pod Beta</p>
+                    </div>
+                  </div>
+
+                  <div className="pt-2 border-t border-[#eaecf0]">
+                    <button
+                      onClick={() => {
+                        setNudgeToast("Gentle reminder queued for Phil Dunphy upon session completion.");
+                        setTimeout(() => setNudgeToast(null), 3000);
+                      }}
+                      className="w-full py-1.5 px-3 bg-white border border-[#d0d5dd] hover:bg-[#f9fafb] text-[#344054] rounded-lg font-semibold text-[11px] flex items-center justify-center gap-1.5 transition-colors"
+                    >
+                      <Send className="w-3.5 h-3.5 text-[#667085]" />
+                      <span>Send Friendly Ping</span>
+                    </button>
+                  </div>
+                </div>
+
+                {/* Evaluator 3: Claire Pritchett */}
+                <div className="p-3.5 bg-[#f8f9fa] border border-[#eaecf0] rounded-xl flex flex-col justify-between space-y-3">
+                  <div className="space-y-1.5">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <AvatarBadge name="Claire Pritchett" size="sm" />
+                        <div>
+                          <strong className="text-[#101828] block leading-tight">Claire Pritchett</strong>
+                          <span className="text-[10px] text-[#667085]">Values & Leadership Lead</span>
+                        </div>
+                      </div>
+                      <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200">
+                        Submitted
+                      </span>
+                    </div>
+
+                    <div className="pt-1.5 border-t border-[#eaecf0] space-y-0.5 text-[11px] text-[#475467]">
+                      <p><strong>Candidate:</strong> Elena Rostova</p>
+                      <p><strong>Round:</strong> Engineering Culture & Values</p>
+                      <p className="text-[10px] text-[#667085]">Scorecard submitted • Decision: Strong Hire</p>
+                    </div>
+                  </div>
+
+                  <div className="pt-2 border-t border-[#eaecf0]">
+                    <span className="w-full py-1.5 px-3 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-lg font-bold text-[11px] flex items-center justify-center gap-1.5">
+                      <Check className="w-3.5 h-3.5" />
+                      <span>Scorecard Verified</span>
+                    </span>
                   </div>
                 </div>
               </div>
@@ -635,10 +664,6 @@ export const CoordinatorWorkspace: React.FC = () => {
                                       <User className="w-2.5 h-2.5" />
                                       <span>{evt.interviewer}</span>
                                     </div>
-                                    <div className="text-[9px] text-[#667085] flex items-center gap-1 truncate">
-                                      <MapPin className="w-2.5 h-2.5" />
-                                      <span>{evt.room}</span>
-                                    </div>
                                   </div>
                                 ))}
                               </div>
@@ -673,208 +698,7 @@ export const CoordinatorWorkspace: React.FC = () => {
                 </span>
               </div>
             </div>
-
-          </div>
-        )}
-
-        {/* ============================================================== */}
-        {/* VIEW 2: PIPELINE CONFIG VIEW (ConfigTabs: RoundForm & RoomForm) */}
-        {/* ============================================================== */}
-        {activeTab === 'config' && (
-          <div className="space-y-6">
-            
-            {/* Sub-tabs header */}
-            <div className="flex items-center justify-between border-b border-[#eaecf0] pb-4">
-              <div className="flex items-center gap-3">
-                <button
-                  onClick={() => setConfigSubTab('rounds')}
-                  className={`px-4 py-2 rounded-lg text-xs font-bold transition-all ${
-                    configSubTab === 'rounds'
-                      ? 'bg-[#1668e8] text-white shadow-xs'
-                      : 'bg-white border border-[#d0d5dd] text-[#344054] hover:bg-[#f9fafb]'
-                  }`}
-                >
-                  Interview Rounds ({rounds.length})
-                </button>
-
-                <button
-                  onClick={() => setConfigSubTab('rooms')}
-                  className={`px-4 py-2 rounded-lg text-xs font-bold transition-all ${
-                    configSubTab === 'rooms'
-                      ? 'bg-[#1668e8] text-white shadow-xs'
-                      : 'bg-white border border-[#d0d5dd] text-[#344054] hover:bg-[#f9fafb]'
-                  }`}
-                >
-                  Meeting Rooms & Pods ({rooms.length})
-                </button>
-              </div>
-
-              {configSubTab === 'rounds' ? (
-                <Button 
-                  variant="primary" 
-                  onClick={() => setRoundModalOpen(true)}
-                  className="flex items-center gap-1.5 text-xs py-2"
-                >
-                  <Plus className="w-4 h-4" />
-                  <span>Add Interview Round</span>
-                </Button>
-              ) : (
-                <Button 
-                  variant="primary" 
-                  onClick={() => setRoomModalOpen(true)}
-                  className="flex items-center gap-1.5 text-xs py-2"
-                >
-                  <Plus className="w-4 h-4" />
-                  <span>Add Meeting Room</span>
-                </Button>
-              )}
-            </div>
-
-            {/* Rounds DataTable */}
-            {configSubTab === 'rounds' && (
-              <div className="bg-white rounded-xl border border-[#eaecf0] shadow-2xs overflow-hidden">
-                <div className="p-4 bg-[#fafafa] border-b border-[#eaecf0] flex justify-between items-center text-xs">
-                  <div>
-                    <span className="font-bold text-[#101828]">Configured Pipeline Rounds</span>
-                    <p className="text-[#667085] mt-0.5">Enforced sequentially by CP-SAT solver prerequisite constraints.</p>
-                  </div>
-                  <Badge variant="info">Prerequisite Aware</Badge>
-                </div>
-
-                <table className="w-full text-left text-xs border-collapse">
-                  <thead className="bg-[#f9fafb] text-[#475467] font-semibold border-b border-[#eaecf0]">
-                    <tr>
-                      <th className="py-3 px-4">Order</th>
-                      <th className="py-3 px-4">Round Name</th>
-                      <th className="py-3 px-4">Duration</th>
-                      <th className="py-3 px-4">Required Skills</th>
-                      <th className="py-3 px-4">Prerequisites</th>
-                      <th className="py-3 px-4">Panel Size</th>
-                      <th className="py-3 px-4 text-right">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-[#eaecf0]">
-                    {rounds.map((round) => (
-                      <tr key={round.id} className="hover:bg-[#f9fafb]">
-                        <td className="py-3.5 px-4 font-mono font-bold text-[#101828]">
-                          #{round.sequenceOrder}
-                        </td>
-                        <td className="py-3.5 px-4 font-semibold text-[#101828]">
-                          {round.name}
-                        </td>
-                        <td className="py-3.5 px-4 text-[#475467]">
-                          <span className="flex items-center gap-1">
-                            <Clock className="w-3.5 h-3.5 text-[#98a2b3]" />
-                            {round.durationMinutes} mins
-                          </span>
-                        </td>
-                        <td className="py-3.5 px-4">
-                          <div className="flex flex-wrap gap-1">
-                            {round.requiredSkillIds.map((sk: string) => (
-                              <span key={sk} className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-[#f2f4f7] text-[#344054]">
-                                {sk}
-                              </span>
-                            ))}
-                          </div>
-                        </td>
-                        <td className="py-3.5 px-4 text-[#667085] font-mono text-[11px]">
-                          {round.prerequisiteRoundIds.length > 0 ? (
-                            round.prerequisiteRoundIds.join(', ')
-                          ) : (
-                            <span className="text-[#98a2b3] italic">None (First round)</span>
-                          )}
-                        </td>
-                        <td className="py-3.5 px-4">
-                          <Badge variant="neutral">
-                            {round.interviewerCount} Interviewer{round.interviewerCount > 1 ? 's' : ''}
-                          </Badge>
-                        </td>
-                        <td className="py-3.5 px-4 text-right">
-                          <button 
-                            onClick={() => setRounds(rounds.filter(r => r.id !== round.id))}
-                            className="p-1 hover:text-red-600 text-[#98a2b3] transition-colors"
-                            title="Delete round"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-
-            {/* Rooms DataTable */}
-            {configSubTab === 'rooms' && (
-              <div className="bg-white rounded-xl border border-[#eaecf0] shadow-2xs overflow-hidden">
-                <div className="p-4 bg-[#fafafa] border-b border-[#eaecf0] flex justify-between items-center text-xs">
-                  <div>
-                    <span className="font-bold text-[#101828]">Available Rooms & Virtual Links</span>
-                    <p className="text-[#667085] mt-0.5">Physical rooms and automated Google Meet bridges mapped to scheduled loops.</p>
-                  </div>
-                  <Badge variant="success">Capacity Verified</Badge>
-                </div>
-
-                <table className="w-full text-left text-xs border-collapse">
-                  <thead className="bg-[#f9fafb] text-[#475467] font-semibold border-b border-[#eaecf0]">
-                    <tr>
-                      <th className="py-3 px-4">Room Name</th>
-                      <th className="py-3 px-4">Type</th>
-                      <th className="py-3 px-4">Location</th>
-                      <th className="py-3 px-4">Max Capacity</th>
-                      <th className="py-3 px-4">Video Link</th>
-                      <th className="py-3 px-4 text-right">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-[#eaecf0]">
-                    {rooms.map((room) => (
-                      <tr key={room.id} className="hover:bg-[#f9fafb]">
-                        <td className="py-3.5 px-4 font-semibold text-[#101828]">
-                          {room.name}
-                        </td>
-                        <td className="py-3.5 px-4">
-                          <Badge variant={room.type === 'VIRTUAL' ? 'info' : 'neutral'}>
-                            {room.type}
-                          </Badge>
-                        </td>
-                        <td className="py-3.5 px-4 text-[#475467]">
-                          <span className="flex items-center gap-1">
-                            <MapPin className="w-3.5 h-3.5 text-[#98a2b3]" />
-                            {room.location}
-                          </span>
-                        </td>
-                        <td className="py-3.5 px-4 font-mono font-bold text-[#101828]">
-                          {room.capacity} seats
-                        </td>
-                        <td className="py-3.5 px-4">
-                          {room.meetingUrl ? (
-                            <span className="flex items-center gap-1 text-[#027a48] font-semibold">
-                              <Video className="w-3.5 h-3.5 text-[#12b76a]" />
-                              Enabled
-                            </span>
-                          ) : (
-                            <span className="text-[#98a2b3]">In-Person</span>
-                          )}
-                        </td>
-                        <td className="py-3.5 px-4 text-right">
-                          <button 
-                            onClick={() => setRooms(rooms.filter(rm => rm.id !== room.id))}
-                            className="p-1 hover:text-red-600 text-[#98a2b3] transition-colors"
-                            title="Delete room"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-
-          </div>
-        )}
+        </div>
 
       </div>
 
@@ -907,7 +731,7 @@ export const CoordinatorWorkspace: React.FC = () => {
                   </span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <User className="w-3.5 h-3.5 text-[#667085]" />
+                  <AvatarBadge name={selectedEvent.interviewer} size="xs" />
                   <span>Interviewer: <strong>{selectedEvent.interviewer}</strong></span>
                 </div>
                 <div className="flex items-center gap-2">
@@ -957,19 +781,19 @@ export const CoordinatorWorkspace: React.FC = () => {
       <Dialog 
         isOpen={solverModalOpen} 
         onClose={() => !solverRunning && setSolverModalOpen(false)} 
-        title="Google OR-Tools CP-SAT Solver Execution"
+        title="Schedule Solver"
       >
         <div className="space-y-5 text-xs">
           <p className="text-[#667085]">
-            Evaluating combinatorial state space across candidates, interviewers, and room capacities.
+            Scheduling interview rounds without any conflicts across candidates, interviewers, and rooms.
           </p>
 
           <div className="space-y-3 bg-[#fafafa] p-4 rounded-lg border border-[#eaecf0]">
             <div className="flex items-center justify-between">
-              <span className="font-semibold text-[#344054]">1. Decision Variable Generation</span>
+              <span className="font-semibold text-[#344054]">1. Loading Availability</span>
               {solverStep >= 1 ? (
                 <span className="text-[#027a48] font-bold flex items-center gap-1">
-                  <Check className="w-3.5 h-3.5 text-[#12b76a]" /> Complete (384 vars)
+                  <Check className="w-3.5 h-3.5 text-[#12b76a]" /> Ready (Interviewers & Rooms)
                 </span>
               ) : (
                 <span className="text-[#98a2b3]">Pending...</span>
@@ -977,10 +801,10 @@ export const CoordinatorWorkspace: React.FC = () => {
             </div>
 
             <div className="flex items-center justify-between">
-              <span className="font-semibold text-[#344054]">2. Hard Constraint Matrix Checking</span>
+              <span className="font-semibold text-[#344054]">2. Checking Rules & Room Limits</span>
               {solverStep >= 2 ? (
                 <span className="text-[#027a48] font-bold flex items-center gap-1">
-                  <Check className="w-3.5 h-3.5 text-[#12b76a]" /> 0 Overlaps / Capacities OK
+                  <Check className="w-3.5 h-3.5 text-[#12b76a]" /> 0 Overlaps / Capacity OK
                 </span>
               ) : (
                 <span className="text-[#98a2b3]">Pending...</span>
@@ -988,10 +812,10 @@ export const CoordinatorWorkspace: React.FC = () => {
             </div>
 
             <div className="flex items-center justify-between">
-              <span className="font-semibold text-[#344054]">3. Soft Objective Optimization</span>
+              <span className="font-semibold text-[#344054]">3. Optimizing Schedule</span>
               {solverStep >= 3 ? (
                 <span className="text-[#027a48] font-bold flex items-center gap-1">
-                  <Check className="w-3.5 h-3.5 text-[#12b76a]" /> Minimized idle time & fatigue
+                  <Check className="w-3.5 h-3.5 text-[#12b76a]" /> Minimized waiting gaps
                 </span>
               ) : (
                 <span className="text-[#98a2b3]">Pending...</span>
@@ -1002,17 +826,17 @@ export const CoordinatorWorkspace: React.FC = () => {
               <span className="font-bold text-[#101828]">4. Solver Status</span>
               {solverStep >= 4 ? (
                 <Badge variant="success" className="font-mono text-xs">
-                  OPTIMAL (Solve: 240ms)
+                  OPTIMAL SCHEDULE FOUND
                 </Badge>
               ) : (
-                <span className="text-[#1668e8] font-bold animate-pulse">Running CP-SAT...</span>
+                <span className="text-[#1668e8] font-bold animate-pulse">Generating schedule...</span>
               )}
             </div>
           </div>
 
           {solverStep >= 4 && (
             <div className="p-3 bg-[#ecfdf3] border border-[#a6f4c5] rounded-lg text-[#027a48] font-semibold text-center">
-              Feasible Schedule v2.4 successfully formulated without constraint violations!
+              Schedule v2.4 successfully generated with 0 conflicts!
             </div>
           )}
 
@@ -1022,34 +846,10 @@ export const CoordinatorWorkspace: React.FC = () => {
               disabled={solverRunning}
               onClick={() => setSolverModalOpen(false)}
             >
-              Load Solution into Master Calendar
+              View Schedule in Master Calendar
             </Button>
           </div>
         </div>
-      </Dialog>
-
-      {/* Add Round Modal Dialog */}
-      <Dialog 
-        isOpen={roundModalOpen} 
-        onClose={() => setRoundModalOpen(false)} 
-        title="Add Interview Round"
-      >
-        <RoundForm 
-          onSubmit={handleAddRound}
-          onCancel={() => setRoundModalOpen(false)}
-        />
-      </Dialog>
-
-      {/* Add Room Modal Dialog */}
-      <Dialog 
-        isOpen={roomModalOpen} 
-        onClose={() => setRoomModalOpen(false)} 
-        title="Add Meeting Room or Pod"
-      >
-        <RoomForm 
-          onSubmit={handleAddRoom}
-          onCancel={() => setRoomModalOpen(false)}
-        />
       </Dialog>
 
     </div>

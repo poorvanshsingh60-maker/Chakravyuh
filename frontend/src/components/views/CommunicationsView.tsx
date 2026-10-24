@@ -9,8 +9,9 @@ import {
   Send,
   CheckCircle2
 } from 'lucide-react';
-import { TimezoneSelector } from '../common/TimezoneSelector';
 import { useTimezone } from '../../context/TimezoneContext';
+
+import { AvatarBadge } from '../common/AvatarBadge';
 
 interface CommunicationsViewProps {
   onGoToScheduling: () => void;
@@ -19,8 +20,8 @@ interface CommunicationsViewProps {
 export const CommunicationsView: React.FC<CommunicationsViewProps> = ({ onGoToScheduling }) => {
   const { currentTimezone, convertTime } = useTimezone();
   const [ccList, setCcList] = useState([
-    { name: 'Claire Pritchett', email: 'claire@chakravyuh.ai', avatar: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=100&auto=format&fit=crop&q=80' },
-    { name: 'Gloria Vergara', email: 'gloria@chakravyuh.ai', avatar: 'https://images.unsplash.com/photo-1580489944761-15a19d654956?w=100&auto=format&fit=crop&q=80' }
+    { name: 'Claire Pritchett', email: 'claire@chakravyuh.ai', avatar: '' },
+    { name: 'Gloria Vergara', email: 'gloria@chakravyuh.ai', avatar: '' }
   ]);
   const [showBcc, setShowBcc] = useState(false);
   const [bccList, setBccList] = useState<string[]>(['recruiting-ops@chakravyuh.ai']);
@@ -65,10 +66,10 @@ export const CommunicationsView: React.FC<CommunicationsViewProps> = ({ onGoToSc
   };
 
   return (
-    <div className="flex-1 flex flex-col min-h-screen bg-white">
+    <div className="h-full flex flex-col bg-white overflow-hidden">
       
       {/* Top Header / Breadcrumb Bar */}
-      <div className="px-8 pt-6 pb-2 border-b border-[#eaecf0] bg-white">
+      <div className="px-6 py-4 border-b border-[#eaecf0] bg-white shrink-0">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
           <div>
             <div className="flex items-center gap-2">
@@ -82,11 +83,6 @@ export const CommunicationsView: React.FC<CommunicationsViewProps> = ({ onGoToSc
             <h1 className="text-lg font-semibold text-[#101828] mt-1">
               Scheduled <span className="font-bold">Zach Buechler</span> for <span className="font-bold">Product Design Onsite</span>
             </h1>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <span className="text-xs text-[#667085] hidden md:inline">Timezone:</span>
-            <TimezoneSelector />
           </div>
         </div>
 
@@ -133,7 +129,7 @@ export const CommunicationsView: React.FC<CommunicationsViewProps> = ({ onGoToSc
       )}
 
       {/* Main Two-Column Layout */}
-      <div className="flex-1 grid grid-cols-12 p-8 gap-8 max-w-6xl">
+      <div className="flex-1 min-h-0 overflow-y-auto grid grid-cols-12 p-6 gap-6 max-w-6xl w-full">
         
         {/* Left Column: Email Composer (8 Cols) */}
         <div className="col-span-12 lg:col-span-8 space-y-6">
@@ -177,7 +173,7 @@ export const CommunicationsView: React.FC<CommunicationsViewProps> = ({ onGoToSc
                     key={cc.name}
                     className="inline-flex items-center gap-1.5 pl-1.5 pr-2 py-1 rounded-md bg-[#f2f4f7] text-xs font-medium text-[#344054] border border-[#eaecf0]"
                   >
-                    <img src={cc.avatar} alt={cc.name} className="w-4 h-4 rounded-full object-cover" />
+                    <AvatarBadge name={cc.name} size="xs" />
                     <span>{cc.name}</span>
                     <button 
                       type="button"

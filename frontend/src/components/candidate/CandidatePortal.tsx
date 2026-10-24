@@ -15,7 +15,8 @@ import {
   FileText, 
   HelpCircle, 
   ChevronRight, 
-  Download
+  Download,
+  X
 } from 'lucide-react';
 
 export const CandidatePortal: React.FC = () => {
@@ -301,9 +302,9 @@ export const CandidatePortal: React.FC = () => {
               </div>
               <button 
                 onClick={() => setRescheduleModalOpen(false)}
-                className="text-slate-400 hover:text-slate-600 text-sm font-mono"
+                className="text-slate-400 hover:text-slate-600"
               >
-                ✕
+                <X className="w-4 h-4" />
               </button>
             </div>
 

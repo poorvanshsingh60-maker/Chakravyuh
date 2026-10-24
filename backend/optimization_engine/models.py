@@ -53,3 +53,12 @@ class SolverResult(BaseModel):
     unscheduled_interviews: List[str]
     diagnostics: List[str]
     is_validated: bool = False
+
+class ScheduleRequest(BaseModel):
+    candidates: Optional[List[Candidate]] = None
+    interviewers: Optional[List[Interviewer]] = None
+    rooms: Optional[List[Room]] = None
+    interviews: Optional[List[InterviewReq]] = None
+    time_horizon: int = 480
+    time_step: int = 15
+    allow_partial: bool = False

@@ -6,13 +6,12 @@ import {
   Video, 
   UserRound
 } from 'lucide-react';
-import { TimezoneSelector } from '../common/TimezoneSelector';
 import { useTimezone } from '../../context/TimezoneContext';
 import { Dialog } from '../ui/dialog';
 import { Button } from '../ui/button';
 
 export const UpcomingEventsView: React.FC = () => {
-  const { convertTime, currentTimezone } = useTimezone();
+  const { convertTime } = useTimezone();
   const [timeframe, setTimeframe] = useState<'TODAY' | 'WEEK' | 'MONTH'>('TODAY');
   const [selectedEvent, setSelectedEvent] = useState<any | null>(null);
 
@@ -23,7 +22,7 @@ export const UpcomingEventsView: React.FC = () => {
       role: 'Product Designer',
       round: 'Design Exercise 1',
       interviewer: 'Claire Pritchett',
-      interviewerAvatar: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=100&auto=format&fit=crop&q=80',
+      interviewerAvatar: '',
       pstTime: '9:00 AM – 9:30 AM PST',
       room: 'Virtual Pod Alpha (Google Meet)',
       meetingUrl: 'https://meet.google.com/chk-design-ex1',
@@ -38,7 +37,7 @@ export const UpcomingEventsView: React.FC = () => {
       role: 'Product Designer',
       round: 'Company Values',
       interviewer: 'Phil Dunphy',
-      interviewerAvatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=80',
+      interviewerAvatar: '',
       pstTime: '9:30 AM – 10:00 AM PST',
       room: 'Virtual Pod Gamma',
       meetingUrl: 'https://meet.google.com/chk-values-eval',
@@ -53,7 +52,7 @@ export const UpcomingEventsView: React.FC = () => {
       role: 'Product Designer',
       round: 'Design Presentation',
       interviewer: 'Manny Delgado',
-      interviewerAvatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&auto=format&fit=crop&q=80',
+      interviewerAvatar: '',
       pstTime: '10:00 AM – 11:00 AM PST',
       room: 'Conference Suite 402',
       meetingUrl: 'https://meet.google.com/chk-pres-suite',
@@ -68,7 +67,7 @@ export const UpcomingEventsView: React.FC = () => {
       role: 'Staff Distributed Systems Engineer',
       round: 'System Architecture (Raft & Storage)',
       interviewer: 'Manny Delgado',
-      interviewerAvatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&auto=format&fit=crop&q=80',
+      interviewerAvatar: '',
       pstTime: '1:00 PM – 2:00 PM PST',
       room: 'Virtual Pod Alpha',
       meetingUrl: 'https://meet.google.com/chk-raft-storage',
@@ -83,7 +82,7 @@ export const UpcomingEventsView: React.FC = () => {
       role: 'Senior Frontend Engineer',
       round: 'Technical Screen (React & State)',
       interviewer: 'Claire Pritchett',
-      interviewerAvatar: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=100&auto=format&fit=crop&q=80',
+      interviewerAvatar: '',
       pstTime: '11:00 AM – 12:00 PM PST',
       room: 'Virtual Pod Gamma',
       meetingUrl: 'https://meet.google.com/chk-fe-screen',
@@ -101,22 +100,16 @@ export const UpcomingEventsView: React.FC = () => {
   });
 
   return (
-    <div className="flex-1 flex flex-col min-h-screen bg-white">
+    <div className="h-full flex flex-col bg-white overflow-hidden">
       
-      {/* Header */}
-      <div className="px-8 pt-6 pb-4 border-b border-[#eaecf0]">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div>
-            <h1 className="text-xl font-bold text-[#101828]">Upcoming events</h1>
-            <p className="text-xs text-[#667085] mt-1">
-              Confirmed candidate onsite loops, panel sessions, and room bookings in <strong className="text-[#101828]">{currentTimezone.label}</strong>.
-            </p>
-          </div>
+      {/* Filter Bar */}
+      <div className="px-6 py-3 border-b border-[#eaecf0] bg-[#fafbfc] shrink-0">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <p className="text-xs text-[#667085]">
+            Confirmed candidate loops and room bookings across calendar slots.
+          </p>
 
-          <div className="flex flex-wrap items-center gap-3">
-            <TimezoneSelector />
-
-            <div className="flex items-center gap-1.5 bg-[#f2f4f7] p-1 rounded-lg text-xs font-medium">
+          <div className="flex items-center gap-1.5 bg-[#f2f4f7] p-1 rounded-lg text-xs font-medium">
               <button
                 onClick={() => setTimeframe('TODAY')}
                 className={`px-3 py-1 rounded-md transition-all ${
@@ -144,10 +137,9 @@ export const UpcomingEventsView: React.FC = () => {
             </div>
           </div>
         </div>
-      </div>
 
       {/* Events Agenda */}
-      <div className="p-8 max-w-5xl space-y-4">
+      <div className="flex-1 min-h-0 overflow-y-auto p-6 max-w-5xl space-y-4">
         <div className="border border-[#eaecf0] rounded-xl overflow-hidden bg-white shadow-2xs divide-y divide-[#eaecf0]">
           {filteredEvents.map((ev) => (
             <div 

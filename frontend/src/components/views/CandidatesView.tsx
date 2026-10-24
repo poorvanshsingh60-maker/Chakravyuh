@@ -3,8 +3,10 @@ import { CandidateItem } from '../../types';
 import { 
   Search, 
   Plus, 
-  CheckCircle2 
+  CheckCircle2,
+  X 
 } from 'lucide-react';
+import { AvatarBadge } from '../common/AvatarBadge';
 
 interface CandidatesViewProps {
   candidates: CandidateItem[];
@@ -53,14 +55,14 @@ export const CandidatesView: React.FC<CandidatesViewProps> = ({
   };
 
   return (
-    <div className="flex-1 flex flex-col min-h-screen bg-white">
+    <div className="h-full flex flex-col bg-white overflow-hidden">
       
       {/* Header */}
-      <div className="px-8 pt-6 pb-4 border-b border-[#eaecf0]">
+      <div className="px-6 py-4 border-b border-[#eaecf0] shrink-0">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-xl font-bold text-[#101828]">Candidates</h1>
-            <p className="text-xs text-[#667085] mt-1">
+            <h1 className="text-lg font-bold text-[#101828]">Candidates</h1>
+            <p className="text-xs text-[#667085] mt-0.5">
               Active candidate pipeline across technical loops, portfolio screens, and executive calibrators.
             </p>
           </div>
@@ -75,7 +77,7 @@ export const CandidatesView: React.FC<CandidatesViewProps> = ({
         </div>
       </div>
 
-      <div className="p-8 max-w-6xl space-y-6">
+      <div className="flex-1 min-h-0 overflow-y-auto p-6 max-w-6xl w-full space-y-4">
         
         {/* Filters */}
         <div className="flex items-center justify-between">
@@ -125,11 +127,7 @@ export const CandidatesView: React.FC<CandidatesViewProps> = ({
                 <tr key={cand.id} className="hover:bg-[#f9fafb] transition-colors">
                   <td className="p-3.5 pl-6">
                     <div className="flex items-center gap-3">
-                      <img 
-                        src={cand.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80'} 
-                        alt={cand.name}
-                        className="w-8 h-8 rounded-full object-cover" 
-                      />
+                      <AvatarBadge name={cand.name} size="sm" />
                       <div>
                         <span className="font-semibold text-sm text-[#101828] block">{cand.name}</span>
                         <span className="text-[11px] text-[#667085]">Applied {cand.appliedDate}</span>
@@ -181,7 +179,9 @@ export const CandidatesView: React.FC<CandidatesViewProps> = ({
           <div className="bg-white rounded-xl border border-[#eaecf0] shadow-xl max-w-md w-full p-6 space-y-4 animate-in fade-in zoom-in-95 duration-150">
             <div className="flex items-center justify-between border-b border-[#eaecf0] pb-3">
               <h3 className="text-base font-bold text-[#101828]">Add Candidate to Pipeline</h3>
-              <button onClick={() => setModalOpen(false)} className="text-[#98a2b3] hover:text-[#101828]">✕</button>
+              <button onClick={() => setModalOpen(false)} className="text-[#98a2b3] hover:text-[#101828]">
+                <X className="w-4 h-4" />
+              </button>
             </div>
 
             <form onSubmit={handleCreate} className="space-y-4 text-xs">

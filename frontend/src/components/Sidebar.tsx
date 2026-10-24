@@ -3,21 +3,16 @@ import {
   Home,
   GitBranch,
   Search, 
-  CheckSquare, 
-  List, 
-  CalendarDays, 
   UserRound, 
-  Briefcase, 
   Contact2, 
-  LineChart, 
   Settings, 
-  HelpCircle,
-  Calendar,
-  MessageSquare,
-  GraduationCap,
   X,
   ChevronRight,
-  LogOut
+  LogOut,
+  CheckSquare,
+  Calendar,
+  Mail,
+  BarChart3
 } from 'lucide-react';
 import { NavTab } from '../types';
 import { UserRole } from '../types/user';
@@ -42,7 +37,7 @@ interface SidebarProps {
 export const Sidebar: React.FC<SidebarProps> = ({ 
   currentTab, 
   onSelectTab,
-  pendingTasksCount = 3,
+  pendingTasksCount: _pendingTasksCount = 3,
   urgentAlertsCount = 2,
   currentUser,
   onSignOut
@@ -173,229 +168,247 @@ export const Sidebar: React.FC<SidebarProps> = ({
         )}
       </div>
 
-      {/* Main Navigation Links */}
-      <nav className="flex-1 px-2.5 py-1 space-y-0.5 overflow-y-auto text-xs">
+      {/* Main Navigation Links - Organized into Distinct Sections */}
+      <nav className="flex-1 px-2.5 py-3 space-y-4 overflow-y-auto text-xs">
         
-        {/* Home */}
-        <button 
-          onClick={() => onSelectTab('home')}
-          className={`w-full flex items-center justify-between px-3 py-2 rounded-lg font-medium transition-colors text-left ${
-            currentTab === 'home' 
-              ? 'bg-[#1668e8] text-white shadow-xs' 
-              : 'text-[#344054] hover:bg-[#f9fafb]'
-          }`}
-        >
-          <div className="flex items-center gap-2.5">
-            <Home className={`w-4 h-4 ${currentTab === 'home' ? 'text-white' : 'text-[#667085]'}`} />
-            <span className="font-semibold">Home</span>
-          </div>
-          {urgentAlertsCount > 0 && (
-            <span className={`flex items-center gap-1.5 text-[11px] font-medium ${
-              currentTab === 'home' ? 'text-white' : 'text-red-600'
-            }`}>
-              <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-[pulse_1.5s_ease-in-out_infinite]" />
-              <span>{urgentAlertsCount}</span>
-            </span>
-          )}
-        </button>
-
-        {/* Workflow */}
-        <button 
-          onClick={() => onSelectTab('flowchart')}
-          className={`w-full flex items-center justify-between px-3 py-2 rounded-lg font-medium transition-colors text-left ${
-            currentTab === 'flowchart' 
-              ? 'bg-[#1668e8] text-white shadow-xs' 
-              : 'text-[#344054] hover:bg-[#f9fafb]'
-          }`}
-        >
-          <div className="flex items-center gap-2.5">
-            <GitBranch className={`w-4 h-4 ${currentTab === 'flowchart' ? 'text-white' : 'text-[#667085]'}`} />
-            <span>Workflow</span>
-          </div>
-        </button>
-
-        <div className="my-1 border-t border-[#f2f4f7]" />
-
-        {/* My Tasks */}
-        <button 
-          onClick={() => onSelectTab('my-tasks')}
-          className={`w-full flex items-center justify-between px-3 py-2 rounded-lg font-medium transition-colors text-left ${
-            currentTab === 'my-tasks' 
-              ? 'bg-[#1668e8] text-white' 
-              : 'text-[#344054] hover:bg-[#f9fafb]'
-          }`}
-        >
-          <div className="flex items-center gap-2.5">
-            <CheckSquare className={`w-4 h-4 ${currentTab === 'my-tasks' ? 'text-white' : 'text-[#667085]'}`} />
-            <span>My tasks</span>
-          </div>
-          {pendingTasksCount > 0 && (
-            <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold ${
-              currentTab === 'my-tasks' ? 'bg-white text-[#1668e8]' : 'bg-[#e7f2fe] text-[#1668e8]'
-            }`}>
-              {pendingTasksCount}
-            </span>
-          )}
-        </button>
-
-        {/* All Tasks */}
-        <button 
-          onClick={() => onSelectTab('all-tasks')}
-          className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg font-medium transition-colors text-left ${
-            currentTab === 'all-tasks' 
-              ? 'bg-[#1668e8] text-white' 
-              : 'text-[#344054] hover:bg-[#f9fafb]'
-          }`}
-        >
-          <List className={`w-4 h-4 ${currentTab === 'all-tasks' ? 'text-white' : 'text-[#667085]'}`} />
-          <span>All tasks</span>
-        </button>
-
-        {/* Upcoming events */}
-        <button 
-          onClick={() => onSelectTab('upcoming')}
-          className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg font-medium transition-colors text-left ${
-            currentTab === 'upcoming' 
-              ? 'bg-[#1668e8] text-white' 
-              : 'text-[#344054] hover:bg-[#f9fafb]'
-          }`}
-        >
-          <CalendarDays className={`w-4 h-4 ${currentTab === 'upcoming' ? 'text-white' : 'text-[#667085]'}`} />
-          <span>Upcoming events</span>
-        </button>
-
-        {/* Candidates */}
-        <button 
-          onClick={() => onSelectTab('candidates')}
-          className={`w-full flex items-center justify-between px-3 py-2 rounded-lg font-medium transition-colors text-left ${
-            currentTab === 'candidates' 
-              ? 'bg-[#1668e8] text-white' 
-              : 'text-[#344054] hover:bg-[#f9fafb]'
-          }`}
-        >
-          <div className="flex items-center gap-2.5">
-            <UserRound className={`w-4 h-4 ${currentTab === 'candidates' ? 'text-white' : 'text-[#667085]'}`} />
-            <span>Candidates</span>
-          </div>
-          <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold ${
-            currentTab === 'candidates' ? 'bg-white text-[#1668e8]' : 'bg-[#f2f4f7] text-[#667085]'
-          }`}>
-            5
+        {/* SECTION: OVERVIEW */}
+        <div className="space-y-1">
+          <span className="px-3 text-[10px] font-bold text-[#98a2b3] uppercase tracking-wider block mb-1">
+            Overview
           </span>
-        </button>
-
-        {/* Jobs */}
-        <button 
-          onClick={() => onSelectTab('jobs')}
-          className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg font-medium transition-colors text-left ${
-            currentTab === 'jobs' 
-              ? 'bg-[#1668e8] text-white' 
-              : 'text-[#344054] hover:bg-[#f9fafb]'
-          }`}
-        >
-          <Briefcase className={`w-4 h-4 ${currentTab === 'jobs' ? 'text-white' : 'text-[#667085]'}`} />
-          <span>Jobs</span>
-        </button>
-
-        <div className="pt-2 pb-1 px-3 text-[10px] font-bold text-[#98a2b3] uppercase tracking-wider">
-          Orchestration
+          
+          <button 
+            onClick={() => onSelectTab('home')}
+            className={`w-full flex items-center justify-between px-3 py-2 rounded-lg font-medium transition-colors text-left ${
+              currentTab === 'home' 
+                ? 'bg-[#1668e8] text-white shadow-xs' 
+                : 'text-[#344054] hover:bg-[#f9fafb]'
+            }`}
+          >
+            <div className="flex items-center gap-2.5">
+              <Home className={`w-4 h-4 ${currentTab === 'home' ? 'text-white' : 'text-[#667085]'}`} />
+              <span className="font-semibold">Home Dashboard</span>
+            </div>
+            {urgentAlertsCount > 0 && (
+              <span className={`flex items-center gap-1.5 text-[11px] font-medium ${
+                currentTab === 'home' ? 'text-white' : 'text-red-600'
+              }`}>
+                <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-[pulse_1.5s_ease-in-out_infinite]" />
+                <span>{urgentAlertsCount}</span>
+              </span>
+            )}
+          </button>
         </div>
 
-        {/* Automate Scheduling Tab */}
-        <button 
-          onClick={() => onSelectTab('scheduling')}
-          className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg font-medium transition-colors text-left ${
-            currentTab === 'scheduling' 
-              ? 'bg-[#1668e8] text-white' 
-              : 'text-[#344054] hover:bg-[#f9fafb]'
-          }`}
-        >
-          <Calendar className={`w-4 h-4 ${currentTab === 'scheduling' ? 'text-white' : 'text-[#667085]'}`} />
-          <span>Automate Scheduling</span>
-        </button>
+        {/* Role: COORDINATOR Sections */}
+        {/* Role: COORDINATOR Sections */}
+        {(!currentUser || currentUser.role === 'COORDINATOR') && (
+          <>
+            {/* SECTION: OPERATIONS & SCHEDULE */}
+            <div className="space-y-1 pt-1 border-t border-[#f2f4f7]">
+              <span className="px-3 text-[10px] font-bold text-[#98a2b3] uppercase tracking-wider block mb-1">
+                Operations & Schedule
+              </span>
 
-        {/* Modules / Interviewer Training Tab */}
-        <button 
-          onClick={() => onSelectTab('training')}
-          className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg font-medium transition-colors text-left ${
-            currentTab === 'training' 
-              ? 'bg-[#1668e8] text-white' 
-              : 'text-[#344054] hover:bg-[#f9fafb]'
-          }`}
-        >
-          <GraduationCap className={`w-4 h-4 ${currentTab === 'training' ? 'text-white' : 'text-[#667085]'}`} />
-          <span>Interviewer Training</span>
-        </button>
+              {/* Automate Scheduling Matrix */}
+              <button 
+                onClick={() => onSelectTab('scheduling')}
+                className={`w-full flex items-center justify-between px-3 py-2 rounded-lg font-medium transition-colors text-left ${
+                  currentTab === 'scheduling' 
+                    ? 'bg-[#1668e8] text-white shadow-xs' 
+                    : 'text-[#344054] hover:bg-[#f9fafb]'
+                }`}
+              >
+                <div className="flex items-center gap-2.5">
+                  <Calendar className={`w-4 h-4 ${currentTab === 'scheduling' ? 'text-white' : 'text-[#667085]'}`} />
+                  <span>Automate Scheduling</span>
+                </div>
+              </button>
+            </div>
 
-        {/* Communications Tab */}
-        <button 
-          onClick={() => onSelectTab('communications')}
-          className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg font-medium transition-colors text-left ${
-            currentTab === 'communications' 
-              ? 'bg-[#1668e8] text-white' 
-              : 'text-[#344054] hover:bg-[#f9fafb]'
-          }`}
-        >
-          <MessageSquare className={`w-4 h-4 ${currentTab === 'communications' ? 'text-white' : 'text-[#667085]'}`} />
-          <span>Communications</span>
-        </button>
+            {/* SECTION: RECRUITMENT & PIPELINE */}
+            <div className="space-y-1 pt-1 border-t border-[#f2f4f7]">
+              <span className="px-3 text-[10px] font-bold text-[#98a2b3] uppercase tracking-wider block mb-1">
+                Recruitment & Pipeline
+              </span>
 
-        <div className="pt-2 pb-1 px-3 text-[10px] font-bold text-[#98a2b3] uppercase tracking-wider">
-          Directory & Insights
-        </div>
+              {/* Candidate Loops */}
+              <button 
+                onClick={() => onSelectTab('candidates')}
+                className={`w-full flex items-center justify-between px-3 py-2 rounded-lg font-medium transition-colors text-left ${
+                  currentTab === 'candidates' 
+                    ? 'bg-[#1668e8] text-white shadow-xs' 
+                    : 'text-[#344054] hover:bg-[#f9fafb]'
+                }`}
+              >
+                <div className="flex items-center gap-2.5">
+                  <UserRound className={`w-4 h-4 ${currentTab === 'candidates' ? 'text-white' : 'text-[#667085]'}`} />
+                  <span>Candidate Loops</span>
+                </div>
+                <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold ${
+                  currentTab === 'candidates' ? 'bg-white text-[#1668e8]' : 'bg-[#f2f4f7] text-[#667085]'
+                }`}>
+                  5
+                </span>
+              </button>
 
-        {/* Directory */}
-        <button 
-          onClick={() => onSelectTab('directory')}
-          className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg font-medium transition-colors text-left ${
-            currentTab === 'directory' 
-              ? 'bg-[#1668e8] text-white' 
-              : 'text-[#344054] hover:bg-[#f9fafb]'
-          }`}
-        >
-          <Contact2 className={`w-4 h-4 ${currentTab === 'directory' ? 'text-white' : 'text-[#667085]'}`} />
-          <span>Directory</span>
-        </button>
+              {/* Communications */}
+              <button 
+                onClick={() => onSelectTab('communications')}
+                className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg font-medium transition-colors text-left ${
+                  currentTab === 'communications' 
+                    ? 'bg-[#1668e8] text-white shadow-xs' 
+                    : 'text-[#344054] hover:bg-[#f9fafb]'
+                }`}
+              >
+                <Mail className={`w-4 h-4 ${currentTab === 'communications' ? 'text-white' : 'text-[#667085]'}`} />
+                <span>Communications</span>
+              </button>
+            </div>
 
-        {/* Metrics */}
-        <button 
-          onClick={() => onSelectTab('metrics')}
-          className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg font-medium transition-colors text-left ${
-            currentTab === 'metrics' 
-              ? 'bg-[#1668e8] text-white' 
-              : 'text-[#344054] hover:bg-[#f9fafb]'
-          }`}
-        >
-          <LineChart className={`w-4 h-4 ${currentTab === 'metrics' ? 'text-white' : 'text-[#667085]'}`} />
-          <span>Metrics</span>
-        </button>
+            {/* SECTION: PANELS & CAPACITY */}
+            <div className="space-y-1 pt-1 border-t border-[#f2f4f7]">
+              <span className="px-3 text-[10px] font-bold text-[#98a2b3] uppercase tracking-wider block mb-1">
+                Panels & Capacity
+              </span>
+
+              {/* Panel & Rooms Directory */}
+              <button 
+                onClick={() => onSelectTab('directory')}
+                className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg font-medium transition-colors text-left ${
+                  currentTab === 'directory' 
+                    ? 'bg-[#1668e8] text-white shadow-xs' 
+                    : 'text-[#344054] hover:bg-[#f9fafb]'
+                }`}
+              >
+                <Contact2 className={`w-4 h-4 ${currentTab === 'directory' ? 'text-white' : 'text-[#667085]'}`} />
+                <span>Panels & Directory</span>
+              </button>
+            </div>
+
+            {/* SECTION: WORKFLOW & METRICS */}
+            <div className="space-y-1 pt-1 border-t border-[#f2f4f7]">
+              <span className="px-3 text-[10px] font-bold text-[#98a2b3] uppercase tracking-wider block mb-1">
+                Workflow & Analytics
+              </span>
+
+              {/* Tasks & Approvals */}
+              <button 
+                onClick={() => onSelectTab('all-tasks')}
+                className={`w-full flex items-center justify-between px-3 py-2 rounded-lg font-medium transition-colors text-left ${
+                  currentTab === 'all-tasks' 
+                    ? 'bg-[#1668e8] text-white shadow-xs' 
+                    : 'text-[#344054] hover:bg-[#f9fafb]'
+                }`}
+              >
+                <div className="flex items-center gap-2.5">
+                  <CheckSquare className={`w-4 h-4 ${currentTab === 'all-tasks' ? 'text-white' : 'text-[#667085]'}`} />
+                  <span>Tasks & Approvals</span>
+                </div>
+                <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold ${
+                  currentTab === 'all-tasks' ? 'bg-white text-[#1668e8]' : 'bg-[#fef3f2] text-[#b42318]'
+                }`}>
+                  3
+                </span>
+              </button>
+
+              {/* Placement Metrics */}
+              <button 
+                onClick={() => onSelectTab('metrics')}
+                className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg font-medium transition-colors text-left ${
+                  currentTab === 'metrics' 
+                    ? 'bg-[#1668e8] text-white shadow-xs' 
+                    : 'text-[#344054] hover:bg-[#f9fafb]'
+                }`}
+              >
+                <BarChart3 className={`w-4 h-4 ${currentTab === 'metrics' ? 'text-white' : 'text-[#667085]'}`} />
+                <span>Placement Metrics</span>
+              </button>
+            </div>
+          </>
+        )}
+
+        {/* Role: INTERVIEWER Sections */}
+        {currentUser?.role === 'INTERVIEWER' && (
+          <>
+            <div className="space-y-1 pt-1 border-t border-[#f2f4f7]">
+              <span className="px-3 text-[10px] font-bold text-[#98a2b3] uppercase tracking-wider block mb-1">
+                My Workspace
+              </span>
+
+              <button 
+                onClick={() => onSelectTab('flowchart')}
+                className={`w-full flex items-center justify-between px-3 py-2 rounded-lg font-medium transition-colors text-left ${
+                  currentTab === 'flowchart' 
+                    ? 'bg-[#1668e8] text-white shadow-xs' 
+                    : 'text-[#344054] hover:bg-[#f9fafb]'
+                }`}
+              >
+                <div className="flex items-center gap-2.5">
+                  <GitBranch className={`w-4 h-4 ${currentTab === 'flowchart' ? 'text-white' : 'text-[#667085]'}`} />
+                  <span>My Schedule & Loops</span>
+                </div>
+              </button>
+
+              <button 
+                onClick={() => onSelectTab('my-tasks')}
+                className={`w-full flex items-center justify-between px-3 py-2 rounded-lg font-medium transition-colors text-left ${
+                  currentTab === 'my-tasks' 
+                    ? 'bg-[#1668e8] text-white shadow-xs' 
+                    : 'text-[#344054] hover:bg-[#f9fafb]'
+                }`}
+              >
+                <div className="flex items-center gap-2.5">
+                  <CheckSquare className={`w-4 h-4 ${currentTab === 'my-tasks' ? 'text-white' : 'text-[#667085]'}`} />
+                  <span>Pending Scorecards</span>
+                </div>
+                <span className="text-[10px] px-1.5 py-0.2 rounded-full font-bold bg-[#fef3f2] text-[#b42318]">
+                  1
+                </span>
+              </button>
+            </div>
+          </>
+        )}
+
+        {/* Role: CANDIDATE Sections */}
+        {currentUser?.role === 'CANDIDATE' && (
+          <>
+            <div className="space-y-1 pt-1 border-t border-[#f2f4f7]">
+              <span className="px-3 text-[10px] font-bold text-[#98a2b3] uppercase tracking-wider block mb-1">
+                My Placement
+              </span>
+
+              <button 
+                onClick={() => onSelectTab('flowchart')}
+                className={`w-full flex items-center justify-between px-3 py-2 rounded-lg font-medium transition-colors text-left ${
+                  currentTab === 'flowchart' 
+                    ? 'bg-[#1668e8] text-white shadow-xs' 
+                    : 'text-[#344054] hover:bg-[#f9fafb]'
+                }`}
+              >
+                <div className="flex items-center gap-2.5">
+                  <GitBranch className={`w-4 h-4 ${currentTab === 'flowchart' ? 'text-white' : 'text-[#667085]'}`} />
+                  <span>Confirmed Rounds</span>
+                </div>
+              </button>
+            </div>
+          </>
+        )}
 
       </nav>
 
-      {/* Footer Settings & Help */}
-      <div className="p-2.5 border-t border-[#f1f3f5] space-y-0.5 text-xs">
+      {/* Footer Settings */}
+      <div className="p-2 border-t border-[#f1f3f5] text-xs">
         <button 
           onClick={() => onSelectTab('settings')}
           className={`w-full flex items-center gap-2.5 px-3 py-1.5 rounded-lg font-medium transition-colors text-left ${
             currentTab === 'settings' 
-              ? 'bg-[#1668e8] text-white' 
+              ? 'bg-[#1668e8] text-white shadow-xs' 
               : 'text-[#475467] hover:bg-[#f9fafb]'
           }`}
         >
           <Settings className={`w-4 h-4 ${currentTab === 'settings' ? 'text-white' : 'text-[#667085]'}`} />
           <span>Settings</span>
-        </button>
-
-        <button 
-          onClick={() => onSelectTab('help')}
-          className={`w-full flex items-center gap-2.5 px-3 py-1.5 rounded-lg font-medium transition-colors text-left ${
-            currentTab === 'help' 
-              ? 'bg-[#1668e8] text-white' 
-              : 'text-[#475467] hover:bg-[#f9fafb]'
-          }`}
-        >
-          <HelpCircle className={`w-4 h-4 ${currentTab === 'help' ? 'text-white' : 'text-[#667085]'}`} />
-          <span>Help & support</span>
         </button>
       </div>
 
