@@ -288,35 +288,31 @@ export const HomeDashboardView: React.FC<HomeDashboardViewProps> = ({
         {currentUser.role === 'INTERVIEWER' && (
           <div className="space-y-6">
             
-            {/* Urgent Pings & Coordinator Nudges Hero Strip */}
+            {/* Urgent Pings & Coordinator Nudges Hero Strip (Soft light-red breathing tint, Apple rounded-2xl, no red border, no warning sign) */}
             {!isScorecardSubmitted ? (
-              <div className="bg-red-50 border-2 border-red-500 rounded-xl p-4 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4 animate-in fade-in">
-                <div className="flex items-start gap-3.5">
-                  <div className="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center shrink-0 mt-0.5 border border-red-200">
-                    <AlertTriangle className="w-5 h-5 text-red-600 animate-bounce" />
+              <div className="bg-rose-50/70 animate-pulse border border-rose-200/50 rounded-2xl p-4.5 shadow-2xs flex flex-col sm:flex-row sm:items-center justify-between gap-4 transition-all">
+                <div className="space-y-1">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-rose-100 text-rose-800">
+                      <span className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-ping" />
+                      <span>{isNudged ? 'Evaluation Requested' : 'Coordinator Ping'}</span>
+                    </span>
+                    <span className="text-xs text-rose-900/70 font-medium">• From Coordinator Emma Watson</span>
+                    <span className="px-2.5 py-0.5 rounded-full text-[10px] font-medium bg-amber-50 text-amber-800 border border-amber-200">
+                      Overdue 3h
+                    </span>
                   </div>
-                  <div>
-                    <div className="flex flex-wrap items-center gap-2">
-                      <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-red-600 text-white uppercase tracking-wider">
-                        {isNudged ? '🚨 Urgent Coordinator Nudge' : '🚨 Urgent Coordinator Ping'}
-                      </span>
-                      <span className="text-xs text-red-900 font-bold">• From Coordinator Emma Watson</span>
-                      <span className="px-2 py-0.2 rounded text-[10px] font-bold bg-amber-100 text-amber-900 border border-amber-300">
-                        Overdue 3h
-                      </span>
-                    </div>
-                    <h3 className="text-sm font-bold text-red-950 mt-1">
-                      Action Required: Submit Scorecard for Marcus Vance (Round 1: Problem Solving & DSA Screen)
-                    </h3>
-                    <p className="text-xs text-red-800 mt-1 leading-relaxed">
-                      Emma Watson nudged your desk for Marcus Vance's scorecard. Candidate finished live coding session in Virtual Pod Alpha. Round 2 Systems schedule is currently frozen pending your evaluation.
-                    </p>
-                  </div>
+                  <h3 className="text-sm font-bold text-[#101828] mt-1.5">
+                    Marcus Vance — Round 1: Problem Solving & DSA Screen
+                  </h3>
+                  <p className="text-xs text-[#475467] mt-0.5 leading-relaxed">
+                    Emma Watson requested Marcus Vance's scorecard. Candidate finished live coding session in Virtual Pod Alpha. Round 2 Systems schedule is currently frozen pending your evaluation.
+                  </p>
                 </div>
                 <div className="flex items-center gap-2 shrink-0">
                   <button
                     onClick={() => setEvalModalOpen(true)}
-                    className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-xs font-bold rounded-lg shadow-sm flex items-center justify-center gap-1.5 transition-colors"
+                    className="px-4 py-2 bg-[#1668e8] hover:bg-[#145ac7] text-white text-xs font-semibold rounded-full shadow-xs flex items-center justify-center gap-1.5 transition-colors"
                   >
                     <FileEdit className="w-3.5 h-3.5" />
                     <span>Score Now</span>
@@ -324,7 +320,7 @@ export const HomeDashboardView: React.FC<HomeDashboardViewProps> = ({
                 </div>
               </div>
             ) : (
-              <div className="bg-[#ecfdf3] border border-[#a6f4c5] rounded-xl p-4 shadow-2xs flex items-center justify-between text-xs text-[#027a48] animate-in fade-in">
+              <div className="bg-[#ecfdf3] border border-[#a6f4c5] rounded-2xl p-4 shadow-2xs flex items-center justify-between text-xs text-[#027a48] animate-in fade-in">
                 <div className="flex items-center gap-3">
                   <div className="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center">
                     <CheckCircle2 className="w-5 h-5 text-emerald-600" />
@@ -336,7 +332,7 @@ export const HomeDashboardView: React.FC<HomeDashboardViewProps> = ({
                     </p>
                   </div>
                 </div>
-                <span className="px-2.5 py-1 bg-white text-[10px] font-bold rounded-md border border-[#a6f4c5] uppercase">
+                <span className="px-2.5 py-1 bg-white text-[10px] font-bold rounded-full border border-[#a6f4c5] uppercase">
                   Zero Pending Loops
                 </span>
               </div>
@@ -351,30 +347,30 @@ export const HomeDashboardView: React.FC<HomeDashboardViewProps> = ({
                     <FileEdit className="w-4 h-4 text-[#1668e8]" />
                     Candidates Left to Score
                   </h2>
-                  <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full border ${
+                  <span className={`text-[11px] font-semibold px-2.5 py-0.5 rounded-full border ${
                     isScorecardSubmitted 
                       ? 'text-emerald-700 bg-emerald-50 border-emerald-200' 
-                      : 'text-red-600 bg-red-50 border-red-200'
+                      : 'text-rose-700 bg-rose-50 border-rose-200'
                   }`}>
                     {isScorecardSubmitted ? '0 Pending' : '1 Pending Evaluation'}
                   </span>
                 </div>
 
               {!isScorecardSubmitted ? (
-                <div className={`bg-white rounded-xl p-4 shadow-2xs space-y-3 transition-all ${
+                <div className={`rounded-2xl p-4 shadow-2xs space-y-3 transition-all ${
                   isNudged 
-                    ? 'border-2 border-red-500 bg-red-50/20 shadow-md ring-2 ring-red-200' 
-                    : 'border border-red-200'
+                    ? 'bg-rose-50/40 animate-pulse border border-rose-200/60' 
+                    : 'bg-white border border-[#eaecf0]'
                 }`}>
                   <div className="flex items-start justify-between gap-3">
                     <div className="space-y-1">
                       <div className="flex items-center gap-2">
-                        <span className={`text-[10px] font-bold px-1.5 py-0.2 rounded ${
+                        <span className={`text-[10px] font-semibold px-2.5 py-0.5 rounded-full ${
                           isNudged 
-                            ? 'bg-red-600 text-white animate-pulse' 
-                            : 'text-red-700 bg-red-50 border border-red-200'
+                            ? 'bg-rose-100 text-rose-800 border border-rose-200/60' 
+                            : 'text-amber-700 bg-amber-50 border border-amber-200'
                         }`}>
-                          {isNudged ? 'NUDGED BY COORDINATOR' : 'Urgent: Scorecard Due Today'}
+                          {isNudged ? 'Nudged by Coordinator' : 'Scorecard Due Today'}
                         </span>
                         <span className="text-[11px] text-[#667085]">Completed {convertTime('11:00 AM')}</span>
                       </div>
@@ -388,7 +384,7 @@ export const HomeDashboardView: React.FC<HomeDashboardViewProps> = ({
 
                     <button
                       onClick={() => setEvalModalOpen(true)}
-                      className="px-3.5 py-2 bg-[#1668e8] hover:bg-[#145ac7] text-white text-xs font-bold rounded-lg shrink-0 flex items-center gap-1.5 shadow-xs"
+                      className="px-4 py-2 bg-[#1668e8] hover:bg-[#145ac7] text-white text-xs font-semibold rounded-full shrink-0 flex items-center gap-1.5 shadow-xs transition-colors"
                     >
                       <FileEdit className="w-3.5 h-3.5" />
                       <span>Score Now</span>

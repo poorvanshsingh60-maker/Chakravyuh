@@ -74,19 +74,19 @@ export const Sidebar: React.FC<SidebarProps> = ({
       {/* Search Input with Live Quick-Results Popover */}
       <div className="p-3 relative">
         <div className="relative">
-          <Search className="w-4 h-4 text-[#98a2b3] absolute left-3 top-1/2 -translate-y-1/2" />
+          <Search className="w-4 h-4 text-[#98a2b3] absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
           <input 
             type="text" 
             placeholder="Search..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             onFocus={() => setSearchFocused(true)}
-            className="w-full bg-white border border-[#d0d5dd] rounded-lg pl-9 pr-7 py-1.5 text-xs text-[#344054] placeholder-[#98a2b3] focus:outline-none focus:border-[#1668e8] focus:ring-1 focus:ring-[#1668e8]"
+            className="w-full bg-[#f2f4f7]/80 hover:bg-[#f2f4f7] focus:bg-white border border-[#d0d5dd] focus:border-[#1668e8] rounded-full pl-9 pr-8 py-2 text-xs text-[#344054] placeholder-[#98a2b3] focus:outline-none focus:ring-2 focus:ring-[#1668e8]/15 shadow-2xs transition-all"
           />
           {searchTerm && (
             <button 
               onClick={() => setSearchTerm('')} 
-              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#98a2b3] hover:text-[#344054]"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-[#98a2b3] hover:text-[#344054]"
             >
               <X className="w-3.5 h-3.5" />
             </button>
@@ -95,7 +95,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
         {/* Live Search Results Popup */}
         {searchFocused && hasResults && (
-          <div className="absolute left-3 right-3 top-12 bg-white rounded-xl border border-[#eaecf0] shadow-xl z-50 p-2 text-xs space-y-2 animate-in fade-in duration-100">
+          <div className="absolute left-3 right-3 top-13 bg-white rounded-2xl border border-[#eaecf0] shadow-xl z-50 p-2.5 text-xs space-y-2 animate-in fade-in duration-100">
             {matchingCandidates.length > 0 && (
               <div>
                 <span className="text-[10px] font-bold text-[#98a2b3] uppercase tracking-wider px-2">Candidates</span>

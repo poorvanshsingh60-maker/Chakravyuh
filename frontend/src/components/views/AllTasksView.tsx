@@ -78,7 +78,7 @@ export const AllTasksView: React.FC<AllTasksViewProps> = ({
       </div>
 
       {reminderToast && (
-        <div className="mx-8 mt-4 p-3.5 rounded-xl bg-[#ecfdf3] text-[#0b7c3e] border border-[#abefc6] text-xs font-semibold flex items-center gap-2 animate-in fade-in">
+        <div className="mx-8 mt-4 p-3.5 rounded-2xl bg-[#ecfdf3] text-[#0b7c3e] border border-[#abefc6] text-xs font-semibold flex items-center gap-2 animate-in fade-in">
           <CheckCircle2 className="w-4 h-4 text-[#0b7c3e]" />
           <span>{reminderToast}</span>
         </div>
@@ -89,22 +89,22 @@ export const AllTasksView: React.FC<AllTasksViewProps> = ({
         {/* Search & Filter Toolbar */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div className="relative w-full sm:w-72">
-            <Search className="w-4 h-4 text-[#98a2b3] absolute left-3 top-1/2 -translate-y-1/2" />
+            <Search className="w-4 h-4 text-[#98a2b3] absolute left-3.5 top-1/2 -translate-y-1/2" />
             <input 
               type="text" 
               placeholder="Search by candidate, interviewer, or task..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full bg-white border border-[#d0d5dd] rounded-lg pl-9 pr-3 py-1.5 text-xs text-[#344054] placeholder-[#98a2b3] focus:outline-none focus:border-[#1668e8]"
+              className="w-full bg-[#f8f9fa] hover:bg-[#f2f4f7] focus:bg-white border border-[#d0d5dd] focus:border-[#1668e8] rounded-full pl-9 pr-4 py-2 text-xs text-[#344054] placeholder-[#98a2b3] focus:outline-none transition-colors"
             />
           </div>
 
-          <div className="flex flex-wrap items-center gap-1.5 text-xs font-medium bg-[#f2f4f7] p-1 rounded-lg">
+          <div className="flex flex-wrap items-center gap-1.5 text-xs font-medium bg-[#f2f4f7] p-1 rounded-full">
             {['ALL', 'SCORECARD', 'SHADOW_REVIEW', 'RESCHEDULE'].map((t) => (
               <button
                 key={t}
                 onClick={() => setTypeFilter(t)}
-                className={`px-3 py-1 rounded-md transition-all ${
+                className={`px-3.5 py-1 rounded-full transition-all ${
                   typeFilter === t ? 'bg-white text-[#101828] shadow-2xs font-semibold' : 'text-[#667085]'
                 }`}
               >
@@ -115,7 +115,7 @@ export const AllTasksView: React.FC<AllTasksViewProps> = ({
         </div>
 
         {/* Tasks Table */}
-        <div className="border border-[#eaecf0] rounded-xl overflow-hidden bg-white shadow-2xs">
+        <div className="border border-[#eaecf0] rounded-2xl overflow-hidden bg-white shadow-2xs">
           <table className="w-full text-left text-xs border-collapse">
             <thead>
               <tr className="bg-[#fafafa] border-b border-[#eaecf0] text-[#475467] font-semibold">
@@ -144,7 +144,7 @@ export const AllTasksView: React.FC<AllTasksViewProps> = ({
                     {task.dueDate} {task.dueTime}
                   </td>
                   <td className="p-3.5">
-                    <span className={`inline-flex px-2 py-0.5 rounded text-[11px] font-semibold ${
+                    <span className={`inline-flex px-2.5 py-0.5 rounded-full text-[11px] font-semibold ${
                       task.status === 'COMPLETED'
                         ? 'bg-[#ecfdf3] text-[#0b7c3e] border border-[#abefc6]'
                         : 'bg-[#fffaeb] text-[#b54708] border border-[#fedf89]'
@@ -154,7 +154,7 @@ export const AllTasksView: React.FC<AllTasksViewProps> = ({
                   </td>
                   <td className="p-3.5 pr-6 text-right space-x-2">
                     {task.status === 'COMPLETED' ? (
-                      <span className="inline-flex items-center gap-1 text-xs font-semibold text-[#0b7c3e] bg-[#ecfdf3] px-2.5 py-1 rounded-md border border-[#abefc6]">
+                      <span className="inline-flex items-center gap-1 text-xs font-semibold text-[#0b7c3e] bg-[#ecfdf3] px-3 py-1 rounded-full border border-[#abefc6]">
                         <Check className="w-3.5 h-3.5" />
                         <span>Resolved</span>
                       </span>
@@ -163,14 +163,14 @@ export const AllTasksView: React.FC<AllTasksViewProps> = ({
                         {onSelectTaskToSchedule && (
                           <button 
                             onClick={onSelectTaskToSchedule}
-                            className="px-3 py-1.5 rounded-lg bg-[#1668e8] hover:bg-[#145ac7] text-white font-semibold text-xs shadow-2xs transition-colors inline-flex items-center gap-1"
+                            className="px-3.5 py-1.5 rounded-full bg-[#1668e8] hover:bg-[#145ac7] text-white font-semibold text-xs shadow-2xs transition-colors inline-flex items-center gap-1"
                           >
                             <span>Go to Automate Schedule →</span>
                           </button>
                         )}
                         <button 
                           onClick={() => setSelectedTask(task)}
-                          className="px-2.5 py-1.5 rounded-lg border border-[#d0d5dd] text-[#344054] hover:bg-[#f9fafb] font-medium text-xs shadow-2xs transition-colors"
+                          className="px-3 py-1.5 rounded-full border border-[#d0d5dd] text-[#344054] hover:bg-[#f9fafb] font-medium text-xs shadow-2xs transition-colors"
                         >
                           Details
                         </button>

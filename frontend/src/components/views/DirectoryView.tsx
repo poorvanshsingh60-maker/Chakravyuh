@@ -79,7 +79,7 @@ export const DirectoryView: React.FC<DirectoryViewProps> = ({ interviewers }) =>
       </div>
 
       {toastMessage && (
-        <div className="mx-8 mt-4 p-3.5 rounded-xl bg-[#ecfdf3] text-[#0b7c3e] border border-[#abefc6] text-xs font-semibold flex items-center gap-2 animate-in fade-in">
+        <div className="mx-8 mt-4 p-3.5 rounded-2xl bg-[#ecfdf3] text-[#0b7c3e] border border-[#abefc6] text-xs font-semibold flex items-center gap-2 animate-in fade-in">
           <CheckCircle2 className="w-4 h-4 text-[#0b7c3e]" />
           <span>{toastMessage}</span>
         </div>
@@ -89,13 +89,13 @@ export const DirectoryView: React.FC<DirectoryViewProps> = ({ interviewers }) =>
         
         {/* Search */}
         <div className="relative w-full sm:w-80">
-          <Search className="w-4 h-4 text-[#98a2b3] absolute left-3 top-1/2 -translate-y-1/2" />
+          <Search className="w-4 h-4 text-[#98a2b3] absolute left-3.5 top-1/2 -translate-y-1/2" />
           <input 
             type="text" 
             placeholder="Search by name, role, or skill..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full bg-white border border-[#d0d5dd] rounded-lg pl-9 pr-3 py-1.5 text-xs text-[#344054] placeholder-[#98a2b3] focus:outline-none focus:border-[#1668e8]"
+            className="w-full bg-[#f8f9fa] hover:bg-[#f2f4f7] focus:bg-white border border-[#d0d5dd] focus:border-[#1668e8] rounded-full pl-9 pr-4 py-2 text-xs text-[#344054] placeholder-[#98a2b3] focus:outline-none transition-colors"
           />
         </div>
 
@@ -105,7 +105,7 @@ export const DirectoryView: React.FC<DirectoryViewProps> = ({ interviewers }) =>
             <div 
               key={item.id} 
               onClick={() => setSelectedInterviewer(item)}
-              className="p-5 rounded-xl border border-[#eaecf0] bg-white shadow-2xs space-y-4 hover:border-[#1668e8]/50 hover:shadow-xs transition-all cursor-pointer"
+              className="p-5 rounded-2xl border border-[#eaecf0] bg-white shadow-2xs space-y-4 hover:border-[#1668e8]/50 hover:shadow-xs transition-all cursor-pointer"
             >
               <div className="flex items-start justify-between">
                 <div className="flex items-center gap-3">
@@ -118,7 +118,7 @@ export const DirectoryView: React.FC<DirectoryViewProps> = ({ interviewers }) =>
                 </div>
 
                 <div className="text-right space-y-1">
-                  <span className={`text-[11px] font-semibold px-2 py-0.5 rounded border inline-block ${
+                  <span className={`text-[11px] font-semibold px-2.5 py-0.5 rounded-full border inline-block ${
                     item.status === 'ACTIVE' 
                       ? 'bg-[#ecfdf3] text-[#0b7c3e] border-[#abefc6]' 
                       : 'bg-[#fffaeb] text-[#b54708] border-[#fedf89]'
@@ -138,7 +138,7 @@ export const DirectoryView: React.FC<DirectoryViewProps> = ({ interviewers }) =>
                 </span>
                 <div className="flex flex-wrap gap-1.5">
                   {item.skills.map((skill, sIdx) => (
-                    <span key={sIdx} className="text-[11px] px-2 py-0.5 rounded bg-[#f2f4f7] text-[#344054] font-medium border border-[#eaecf0]">
+                    <span key={sIdx} className="text-[11px] px-2.5 py-0.5 rounded-full bg-[#f2f4f7] text-[#344054] font-medium border border-[#eaecf0]">
                       {skill}
                     </span>
                   ))}

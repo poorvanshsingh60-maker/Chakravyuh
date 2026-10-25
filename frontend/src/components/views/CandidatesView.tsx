@@ -83,22 +83,22 @@ export const CandidatesView: React.FC<CandidatesViewProps> = ({
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="relative w-72">
-              <Search className="w-4 h-4 text-[#98a2b3] absolute left-3 top-1/2 -translate-y-1/2" />
+              <Search className="w-4 h-4 text-[#98a2b3] absolute left-3.5 top-1/2 -translate-y-1/2" />
               <input 
                 type="text" 
                 placeholder="Search candidates or roles..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="w-full bg-white border border-[#d0d5dd] rounded-lg pl-9 pr-3 py-1.5 text-xs text-[#344054] placeholder-[#98a2b3] focus:outline-none focus:border-[#1668e8]"
+                className="w-full bg-[#f8f9fa] hover:bg-[#f2f4f7] focus:bg-white border border-[#d0d5dd] focus:border-[#1668e8] rounded-full pl-9 pr-4 py-2 text-xs text-[#344054] placeholder-[#98a2b3] focus:outline-none transition-colors"
               />
             </div>
 
-            <div className="flex items-center bg-[#f2f4f7] p-1 rounded-lg text-xs font-medium">
+            <div className="flex items-center bg-[#f2f4f7] p-1 rounded-full text-xs font-medium">
               {['ALL', 'Technical Loop', 'Recruiter Screen', 'Executive Review'].map((s) => (
                 <button
                   key={s}
                   onClick={() => setFilterStage(s)}
-                  className={`px-3 py-1 rounded-md transition-all ${
+                  className={`px-3.5 py-1 rounded-full transition-all ${
                     filterStage === s ? 'bg-white text-[#101828] shadow-2xs font-semibold' : 'text-[#667085]'
                   }`}
                 >
@@ -110,7 +110,7 @@ export const CandidatesView: React.FC<CandidatesViewProps> = ({
         </div>
 
         {/* Table */}
-        <div className="border border-[#eaecf0] rounded-xl overflow-hidden bg-white shadow-2xs">
+        <div className="border border-[#eaecf0] rounded-2xl overflow-hidden bg-white shadow-2xs">
           <table className="w-full text-left text-xs border-collapse">
             <thead>
               <tr className="bg-[#fafafa] border-b border-[#eaecf0] text-[#475467] font-semibold">
@@ -136,23 +136,23 @@ export const CandidatesView: React.FC<CandidatesViewProps> = ({
                   </td>
                   <td className="p-3.5 font-medium text-[#101828]">{cand.role}</td>
                   <td className="p-3.5 text-[#475467]">
-                    <span className="inline-block px-2 py-0.5 rounded bg-[#f2f4f7] font-medium text-[#344054] border border-[#eaecf0]">
+                    <span className="inline-block px-2.5 py-0.5 rounded-full bg-[#f2f4f7] font-medium text-[#344054] border border-[#eaecf0]">
                       {cand.stage}
                     </span>
                   </td>
                   <td className="p-3.5 text-[#475467]">{cand.recruiter}</td>
                   <td className="p-3.5">
                     {cand.status === 'SCHEDULED' ? (
-                      <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-[#0b7c3e] bg-[#ecfdf3] px-2 py-0.5 rounded border border-[#abefc6]">
+                      <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-[#0b7c3e] bg-[#ecfdf3] px-2.5 py-0.5 rounded-full border border-[#abefc6]">
                         <CheckCircle2 className="w-3 h-3 text-[#0b7c3e]" />
                         {cand.scheduledDate || 'Scheduled'}
                       </span>
                     ) : cand.status === 'NEEDS_SCHEDULING' ? (
-                      <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-[#b54708] bg-[#fffaeb] px-2 py-0.5 rounded border border-[#fedf89]">
+                      <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-[#b54708] bg-[#fffaeb] px-2.5 py-0.5 rounded-full border border-[#fedf89]">
                         Needs Scheduling
                       </span>
                     ) : (
-                      <span className="inline-flex text-[11px] font-semibold text-[#1668e8] bg-[#e7f2fe] px-2 py-0.5 rounded border border-[#bcd7fd]">
+                      <span className="inline-flex text-[11px] font-semibold text-[#1668e8] bg-[#e7f2fe] px-2.5 py-0.5 rounded-full border border-[#bcd7fd]">
                         Decision Pending
                       </span>
                     )}
@@ -160,7 +160,7 @@ export const CandidatesView: React.FC<CandidatesViewProps> = ({
                   <td className="p-3.5 pr-6 text-right">
                     <button 
                       onClick={() => onScheduleCandidate(cand)}
-                      className="px-3 py-1 rounded bg-[#1668e8] hover:bg-[#145ac7] text-white font-medium shadow-2xs transition-colors"
+                      className="px-3.5 py-1.5 rounded-full bg-[#1668e8] hover:bg-[#145ac7] text-white font-semibold shadow-2xs transition-colors"
                     >
                       Schedule Loop
                     </button>

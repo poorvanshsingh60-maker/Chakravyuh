@@ -6,8 +6,7 @@ import {
   Video, 
   FileText, 
   Check, 
-  MapPin,
-  AlertTriangle
+  MapPin
 } from 'lucide-react';
 import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
@@ -207,7 +206,7 @@ export const InterviewerWorkspace: React.FC = () => {
         <div className="flex items-center gap-2 mt-3 pt-2 border-t border-[#f2f4f7]">
           <button
             onClick={() => setActiveTab('dashboard')}
-            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 ${
+            className={`px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all flex items-center gap-1.5 ${
               activeTab === 'dashboard'
                 ? 'bg-[#1668e8] text-white shadow-xs'
                 : 'bg-white border border-[#d0d5dd] text-[#344054] hover:bg-[#f9fafb]'
@@ -219,7 +218,7 @@ export const InterviewerWorkspace: React.FC = () => {
 
           <button
             onClick={() => setActiveTab('availability')}
-            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 ${
+            className={`px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all flex items-center gap-1.5 ${
               activeTab === 'availability'
                 ? 'bg-[#1668e8] text-white shadow-xs'
                 : 'bg-white border border-[#d0d5dd] text-[#344054] hover:bg-[#f9fafb]'
@@ -252,34 +251,30 @@ export const InterviewerWorkspace: React.FC = () => {
         {activeTab === 'dashboard' && (
           <div className="space-y-3">
             
-            {/* Urgent Nudge Alert from Coordinator */}
+            {/* Urgent Nudge Alert from Coordinator (Soft light-red breathing tint, Apple rounded-2xl, no red border, no warning sign) */}
             {isNudged && !isScorecardSubmitted && (
-              <div className="bg-red-50 border-2 border-red-500 rounded-xl p-4 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-3 animate-in fade-in">
-                <div className="flex items-start gap-3">
-                  <div className="w-8 h-8 rounded-full bg-red-100 flex items-center justify-center shrink-0 mt-0.5">
-                    <AlertTriangle className="w-4 h-4 text-red-600 animate-bounce" />
+              <div className="bg-rose-50/70 animate-pulse border border-rose-200/50 rounded-2xl p-4.5 shadow-2xs flex flex-col sm:flex-row sm:items-center justify-between gap-4 transition-all">
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2">
+                    <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-rose-100 text-rose-800">
+                      <span className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-ping" />
+                      <span>Evaluation Requested</span>
+                    </span>
+                    <span className="text-xs text-rose-900/70 font-medium">• Coordinator Emma Watson</span>
                   </div>
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-red-600 text-white uppercase tracking-wider">
-                        Urgent Coordinator Nudge
-                      </span>
-                      <span className="text-xs text-red-800 font-semibold">From Coordinator Emma Watson</span>
-                    </div>
-                    <h3 className="text-sm font-bold text-red-950 mt-1">
-                      Immediate Scorecard Evaluation Required for Marcus Vance
-                    </h3>
-                    <p className="text-xs text-red-700 mt-0.5">
-                      Coordinator Emma Watson requested your scorecard for Round 1 to unblock candidate advancement to Round 2.
-                    </p>
-                  </div>
+                  <h3 className="text-sm font-bold text-[#101828] mt-1">
+                    Marcus Vance — Round 1: Problem Solving & DSA Screen
+                  </h3>
+                  <p className="text-xs text-[#475467] mt-0.5">
+                    Coordinator Emma Watson requested your scorecard for Round 1 to unblock candidate advancement to Round 2.
+                  </p>
                 </div>
                 <button
                   onClick={() => {
                     const targetInv = interviews.find(i => i.id === 'inv-101') || interviews[0];
                     openScorecard(targetInv);
                   }}
-                  className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-xs font-bold rounded-lg shrink-0 flex items-center justify-center gap-1.5 shadow-sm transition-colors"
+                  className="px-4 py-2 bg-[#1668e8] hover:bg-[#145ac7] text-white text-xs font-semibold rounded-full shrink-0 flex items-center justify-center gap-1.5 shadow-xs transition-all"
                 >
                   <FileText className="w-3.5 h-3.5" />
                   <span>Fill Scorecard Now</span>
@@ -306,10 +301,10 @@ export const InterviewerWorkspace: React.FC = () => {
                 return (
                   <div 
                     key={inv.id}
-                    className={`rounded-xl shadow-2xs p-3.5 flex flex-col md:flex-row md:items-center justify-between gap-3 transition-all ${
+                    className={`rounded-2xl shadow-2xs p-3.5 flex flex-col md:flex-row md:items-center justify-between gap-3 transition-all ${
                       isItemNudged
-                        ? 'bg-red-50/20 border-2 border-red-500 shadow-md ring-2 ring-red-200'
-                        : 'bg-white border border-[#eaecf0] hover:border-[#1668e8]/40'
+                        ? 'bg-rose-50/40 animate-pulse border border-rose-200/60'
+                        : 'bg-white border border-[#eaecf0] hover:border-[#1668e8]/30'
                     }`}
                   >
                     <div className="flex items-start gap-3">
@@ -320,19 +315,19 @@ export const InterviewerWorkspace: React.FC = () => {
                           <span className="text-[11px] text-[#667085]">• {inv.role}</span>
                           
                           {isEvaluated ? (
-                            <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-[#ecfdf3] text-[#027a48] border border-[#a6f4c5]">
+                            <span className="px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-[#ecfdf3] text-[#027a48] border border-[#a6f4c5]">
                               Evaluated ({inv.decision || 'STRONG_HIRE'})
                             </span>
                           ) : isItemNudged ? (
-                            <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-red-600 text-white animate-pulse">
-                              URGENT: NUDGED BY COORDINATOR
+                            <span className="px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-rose-100 text-rose-800 border border-rose-200/60">
+                              Nudged by Coordinator
                             </span>
                           ) : isConfirmed ? (
-                            <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-[#eff8ff] text-[#175cd3] border border-[#b2ddff]">
+                            <span className="px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-[#eff8ff] text-[#175cd3] border border-[#b2ddff]">
                               Confirmed & Ready
                             </span>
                           ) : (
-                            <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200">
+                            <span className="px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-amber-50 text-amber-700 border border-amber-200">
                               Invite Sent (Pending)
                             </span>
                           )}
@@ -357,7 +352,7 @@ export const InterviewerWorkspace: React.FC = () => {
                         href={inv.meetingLink}
                         target="_blank"
                         rel="noreferrer"
-                        className="px-3 py-1.5 rounded-lg border border-[#d0d5dd] hover:bg-[#f9fafb] text-[#344054] text-xs font-semibold flex items-center gap-1.5 transition-colors"
+                        className="px-3.5 py-1.5 rounded-full border border-[#d0d5dd] hover:bg-[#f9fafb] text-[#344054] text-xs font-semibold flex items-center gap-1.5 transition-colors"
                       >
                         <Video className="w-3.5 h-3.5 text-[#1668e8]" />
                         <span>Google Meet</span>
@@ -365,7 +360,7 @@ export const InterviewerWorkspace: React.FC = () => {
 
                       <button
                         onClick={() => openScorecard(inv)}
-                        className={`px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 shadow-xs transition-colors ${
+                        className={`px-3.5 py-1.5 rounded-full text-xs font-semibold flex items-center gap-1.5 shadow-xs transition-colors ${
                           isEvaluated
                             ? 'bg-[#f2f4f7] text-[#344054] hover:bg-[#eaecf0]'
                             : 'bg-[#1668e8] hover:bg-[#145ac7] text-white'

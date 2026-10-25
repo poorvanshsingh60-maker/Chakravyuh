@@ -108,7 +108,7 @@ export const JobsView: React.FC<JobsViewProps> = ({ jobs }) => {
           <button 
             type="button"
             onClick={() => setCreateJobModalOpen(true)}
-            className="px-3.5 py-1.5 rounded-lg bg-[#1668e8] hover:bg-[#145ac7] text-white text-xs font-semibold shadow-2xs flex items-center gap-1.5 transition-colors"
+            className="px-4 py-2 rounded-full bg-[#1668e8] hover:bg-[#145ac7] text-white text-xs font-semibold shadow-2xs flex items-center gap-1.5 transition-colors"
           >
             <Plus className="w-3.5 h-3.5" />
             <span>Create Job Setup</span>
@@ -117,7 +117,7 @@ export const JobsView: React.FC<JobsViewProps> = ({ jobs }) => {
       </div>
 
       {feedbackToast && (
-        <div className="mx-8 mt-4 p-3.5 rounded-xl bg-[#ecfdf3] text-[#0b7c3e] border border-[#abefc6] text-xs font-semibold flex items-center gap-2 animate-in fade-in">
+        <div className="mx-8 mt-4 p-3.5 rounded-2xl bg-[#ecfdf3] text-[#0b7c3e] border border-[#abefc6] text-xs font-semibold flex items-center gap-2 animate-in fade-in">
           <CheckCircle2 className="w-4 h-4 text-[#0b7c3e]" />
           <span>{feedbackToast}</span>
         </div>
@@ -139,7 +139,7 @@ export const JobsView: React.FC<JobsViewProps> = ({ jobs }) => {
                 <div
                   key={job.id}
                   onClick={() => setSelectedJob(job)}
-                  className={`p-4 rounded-xl border transition-all cursor-pointer ${
+                  className={`p-4 rounded-2xl border transition-all cursor-pointer ${
                     isSelected 
                       ? 'border-[#1668e8] bg-[#f9fafb] ring-1 ring-[#1668e8]/20 shadow-2xs' 
                       : 'border-[#eaecf0] bg-white hover:bg-[#fafafa]'
@@ -171,10 +171,10 @@ export const JobsView: React.FC<JobsViewProps> = ({ jobs }) => {
 
         {/* Right Column: Calibrated Round Plan (7 Cols) */}
         <div className="col-span-12 md:col-span-7 space-y-4">
-          <div className="bg-white border border-[#eaecf0] rounded-xl p-6 shadow-2xs space-y-6">
+          <div className="bg-white border border-[#eaecf0] rounded-2xl p-6 shadow-2xs space-y-6">
             
             <div className="border-b border-[#f2f4f7] pb-4">
-              <span className="text-[11px] font-semibold text-[#1668e8] bg-[#e7f2fe] px-2 py-0.5 rounded border border-[#bcd7fd]">
+              <span className="text-[11px] font-semibold text-[#1668e8] bg-[#e7f2fe] px-2.5 py-0.5 rounded-full border border-[#bcd7fd]">
                 INTERVIEW LOOP SETUP
               </span>
               <h3 className="text-lg font-bold text-[#101828] mt-2">
