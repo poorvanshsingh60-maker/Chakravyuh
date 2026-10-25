@@ -179,7 +179,7 @@ export const DirectoryView: React.FC<DirectoryViewProps> = ({ interviewers }) =>
                 <div>
                   <h3 className="font-bold text-sm text-[#101828]">{selectedInterviewer.name}</h3>
                   <p className="text-xs text-[#667085]">{selectedInterviewer.role} • {selectedInterviewer.team}</p>
-                  <span className="text-[11px] font-mono font-semibold text-[#1668e8]">
+                  <span className="text-[11px] font-semibold text-[#1668e8]">
                     {selectedInterviewer.trainingLevel}
                   </span>
                 </div>
@@ -188,7 +188,7 @@ export const DirectoryView: React.FC<DirectoryViewProps> = ({ interviewers }) =>
               <div className="pt-2 border-t border-[#eaecf0] space-y-2 text-[#344054]">
                 <div className="flex justify-between">
                   <span className="font-semibold">Weekly Burnout Threshold:</span>
-                  <span className="font-mono">{selectedInterviewer.scheduledThisWeek} / {selectedInterviewer.weeklyCapacity} sessions</span>
+                  <span className="font-semibold">{selectedInterviewer.scheduledThisWeek} / {selectedInterviewer.weeklyCapacity} sessions</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="font-semibold">Calendar Sync:</span>

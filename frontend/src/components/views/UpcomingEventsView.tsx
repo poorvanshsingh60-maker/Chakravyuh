@@ -211,7 +211,7 @@ export const UpcomingEventsView: React.FC = () => {
                   <h3 className="font-bold text-sm text-[#101828]">{selectedEvent.candidate}</h3>
                   <p className="text-xs text-[#667085]">{selectedEvent.role}</p>
                 </div>
-                <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-white border border-[#d0d5dd] font-bold">
+                <span className="text-[10px] font-semibold px-2.5 py-0.5 rounded-full bg-white border border-[#d0d5dd]">
                   {selectedEvent.type}
                 </span>
               </div>

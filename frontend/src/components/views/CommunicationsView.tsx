@@ -115,14 +115,14 @@ export const CommunicationsView: React.FC<CommunicationsViewProps> = ({ onGoToSc
               </span>
             </div>
           </div>
-          <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-white border border-[#abefc6] font-bold">
+          <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-white border border-[#abefc6]">
             DELIVERED
           </span>
         </div>
       )}
 
       {sentInternal && (
-        <div className="mx-8 mt-4 p-3.5 rounded-xl bg-[#eff8ff] text-[#175cd3] border border-[#b2ddff] text-xs font-semibold flex items-center gap-2 animate-in fade-in">
+        <div className="mx-8 mt-4 p-3.5 rounded-2xl bg-[#eff8ff] text-[#175cd3] border border-[#b2ddff] text-xs font-semibold flex items-center gap-2 animate-in fade-in">
           <CheckCircle2 className="w-4 h-4 text-[#175cd3]" />
           <span>Internal panel briefing sent to {ccList.map(c => c.name).join(', ')} without notifying candidate.</span>
         </div>
@@ -138,20 +138,20 @@ export const CommunicationsView: React.FC<CommunicationsViewProps> = ({ onGoToSc
           <div className="space-y-4">
             
             {/* Candidate Email Input */}
-            <div className="p-3 bg-[#fafafa] rounded-xl border border-[#eaecf0] space-y-1">
+            <div className="p-3 bg-[#fafafa] rounded-2xl border border-[#eaecf0] space-y-1">
               <label className="text-[11px] font-medium text-[#667085] block">
                 Candidate email
               </label>
               <div className="flex items-center justify-between">
-                <span className="text-sm font-medium text-[#101828] font-mono">{candidateEmail}</span>
-                <span className="text-[11px] font-bold text-[#0b7c3e] bg-[#ecfdf3] px-2 py-0.5 rounded border border-[#abefc6]">
+                <span className="text-sm font-medium text-[#101828]">{candidateEmail}</span>
+                <span className="text-[11px] font-semibold text-[#0b7c3e] bg-[#ecfdf3] px-2.5 py-0.5 rounded-full border border-[#abefc6]">
                   Verified Contact
                 </span>
               </div>
             </div>
 
             {/* CC Input with Chips */}
-            <div className="p-3 bg-white rounded-xl border border-[#eaecf0] space-y-2">
+            <div className="p-3 bg-white rounded-2xl border border-[#eaecf0] space-y-2">
               <div className="flex items-center justify-between">
                 <label className="text-[11px] font-medium text-[#667085] block">
                   Panel CC
@@ -171,7 +171,7 @@ export const CommunicationsView: React.FC<CommunicationsViewProps> = ({ onGoToSc
                 {ccList.map((cc) => (
                   <span 
                     key={cc.name}
-                    className="inline-flex items-center gap-1.5 pl-1.5 pr-2 py-1 rounded-md bg-[#f2f4f7] text-xs font-medium text-[#344054] border border-[#eaecf0]"
+                    className="inline-flex items-center gap-1.5 pl-2 pr-2.5 py-1 rounded-full bg-[#f2f4f7] text-xs font-medium text-[#344054] border border-[#eaecf0]"
                   >
                     <AvatarBadge name={cc.name} size="xs" />
                     <span>{cc.name}</span>
@@ -190,7 +190,7 @@ export const CommunicationsView: React.FC<CommunicationsViewProps> = ({ onGoToSc
 
             {/* BCC Section */}
             {showBcc && (
-              <div className="p-3 bg-white rounded-xl border border-[#eaecf0] space-y-2 animate-in fade-in">
+              <div className="p-3 bg-white rounded-2xl border border-[#eaecf0] space-y-2 animate-in fade-in">
                 <label className="text-[11px] font-medium text-[#667085] block">
                   BCC (Hidden Operations Ledger)
                 </label>
@@ -198,7 +198,7 @@ export const CommunicationsView: React.FC<CommunicationsViewProps> = ({ onGoToSc
                   {bccList.map((bcc) => (
                     <span 
                       key={bcc}
-                      className="inline-flex items-center gap-1.5 px-2 py-1 rounded-md bg-[#fafafa] text-xs font-mono text-[#344054] border border-[#d0d5dd]"
+                      className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#fafafa] text-xs text-[#344054] border border-[#d0d5dd]"
                     >
                       <span>{bcc}</span>
                       <button 

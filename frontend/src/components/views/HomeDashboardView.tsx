@@ -11,12 +11,14 @@ import {
   Video,
   ChevronRight,
   Sparkles,
-  X
+  X,
+  Plus,
+  UserCheck
 } from 'lucide-react';
 import { UserRole } from '../../types/user';
 import { NavTab, Task, CandidateItem } from '../../types';
 import { useTimezone } from '../../context/TimezoneContext';
-import { useCoordination } from '../../context/CoordinationContext';
+import { useCoordination, InterviewAssignment } from '../../context/CoordinationContext';
 
 interface HomeDashboardViewProps {
   currentUser: {
@@ -42,51 +44,99 @@ export const HomeDashboardView: React.FC<HomeDashboardViewProps> = ({
   const { 
     isInviteAccepted, 
     acceptInvite, 
-    isScorecardSubmitted, 
-    interviewerDecision,
-    isNudged,
-    nudgeInterviewer,
-    submitScorecard
+    assignments,
+    submitScorecardForAssignment,
+    nudgeAssignment,
+    createAndSendAssignment
   } = useCoordination();
 
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
-  // Home scorecard modal state
+  // Scorecard modal state for interviewer
   const [evalModalOpen, setEvalModalOpen] = useState(false);
+  const [activeEvalAssignment, setActiveEvalAssignment] = useState<InterviewAssignment | null>(null);
   const [scoreProblemSolving, setScoreProblemSolving] = useState(5);
   const [scoreArchitecture, setScoreArchitecture] = useState(4);
   const [scoreRecommendation, setScoreRecommendation] = useState<'STRONG_HIRE' | 'HIRE' | 'NO_HIRE'>('STRONG_HIRE');
   const [scoreFeedback, setScoreFeedback] = useState('Excellent problem decomposition, clean graph traversal implementation, and optimal time complexity analysis.');
+
+  // Create & Dispatch Evaluation Profile Modal (for Coordinator)
+  const [createProfileModalOpen, setCreateProfileModalOpen] = useState(false);
+  const [newCandName, setNewCandName] = useState('');
+  const [newCandRole, setNewCandRole] = useState('Senior Distributed Systems Engineer');
+  const [newRoundName, setNewRoundName] = useState('Round 2: Systems Architecture & Concurrency');
+  const [newInterviewerName, setNewInterviewerName] = useState('Dr. Sarah Chen');
+  const [newTimeSlot, setNewTimeSlot] = useState('3:30 PM – 4:15 PM PST');
+  const [newRoomName, setNewRoomName] = useState('Virtual Pod Alpha');
+  const [newNotes, setNewNotes] = useState('Evaluate fault tolerance, consensus tradeoffs, and distributed caching strategy.');
 
   const showToast = (msg: string) => {
     setToastMessage(msg);
     setTimeout(() => setToastMessage(null), 3500);
   };
 
-  const handleScoreSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    submitScorecard(scoreRecommendation, scoreProblemSolving);
-    setEvalModalOpen(false);
-    showToast('Scorecard submitted for Marcus Vance! Hiring decision updated and unfilled scorecards cleared.');
+  const handleOpenScoreModal = (assignment: InterviewAssignment) => {
+    setActiveEvalAssignment(assignment);
+    setEvalModalOpen(true);
   };
 
+  const handleScoreSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const target = activeEvalAssignment || assignments.find(a => a.id === 'inv-101') || assignments[0];
+    if (!target) return;
+
+    submitScorecardForAssignment(
+      target.id,
+      scoreRecommendation,
+      scoreProblemSolving,
+      scoreFeedback,
+      'Continuous focus on distributed systems fundamentals'
+    );
+    setEvalModalOpen(false);
+    showToast(`Scorecard submitted for ${target.candidateName}! Hiring decision and coordinator page updated.`);
+  };
+
+  const handleCreateAndSendProfile = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newCandName.trim()) return;
+
+    createAndSendAssignment({
+      candidateName: newCandName,
+      role: newCandRole,
+      roundName: newRoundName,
+      interviewerName: newInterviewerName,
+      pstTimeSlot: newTimeSlot,
+      roomName: newRoomName,
+      notes: newNotes
+    });
+
+    setCreateProfileModalOpen(false);
+    showToast(`Evaluation profile for ${newCandName} dispatched to ${newInterviewerName} to score!`);
+    setNewCandName('');
+  };
+
+  // Filter assignments
+  const pendingScorecards = assignments.filter(a => a.status !== 'EVALUATED');
+  const evaluatedScorecards = assignments.filter(a => a.status === 'EVALUATED');
+  const urgentCount = pendingScorecards.length + (!isInviteAccepted ? 1 : 0);
+
   return (
-    <div className="h-full flex flex-col bg-[#f8f9fa] overflow-y-auto font-['Inter',-apple-system,BlinkMacSystemFont,'Segoe_UI',Roboto,sans-serif]">
+    <div className="h-full flex flex-col bg-[#f8f9fa] overflow-y-auto">
       
       {/* Toast Notification */}
       {toastMessage && (
-        <div className="fixed bottom-6 right-6 z-50 bg-[#101828] text-white text-xs px-4 py-2.5 rounded-lg shadow-xl flex items-center gap-2 animate-in fade-in slide-in-from-bottom-2">
+        <div className="fixed bottom-6 right-6 z-50 bg-[#101828] text-white text-xs px-4 py-2.5 rounded-full shadow-xl flex items-center gap-2 animate-in fade-in slide-in-from-bottom-2">
           <CheckCircle2 className="w-4 h-4 text-emerald-400" />
           <span>{toastMessage}</span>
         </div>
       )}
 
-      {/* Hero Strip (Clean Standard SaaS Demo - No duplicate title or timezone) */}
+      {/* Hero Strip */}
       <div className="bg-white border-b border-[#eaecf0] px-6 py-4 shrink-0">
         <div className="max-w-6xl mx-auto flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
             <div className="flex items-center gap-2">
-              <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-[#eff8ff] text-[#175cd3] border border-[#b2ddff] uppercase tracking-wider">
+              <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-[#eff8ff] text-[#175cd3] border border-[#b2ddff] uppercase tracking-wider">
                 {currentUser.role === 'COORDINATOR' ? 'Scheduler Command' : currentUser.role === 'INTERVIEWER' ? 'Panelist Desk' : 'Student Placement'}
               </span>
               <span className="text-xs text-[#667085]">
@@ -99,11 +149,20 @@ export const HomeDashboardView: React.FC<HomeDashboardViewProps> = ({
           </div>
 
           <div className="flex items-center gap-2.5">
+            {currentUser.role === 'COORDINATOR' && (
+              <button
+                onClick={() => setCreateProfileModalOpen(true)}
+                className="px-3.5 py-1.5 bg-[#1668e8] hover:bg-[#145ac7] text-white text-xs font-semibold rounded-full shadow-xs transition-colors flex items-center gap-1.5"
+              >
+                <Plus className="w-3.5 h-3.5" />
+                <span>Send Candidate to Score</span>
+              </button>
+            )}
             <button
               onClick={() => onNavigate(currentUser.role === 'COORDINATOR' ? 'scheduling' : 'flowchart')}
-              className="px-3.5 py-1.5 bg-[#1668e8] hover:bg-[#145ac7] text-white text-xs font-semibold rounded-lg shadow-xs transition-colors flex items-center gap-1.5"
+              className="px-3.5 py-1.5 bg-white border border-[#d0d5dd] hover:bg-[#f9fafb] text-[#344054] text-xs font-semibold rounded-full shadow-xs transition-colors flex items-center gap-1.5"
             >
-              <Calendar className="w-3.5 h-3.5" />
+              <Calendar className="w-3.5 h-3.5 text-[#1668e8]" />
               <span>
                 {currentUser.role === 'COORDINATOR' ? 'Automate Schedule' : currentUser.role === 'INTERVIEWER' ? 'My Interview Loops' : 'View Schedule & Slots'}
               </span>
@@ -128,86 +187,155 @@ export const HomeDashboardView: React.FC<HomeDashboardViewProps> = ({
                   <AlertTriangle className="w-4 h-4 text-amber-500" />
                   Urgent Tasks & Bottlenecks
                 </h2>
-                <span className="text-[11px] font-semibold text-red-600 bg-red-50 px-2 py-0.5 rounded-full border border-red-200">
-                  2 Items Require Action
-                </span>
-              </div>
-
-              {/* Task 1: Overdue Scorecard Reminder */}
-              <div className="bg-white border border-[#eaecf0] rounded-xl p-4 shadow-2xs space-y-2.5">
-                <div className="flex items-start justify-between gap-3">
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-2">
-                      <span className="text-[10px] font-bold text-red-700 bg-red-50 border border-red-200 px-1.5 py-0.2 rounded">
-                        Overdue Scorecard
-                      </span>
-                      <span className="text-[11px] text-[#667085]">Google SDE Panel</span>
-                    </div>
-                    <h3 className="text-xs font-bold text-[#101828]">
-                      Nudge Dr. Sarah Chen for Marcus Vance's Round 1 Evaluation
-                    </h3>
-                    <p className="text-[11px] text-[#475467]">
-                      DSA Screen ended 3 hours ago. Scorecard needed to unlock Round 2 Systems slot.
-                    </p>
-                  </div>
-                  <button
-                    onClick={() => {
-                      nudgeInterviewer();
-                      showToast('Urgent reminder dispatched to Dr. Sarah Chen! Interviewer panel updated with high-priority alert.');
-                    }}
-                    className={`px-3 py-1.5 text-white text-xs font-semibold rounded-lg shrink-0 flex items-center gap-1 shadow-xs transition-all ${
-                      isNudged
-                        ? 'bg-amber-600 hover:bg-amber-700'
-                        : 'bg-[#1668e8] hover:bg-[#145ac7]'
-                    }`}
-                  >
-                    <Send className="w-3 h-3" />
-                    <span>{isNudged ? 'Nudged (Re-send)' : 'Nudge Panel'}</span>
-                  </button>
+                <div className="flex items-center gap-2">
+                  <span className={`text-[11px] font-semibold px-2.5 py-0.5 rounded-full border ${
+                    urgentCount > 0 
+                      ? 'text-rose-700 bg-rose-50 border-rose-200' 
+                      : 'text-emerald-700 bg-emerald-50 border-emerald-200'
+                  }`}>
+                    {urgentCount > 0 ? `${urgentCount} Items Require Action` : 'Zero Bottlenecks'}
+                  </span>
                 </div>
               </div>
+
+              {/* Pending Scorecards List */}
+              {pendingScorecards.length > 0 ? (
+                pendingScorecards.map((sc) => (
+                  <div key={sc.id} className="bg-white border border-[#eaecf0] rounded-2xl p-4 shadow-2xs space-y-2.5">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-2">
+                          <span className="text-[10px] font-semibold text-rose-700 bg-rose-50 border border-rose-200 px-2 py-0.5 rounded-full">
+                            Pending Scorecard
+                          </span>
+                          <span className="text-[11px] text-[#667085]">• Assigned to {sc.interviewerName}</span>
+                        </div>
+                        <h3 className="text-xs font-bold text-[#101828]">
+                          {sc.candidateName} — {sc.roundName}
+                        </h3>
+                        <p className="text-[11px] text-[#475467]">
+                          Interview completed in {sc.roomName}. Scorecard needed to evaluate candidate and unlock next stage.
+                        </p>
+                      </div>
+                      <button
+                        onClick={() => {
+                          nudgeAssignment(sc.id);
+                          showToast(`Urgent reminder dispatched to ${sc.interviewerName} for ${sc.candidateName}!`);
+                        }}
+                        className="px-3.5 py-1.5 text-white text-xs font-semibold rounded-full shrink-0 flex items-center gap-1 shadow-xs transition-all bg-[#1668e8] hover:bg-[#145ac7]"
+                      >
+                        <Send className="w-3 h-3" />
+                        <span>Nudge Panel</span>
+                      </button>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <div className="bg-[#ecfdf3] border border-[#a6f4c5] rounded-2xl p-4 shadow-2xs flex items-center justify-between text-xs text-[#027a48] animate-in fade-in">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center shrink-0">
+                      <CheckCircle2 className="w-5 h-5 text-emerald-600" />
+                    </div>
+                    <div>
+                      <h3 className="font-bold text-sm text-[#027a48]">All Assigned Scorecards Completed!</h3>
+                      <p className="text-[11px] text-[#05603a]">
+                        All interviewers have submitted evaluations. Candidate pipelines are currently clear of score bottlenecks.
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => setCreateProfileModalOpen(true)}
+                    className="px-3 py-1 bg-white text-emerald-800 text-[10px] font-bold rounded-full border border-[#a6f4c5] hover:bg-emerald-50 shrink-0"
+                  >
+                    + New Evaluation
+                  </button>
+                </div>
+              )}
+
+              {/* Real-Time Evaluated Scorecards Feed (Updates when interviewer scores someone) */}
+              {evaluatedScorecards.length > 0 && (
+                <div className="space-y-3 pt-2">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-xs font-bold text-[#475467] uppercase tracking-wider flex items-center gap-1.5">
+                      <UserCheck className="w-3.5 h-3.5 text-emerald-600" />
+                      <span>Completed Scorecards & Decisions ({evaluatedScorecards.length})</span>
+                    </h3>
+                    <span className="text-[11px] text-emerald-700 font-semibold bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200">
+                      Live Synced
+                    </span>
+                  </div>
+
+                  {evaluatedScorecards.map((sc) => (
+                    <div key={sc.id} className="bg-emerald-50/50 border border-emerald-200/70 rounded-2xl p-4 shadow-2xs space-y-2 animate-in fade-in">
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="space-y-1">
+                          <div className="flex items-center gap-2">
+                            <span className="text-[10px] font-semibold text-emerald-800 bg-emerald-100 border border-emerald-200 px-2.5 py-0.5 rounded-full">
+                              ✓ Scorecard Received
+                            </span>
+                            <span className="text-xs text-emerald-900 font-semibold">• Evaluated by {sc.interviewerName}</span>
+                            <span className="text-[11px] text-[#667085]">{sc.submittedAt || 'Today'}</span>
+                          </div>
+                          <h4 className="text-sm font-bold text-[#101828]">
+                            {sc.candidateName} — {sc.roundName}
+                          </h4>
+                          <p className="text-xs text-[#475467] leading-relaxed">
+                            Recommendation: <strong className="text-emerald-700">{sc.decision?.replace('_', ' ') || 'STRONG HIRE'}</strong> • Technical Rating: <strong>{sc.rating || 5}/5.0</strong>
+                            {sc.strengths && ` • "${sc.strengths}"`}
+                          </p>
+                        </div>
+                        <span className="px-3 py-1 bg-white text-emerald-800 text-xs font-bold rounded-full border border-emerald-200 shadow-2xs shrink-0">
+                          {sc.rating || 5}/5
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
 
               {/* Task 2: Unconfirmed Candidate Invite */}
-              <div className="bg-white border border-[#eaecf0] rounded-xl p-4 shadow-2xs space-y-2.5">
-                <div className="flex items-start justify-between gap-3">
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-2">
-                      <span className="text-[10px] font-bold text-amber-700 bg-amber-50 border border-amber-200 px-1.5 py-0.2 rounded">
-                        Invite Pending
-                      </span>
-                      <span className="text-[11px] text-[#667085]">Microsoft Cloud</span>
+              {!isInviteAccepted && (
+                <div className="bg-white border border-[#eaecf0] rounded-2xl p-4 shadow-2xs space-y-2.5">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2">
+                        <span className="text-[10px] font-semibold text-amber-700 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-full">
+                          Invite Pending
+                        </span>
+                        <span className="text-[11px] text-[#667085]">Microsoft Cloud</span>
+                      </div>
+                      <h3 className="text-xs font-bold text-[#101828]">
+                        Rahul Verma has not confirmed slot selections for Round 2
+                      </h3>
+                      <p className="text-[11px] text-[#475467]">
+                        Invite link dispatched. CP-SAT engine reserved temporary buffer in Virtual Pod Alpha.
+                      </p>
                     </div>
-                    <h3 className="text-xs font-bold text-[#101828]">
-                      Rahul Verma has not confirmed slot selections for Round 2
-                    </h3>
-                    <p className="text-[11px] text-[#475467]">
-                      Invite link dispatched. CP-SAT engine reserved temporary buffer in Virtual Pod Alpha.
-                    </p>
+                    <button
+                      onClick={() => {
+                        navigator.clipboard.writeText(window.location.origin + '/?invite=msft-rahul');
+                        showToast('Invite link copied for Rahul Verma!');
+                      }}
+                      className="px-3.5 py-1.5 bg-white border border-[#d0d5dd] hover:bg-[#f9fafb] text-[#344054] text-xs font-semibold rounded-full shrink-0 transition-colors"
+                    >
+                      Copy Link
+                    </button>
                   </div>
-                  <button
-                    onClick={() => {
-                      navigator.clipboard.writeText(window.location.origin + '/?invite=msft-rahul');
-                      showToast('Invite link copied for Rahul Verma!');
-                    }}
-                    className="px-3 py-1.5 bg-white border border-[#d0d5dd] hover:bg-[#f9fafb] text-[#344054] text-xs font-semibold rounded-lg shrink-0"
-                  >
-                    Copy Link
-                  </button>
                 </div>
-              </div>
+              )}
 
-              {/* Task 3: Quick CP-SAT Optimization Nudge */}
-              <div className="bg-[#f0f9ff] border border-[#b9e6fe] rounded-xl p-3.5 flex items-center justify-between text-xs">
+              {/* Task 3: Quick Optimization Nudge */}
+              <div className="bg-[#f0f9ff] border border-[#b9e6fe] rounded-2xl p-3.5 flex items-center justify-between text-xs">
                 <div className="flex items-center gap-2.5">
                   <Sparkles className="w-4 h-4 text-[#0284c7] shrink-0" />
                   <div>
-                    <strong className="text-[#0369a1] block">CP-SAT Engine Ready</strong>
+                    <strong className="text-[#0369a1] block">Automated Schedule Engine Active</strong>
                     <span className="text-[11px] text-[#0284c7]">Zero resource overlaps detected across 14 scheduled rounds.</span>
                   </div>
                 </div>
                 <button
                   onClick={() => onNavigate('scheduling')}
-                  className="px-3 py-1 bg-[#0284c7] hover:bg-[#0369a1] text-white font-bold rounded-lg shrink-0 text-[11px]"
+                  className="px-3.5 py-1.5 bg-[#0284c7] hover:bg-[#0369a1] text-white font-semibold rounded-full shrink-0 text-xs shadow-2xs transition-colors"
                 >
                   Inspect Matrix
                 </button>
@@ -230,36 +358,36 @@ export const HomeDashboardView: React.FC<HomeDashboardViewProps> = ({
                 </button>
               </div>
 
-              <div className="bg-white border border-[#eaecf0] rounded-xl divide-y divide-[#f2f4f7] shadow-2xs text-xs">
+              <div className="bg-white border border-[#eaecf0] rounded-2xl divide-y divide-[#f2f4f7] shadow-2xs text-xs overflow-hidden">
                 <div className="p-3.5 flex items-center justify-between">
                   <div className="space-y-0.5">
-                    <span className="font-mono text-[11px] font-bold text-[#1668e8]">{convertTime('10:00 AM – 10:45 AM')}</span>
+                    <span className="text-[11px] font-semibold text-[#1668e8]">{convertTime('10:00 AM – 10:45 AM')}</span>
                     <h4 className="font-bold text-[#101828]">Marcus Vance • Round 1 (Coding)</h4>
                     <span className="text-[11px] text-[#667085]">Interviewer: Dr. Sarah Chen</span>
                   </div>
-                  <span className="text-[10px] font-semibold px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200">
+                  <span className="text-[10px] font-semibold px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
                     Terminal 12
                   </span>
                 </div>
 
                 <div className="p-3.5 flex items-center justify-between">
                   <div className="space-y-0.5">
-                    <span className="font-mono text-[11px] font-bold text-[#1668e8]">{convertTime('1:00 PM – 2:00 PM')}</span>
+                    <span className="text-[11px] font-semibold text-[#1668e8]">{convertTime('1:00 PM – 2:00 PM')}</span>
                     <h4 className="font-bold text-[#101828]">Priya Sharma • System Design</h4>
                     <span className="text-[11px] text-[#667085]">Interviewer: Phil Dunphy</span>
                   </div>
-                  <span className="text-[10px] font-semibold px-2 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-200">
+                  <span className="text-[10px] font-semibold px-2.5 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200">
                     Terminal 08
                   </span>
                 </div>
 
                 <div className="p-3.5 flex items-center justify-between">
                   <div className="space-y-0.5">
-                    <span className="font-mono text-[11px] font-bold text-[#1668e8]">{convertTime('3:00 PM – 3:45 PM')}</span>
+                    <span className="text-[11px] font-semibold text-[#1668e8]">{convertTime('3:00 PM – 3:45 PM')}</span>
                     <h4 className="font-bold text-[#101828]">Elena Rostova • Values & Leadership</h4>
                     <span className="text-[11px] text-[#667085]">Interviewer: Claire Pritchett</span>
                   </div>
-                  <span className="text-[10px] font-semibold px-2 py-0.5 rounded bg-purple-50 text-purple-700 border border-purple-200">
+                  <span className="text-[10px] font-semibold px-2.5 py-0.5 rounded-full bg-purple-50 text-purple-700 border border-purple-200">
                     Suite 402
                   </span>
                 </div>
@@ -267,13 +395,13 @@ export const HomeDashboardView: React.FC<HomeDashboardViewProps> = ({
 
               {/* Metric Snapshot */}
               <div className="grid grid-cols-2 gap-3 pt-1">
-                <div className="p-3 bg-white border border-[#eaecf0] rounded-xl text-center">
-                  <span className="text-[10px] text-[#667085] uppercase font-bold block">Shortlisted</span>
-                  <span className="text-xl font-bold text-[#101828]">5 Candidates</span>
+                <div className="p-3.5 bg-white border border-[#eaecf0] rounded-2xl text-center shadow-2xs">
+                  <span className="text-[10px] text-[#667085] uppercase font-bold block">Active Loops</span>
+                  <span className="text-xl font-bold text-[#101828]">{assignments.length} Candidates</span>
                 </div>
-                <div className="p-3 bg-white border border-[#eaecf0] rounded-xl text-center">
-                  <span className="text-[10px] text-[#667085] uppercase font-bold block">Solver Horizon</span>
-                  <span className="text-xl font-bold text-emerald-600">0 Overlaps</span>
+                <div className="p-3.5 bg-white border border-[#eaecf0] rounded-2xl text-center shadow-2xs">
+                  <span className="text-[10px] text-[#667085] uppercase font-bold block">Evaluations Done</span>
+                  <span className="text-xl font-bold text-[#027a48]">{evaluatedScorecards.length} Scored</span>
                 </div>
               </div>
             </div>
@@ -282,36 +410,32 @@ export const HomeDashboardView: React.FC<HomeDashboardViewProps> = ({
         )}
 
         {/* ========================================================================= */}
-        {/* ========================================================================= */}
         {/* ROLE 2: INTERVIEWER HOME DASHBOARD */}
         {/* ========================================================================= */}
         {currentUser.role === 'INTERVIEWER' && (
           <div className="space-y-6">
             
-            {/* Urgent Pings & Coordinator Nudges Hero Strip (Soft light-red breathing tint, Apple rounded-2xl, no red border, no warning sign) */}
-            {!isScorecardSubmitted ? (
+            {/* Urgent Nudge Banner */}
+            {pendingScorecards.some(sc => sc.isNudged) ? (
               <div className="bg-rose-50/70 animate-pulse border border-rose-200/50 rounded-2xl p-4.5 shadow-2xs flex flex-col sm:flex-row sm:items-center justify-between gap-4 transition-all">
                 <div className="space-y-1">
                   <div className="flex flex-wrap items-center gap-2">
                     <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-rose-100 text-rose-800">
                       <span className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-ping" />
-                      <span>{isNudged ? 'Evaluation Requested' : 'Coordinator Ping'}</span>
+                      <span>Scorecard Evaluation Requested</span>
                     </span>
-                    <span className="text-xs text-rose-900/70 font-medium">• From Coordinator Emma Watson</span>
-                    <span className="px-2.5 py-0.5 rounded-full text-[10px] font-medium bg-amber-50 text-amber-800 border border-amber-200">
-                      Overdue 3h
-                    </span>
+                    <span className="text-xs text-rose-900/70 font-medium">• Coordinator Emma Watson</span>
                   </div>
                   <h3 className="text-sm font-bold text-[#101828] mt-1.5">
-                    Marcus Vance — Round 1: Problem Solving & DSA Screen
+                    {pendingScorecards[0]?.candidateName} — {pendingScorecards[0]?.roundName}
                   </h3>
                   <p className="text-xs text-[#475467] mt-0.5 leading-relaxed">
-                    Emma Watson requested Marcus Vance's scorecard. Candidate finished live coding session in Virtual Pod Alpha. Round 2 Systems schedule is currently frozen pending your evaluation.
+                    Emma Watson requested your scorecard to unblock the candidate's hiring decision and schedule the next technical round.
                   </p>
                 </div>
                 <div className="flex items-center gap-2 shrink-0">
                   <button
-                    onClick={() => setEvalModalOpen(true)}
+                    onClick={() => handleOpenScoreModal(pendingScorecards[0])}
                     className="px-4 py-2 bg-[#1668e8] hover:bg-[#145ac7] text-white text-xs font-semibold rounded-full shadow-xs flex items-center justify-center gap-1.5 transition-colors"
                   >
                     <FileEdit className="w-3.5 h-3.5" />
@@ -322,13 +446,13 @@ export const HomeDashboardView: React.FC<HomeDashboardViewProps> = ({
             ) : (
               <div className="bg-[#ecfdf3] border border-[#a6f4c5] rounded-2xl p-4 shadow-2xs flex items-center justify-between text-xs text-[#027a48] animate-in fade-in">
                 <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center">
+                  <div className="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center shrink-0">
                     <CheckCircle2 className="w-5 h-5 text-emerald-600" />
                   </div>
                   <div>
-                    <h3 className="font-bold text-sm text-[#027a48]">All Coordinator Pings & Nudges Resolved!</h3>
+                    <h3 className="font-bold text-sm text-[#027a48]">All Assigned Scorecards Up-to-Date!</h3>
                     <p className="text-[11px] text-[#05603a]">
-                      Marcus Vance evaluated as {interviewerDecision.replace('_', ' ')}. Zero pending bottlenecks across candidate loops.
+                      Zero pending evaluations. All candidate loops are moving forward without delays.
                     </p>
                   </div>
                 </div>
@@ -340,7 +464,7 @@ export const HomeDashboardView: React.FC<HomeDashboardViewProps> = ({
 
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
               
-              {/* Left Column (7 cols): Candidates Left to Score & Urgent Overdue */}
+              {/* Left Column (7 cols): Candidates Left to Score */}
               <div className="lg:col-span-7 space-y-4">
                 <div className="flex items-center justify-between">
                   <h2 className="text-xs font-bold text-[#475467] uppercase tracking-wider flex items-center gap-2">
@@ -348,120 +472,137 @@ export const HomeDashboardView: React.FC<HomeDashboardViewProps> = ({
                     Candidates Left to Score
                   </h2>
                   <span className={`text-[11px] font-semibold px-2.5 py-0.5 rounded-full border ${
-                    isScorecardSubmitted 
+                    pendingScorecards.length === 0
                       ? 'text-emerald-700 bg-emerald-50 border-emerald-200' 
                       : 'text-rose-700 bg-rose-50 border-rose-200'
                   }`}>
-                    {isScorecardSubmitted ? '0 Pending' : '1 Pending Evaluation'}
+                    {pendingScorecards.length === 0 ? '0 Pending' : `${pendingScorecards.length} Pending Evaluation`}
                   </span>
                 </div>
 
-              {!isScorecardSubmitted ? (
-                <div className={`rounded-2xl p-4 shadow-2xs space-y-3 transition-all ${
-                  isNudged 
-                    ? 'bg-rose-50/40 animate-pulse border border-rose-200/60' 
-                    : 'bg-white border border-[#eaecf0]'
-                }`}>
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-2">
-                        <span className={`text-[10px] font-semibold px-2.5 py-0.5 rounded-full ${
-                          isNudged 
-                            ? 'bg-rose-100 text-rose-800 border border-rose-200/60' 
-                            : 'text-amber-700 bg-amber-50 border border-amber-200'
-                        }`}>
-                          {isNudged ? 'Nudged by Coordinator' : 'Scorecard Due Today'}
-                        </span>
-                        <span className="text-[11px] text-[#667085]">Completed {convertTime('11:00 AM')}</span>
+                {pendingScorecards.length > 0 ? (
+                  pendingScorecards.map((cand) => (
+                    <div 
+                      key={cand.id}
+                      className={`rounded-2xl p-4 shadow-2xs space-y-3 transition-all ${
+                        cand.isNudged 
+                          ? 'bg-rose-50/40 animate-pulse border border-rose-200/60' 
+                          : 'bg-white border border-[#eaecf0]'
+                      }`}
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="space-y-1">
+                          <div className="flex items-center gap-2">
+                            <span className={`text-[10px] font-semibold px-2.5 py-0.5 rounded-full ${
+                              cand.isNudged 
+                                ? 'bg-rose-100 text-rose-800 border border-rose-200/60' 
+                                : 'text-amber-700 bg-amber-50 border border-amber-200'
+                            }`}>
+                              {cand.isNudged ? 'Nudged by Coordinator' : 'Scorecard Due Today'}
+                            </span>
+                            <span className="text-[11px] text-[#667085]">{cand.pstTimeSlot}</span>
+                          </div>
+                          <h3 className="text-sm font-bold text-[#101828]">
+                            {cand.candidateName} — {cand.roundName}
+                          </h3>
+                          <p className="text-xs text-[#475467]">
+                            Role: {cand.role} • Room: {cand.roomName}. Rate competencies and submit recommendation.
+                          </p>
+                        </div>
+
+                        <button
+                          onClick={() => handleOpenScoreModal(cand)}
+                          className="px-4 py-2 bg-[#1668e8] hover:bg-[#145ac7] text-white text-xs font-semibold rounded-full shrink-0 flex items-center gap-1.5 shadow-xs transition-colors"
+                        >
+                          <FileEdit className="w-3.5 h-3.5" />
+                          <span>Score Now</span>
+                        </button>
                       </div>
-                      <h3 className="text-sm font-bold text-[#101828]">
-                        Marcus Vance — Round 1: Problem Solving & DSA Screen
-                      </h3>
-                      <p className="text-xs text-[#475467]">
-                        Candidate completed live coding session in Virtual Pod Alpha. Rate technical competencies and submit recommendation to advance candidate loop.
-                      </p>
                     </div>
-
-                    <button
-                      onClick={() => setEvalModalOpen(true)}
-                      className="px-4 py-2 bg-[#1668e8] hover:bg-[#145ac7] text-white text-xs font-semibold rounded-full shrink-0 flex items-center gap-1.5 shadow-xs transition-colors"
-                    >
-                      <FileEdit className="w-3.5 h-3.5" />
-                      <span>Score Now</span>
-                    </button>
+                  ))
+                ) : (
+                  <div className="bg-[#ecfdf3] border border-[#a6f4c5] rounded-2xl p-4 text-xs text-[#027a48] flex items-center justify-between">
+                    <div className="flex items-center gap-2.5">
+                      <CheckCircle2 className="w-5 h-5 text-[#12b76a]" />
+                      <div>
+                        <strong className="block text-sm">All Scorecards Submitted!</strong>
+                        <span className="text-[11px]">All assigned candidates have been scored. Good job keeping interview loops smooth!</span>
+                      </div>
+                    </div>
+                    <span className="px-2.5 py-0.5 bg-white text-[10px] font-bold rounded-full border border-[#a6f4c5]">
+                      COMPLETED
+                    </span>
                   </div>
-                </div>
-              ) : (
-                <div className="bg-[#ecfdf3] border border-[#a6f4c5] rounded-xl p-4 text-xs text-[#027a48] flex items-center justify-between">
-                  <div className="flex items-center gap-2.5">
-                    <CheckCircle2 className="w-5 h-5 text-[#12b76a]" />
-                    <div>
-                      <strong className="block text-sm">All Scorecards Submitted!</strong>
-                      <span className="text-[11px]">Marcus Vance evaluated as {interviewerDecision.replace('_', ' ')}. Good job keeping loops zero-churn.</span>
+                )}
+
+                {/* Calibrated Guidelines */}
+                <div className="bg-white border border-[#eaecf0] rounded-2xl p-4 shadow-2xs space-y-2 text-xs">
+                  <span className="font-bold text-[#101828] block">Google SDE Panel Calibration Rubric</span>
+                  <div className="grid grid-cols-3 gap-2 pt-1 text-[11px]">
+                    <div className="p-2.5 bg-[#f9fafb] rounded-xl border border-[#eaecf0]">
+                      <strong className="text-[#101828] block">Strong Hire (5)</strong>
+                      <span className="text-[#667085]">Clean algorithm, optimal complexity, self-corrects edges.</span>
+                    </div>
+                    <div className="p-2.5 bg-[#f9fafb] rounded-xl border border-[#eaecf0]">
+                      <strong className="text-[#101828] block">Hire (4)</strong>
+                      <span className="text-[#667085]">Working solution with minimal prompts, good communication.</span>
+                    </div>
+                    <div className="p-2.5 bg-[#f9fafb] rounded-xl border border-[#eaecf0]">
+                      <strong className="text-[#101828] block">No Hire (1-2)</strong>
+                      <span className="text-[#667085]">Struggled with core structures or syntax barriers.</span>
                     </div>
                   </div>
-                  <span className="px-2 py-0.5 bg-white text-[10px] font-bold rounded border border-[#a6f4c5]">
-                    COMPLETED
-                  </span>
-                </div>
-              )}
-
-              {/* Calibrated Guidelines */}
-              <div className="bg-white border border-[#eaecf0] rounded-xl p-4 shadow-2xs space-y-2 text-xs">
-                <h4 className="font-bold text-[#101828]">Bar-Raiser Rubric Reminder</h4>
-                <p className="text-[#475467] text-[11px] leading-relaxed">
-                  Focus on algorithmic clarity, handling corner cases in distributed partitions, and clear technical communication.
-                </p>
-              </div>
-            </div>
-
-            {/* Right Column (5 cols): Upcoming Sessions */}
-            <div className="lg:col-span-5 space-y-4">
-              <div className="flex items-center justify-between">
-                <h2 className="text-xs font-bold text-[#475467] uppercase tracking-wider flex items-center gap-2">
-                  <Clock className="w-4 h-4 text-[#1668e8]" />
-                  My Scheduled Rounds
-                </h2>
-                <button
-                  onClick={() => onNavigate('flowchart')}
-                  className="text-xs text-[#1668e8] hover:underline font-semibold"
-                >
-                  Manage Availability
-                </button>
-              </div>
-
-              <div className="bg-white border border-[#eaecf0] rounded-xl p-4 shadow-2xs space-y-3 text-xs">
-                <div className="p-3 bg-[#f8f9fa] border border-[#eaecf0] rounded-lg space-y-1.5">
-                  <div className="flex items-center justify-between">
-                    <span className="font-bold text-[#101828]">Round 1: DSA Screen</span>
-                    <span className="text-[10px] font-mono text-[#667085]">Today, {convertTime('10:00 AM')}</span>
-                  </div>
-                  <p className="text-[#475467] text-[11px]">Candidate: Marcus Vance (Google SDE)</p>
-                  <div className="flex items-center gap-2 pt-1 border-t border-[#eaecf0]">
-                    <a
-                      href="https://meet.google.com/chk-dist-sys"
-                      target="_blank"
-                      rel="noreferrer"
-                      className="text-[#1668e8] font-bold text-[11px] flex items-center gap-1 hover:underline"
-                    >
-                      <Video className="w-3 h-3" />
-                      <span>Join Google Meet</span>
-                    </a>
-                  </div>
-                </div>
-
-                <div className="p-3 bg-[#f8f9fa] border border-[#eaecf0] rounded-lg space-y-1.5 opacity-75">
-                  <div className="flex items-center justify-between">
-                    <span className="font-bold text-[#101828]">Round 2: Architecture Review</span>
-                    <span className="text-[10px] font-mono text-[#667085]">Tomorrow, {convertTime('2:00 PM')}</span>
-                  </div>
-                  <p className="text-[#475467] text-[11px]">Candidate: Elena Rostova (Staff Loop)</p>
                 </div>
               </div>
+
+              {/* Right Column (5 cols): Upcoming Sessions */}
+              <div className="lg:col-span-5 space-y-4">
+                <div className="flex items-center justify-between">
+                  <h2 className="text-xs font-bold text-[#475467] uppercase tracking-wider flex items-center gap-2">
+                    <Clock className="w-4 h-4 text-[#1668e8]" />
+                    Upcoming Today
+                  </h2>
+                  <button 
+                    onClick={() => onNavigate('flowchart')}
+                    className="text-xs text-[#1668e8] hover:underline font-semibold"
+                  >
+                    View All Loops →
+                  </button>
+                </div>
+
+                <div className="bg-white border border-[#eaecf0] rounded-2xl p-4 shadow-2xs space-y-3 text-xs">
+                  <div className="p-3 bg-[#f8f9fa] border border-[#eaecf0] rounded-xl space-y-1.5">
+                    <div className="flex items-center justify-between">
+                      <span className="font-bold text-[#101828]">Round 1: DSA Screen</span>
+                      <span className="text-[11px] font-semibold text-[#1668e8]">Today, {convertTime('10:00 AM')}</span>
+                    </div>
+                    <p className="text-[#475467] text-[11px]">Candidate: Marcus Vance (Google SDE)</p>
+                    <div className="flex items-center gap-2 pt-1 border-t border-[#eaecf0]">
+                      <a
+                        href="https://meet.google.com/chk-dist-sys"
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-[#1668e8] font-semibold text-[11px] flex items-center gap-1 hover:underline"
+                      >
+                        <Video className="w-3 h-3" />
+                        <span>Join Google Meet</span>
+                      </a>
+                    </div>
+                  </div>
+
+                  <div className="p-3 bg-[#f8f9fa] border border-[#eaecf0] rounded-xl space-y-1.5 opacity-75">
+                    <div className="flex items-center justify-between">
+                      <span className="font-bold text-[#101828]">Round 2: Architecture Review</span>
+                      <span className="text-[11px] font-semibold text-[#1668e8]">Tomorrow, {convertTime('2:00 PM')}</span>
+                    </div>
+                    <p className="text-[#475467] text-[11px]">Candidate: Elena Rostova (Staff Loop)</p>
+                  </div>
+                </div>
+              </div>
+
             </div>
           </div>
-        </div>
-      )}
+        )}
 
         {/* ========================================================================= */}
         {/* ROLE 3: CANDIDATE HOME DASHBOARD */}
@@ -479,9 +620,9 @@ export const HomeDashboardView: React.FC<HomeDashboardViewProps> = ({
               </div>
 
               {!isInviteAccepted ? (
-                <div className="bg-[#eff8ff] border border-[#b2ddff] rounded-xl p-5 shadow-xs space-y-3">
+                <div className="bg-[#eff8ff] border border-[#b2ddff] rounded-2xl p-5 shadow-xs space-y-3">
                   <div>
-                    <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-[#1668e8] text-white uppercase tracking-wider">
+                    <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-[#1668e8] text-white uppercase tracking-wider">
                       Action Required
                     </span>
                     <h3 className="text-base font-bold text-[#101828] mt-2">
@@ -498,7 +639,7 @@ export const HomeDashboardView: React.FC<HomeDashboardViewProps> = ({
                         acceptInvite();
                         showToast('Loop invitation accepted! Schedule confirmed.');
                       }}
-                      className="w-full py-2.5 px-4 bg-[#1668e8] hover:bg-[#145ac7] text-white text-xs font-bold rounded-lg shadow-xs flex items-center justify-center gap-2 transition-colors"
+                      className="w-full py-2.5 px-4 bg-[#1668e8] hover:bg-[#145ac7] text-white text-xs font-semibold rounded-full shadow-xs flex items-center justify-center gap-2 transition-colors"
                     >
                       <Check className="w-4 h-4" />
                       <span>Accept Invite & Confirm Slots</span>
@@ -506,7 +647,7 @@ export const HomeDashboardView: React.FC<HomeDashboardViewProps> = ({
                   </div>
                 </div>
               ) : (
-                <div className="bg-[#ecfdf3] border border-[#a6f4c5] rounded-xl p-5 shadow-xs space-y-2">
+                <div className="bg-[#ecfdf3] border border-[#a6f4c5] rounded-2xl p-5 shadow-xs space-y-2">
                   <div className="flex items-center gap-2 text-emerald-800">
                     <CheckCircle2 className="w-5 h-5 text-emerald-600" />
                     <h3 className="text-sm font-bold">Interview Schedule Confirmed</h3>
@@ -534,7 +675,7 @@ export const HomeDashboardView: React.FC<HomeDashboardViewProps> = ({
                 </button>
               </div>
 
-              <div className="bg-white border border-[#eaecf0] rounded-xl divide-y divide-[#f2f4f7] shadow-2xs text-xs">
+              <div className="bg-white border border-[#eaecf0] rounded-2xl divide-y divide-[#f2f4f7] shadow-2xs text-xs overflow-hidden">
                 {/* Round 1 */}
                 <div className="p-4 space-y-2">
                   <div className="flex items-start justify-between">
@@ -543,7 +684,7 @@ export const HomeDashboardView: React.FC<HomeDashboardViewProps> = ({
                       <h4 className="text-xs font-bold text-[#101828]">Problem Solving & DSA Screen</h4>
                       <p className="text-[11px] text-[#667085]">Interviewer: Dr. Sarah Chen (Google)</p>
                     </div>
-                    <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-blue-50 text-blue-700 font-bold border border-blue-200">
+                    <span className="text-[10px] font-semibold px-2.5 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200">
                       Mon Oct 26 • {convertTime('10:00 AM')}
                     </span>
                   </div>
@@ -552,7 +693,7 @@ export const HomeDashboardView: React.FC<HomeDashboardViewProps> = ({
                       href="https://meet.google.com/chk-dist-sys"
                       target="_blank"
                       rel="noreferrer"
-                      className="text-[#1668e8] font-bold flex items-center gap-1 hover:underline"
+                      className="text-[#1668e8] font-semibold flex items-center gap-1 hover:underline"
                     >
                       <Video className="w-3 h-3" />
                       <span>Join Google Meet</span>
@@ -568,7 +709,7 @@ export const HomeDashboardView: React.FC<HomeDashboardViewProps> = ({
                       <h4 className="text-xs font-bold text-[#101828]">Distributed Systems Architecture</h4>
                       <p className="text-[11px] text-[#667085]">Interviewer: Phil Dunphy (Atlassian)</p>
                     </div>
-                    <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-purple-50 text-purple-700 font-bold border border-purple-200">
+                    <span className="text-[10px] font-semibold px-2.5 py-0.5 rounded-full bg-purple-50 text-purple-700 border border-purple-200">
                       Tue Oct 27 • {convertTime('2:00 PM')}
                     </span>
                   </div>
@@ -582,7 +723,7 @@ export const HomeDashboardView: React.FC<HomeDashboardViewProps> = ({
                       <h4 className="text-xs font-bold text-[#101828]">Engineering Culture & Values</h4>
                       <p className="text-[11px] text-[#667085]">Interviewer: Claire Pritchett (Lead)</p>
                     </div>
-                    <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 font-bold border border-emerald-200">
+                    <span className="text-[10px] font-semibold px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
                       Fri Oct 30 • {convertTime('2:00 PM')}
                     </span>
                   </div>
@@ -595,22 +736,22 @@ export const HomeDashboardView: React.FC<HomeDashboardViewProps> = ({
 
       </div>
 
-      {/* Evaluation Scorecard Modal for Interviewer */}
+      {/* MODAL 1: Evaluation Scorecard Modal for Interviewer */}
       {evalModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-2xs p-4 animate-in fade-in">
-          <div className="bg-white rounded-xl border border-[#eaecf0] shadow-xl max-w-lg w-full p-6 space-y-4 animate-in zoom-in-95 duration-150">
+          <div className="bg-white rounded-2xl border border-[#eaecf0] shadow-xl max-w-lg w-full p-6 space-y-4 animate-in zoom-in-95 duration-150">
             <div className="flex items-center justify-between border-b border-[#eaecf0] pb-3">
               <div>
-                <span className="text-[10px] font-bold text-[#1668e8] bg-[#eff8ff] px-2 py-0.5 rounded border border-[#b2ddff] uppercase">
-                  Submit Candidate Scorecard
+                <span className="text-[10px] font-bold text-[#1668e8] bg-[#eff8ff] px-2.5 py-0.5 rounded-full border border-[#b2ddff] uppercase">
+                  Candidate Evaluation Scorecard
                 </span>
                 <h3 className="text-base font-bold text-[#101828] mt-1">
-                  Marcus Vance — Round 1: DSA Screen
+                  {activeEvalAssignment?.candidateName || 'Marcus Vance'} — {activeEvalAssignment?.roundName || 'Round 1: DSA Screen'}
                 </h3>
               </div>
               <button 
                 onClick={() => setEvalModalOpen(false)}
-                className="text-[#98a2b3] hover:text-[#101828] p-1 rounded-md"
+                className="text-[#98a2b3] hover:text-[#101828] p-1 rounded-full"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -620,7 +761,7 @@ export const HomeDashboardView: React.FC<HomeDashboardViewProps> = ({
               {/* Problem Solving Rating */}
               <div className="space-y-1.5">
                 <div className="flex justify-between font-semibold text-[#344054]">
-                  <span>Problem Solving & Data Structures</span>
+                  <span>Problem Solving & Technical Competence</span>
                   <span className="text-[#1668e8] font-bold">{scoreProblemSolving} / 5</span>
                 </div>
                 <div className="flex gap-2">
@@ -629,7 +770,7 @@ export const HomeDashboardView: React.FC<HomeDashboardViewProps> = ({
                       type="button"
                       key={val}
                       onClick={() => setScoreProblemSolving(val)}
-                      className={`flex-1 py-1.5 rounded-lg border font-bold transition-all ${
+                      className={`flex-1 py-1.5 rounded-full border font-bold transition-all ${
                         scoreProblemSolving === val
                           ? 'bg-[#1668e8] border-[#1668e8] text-white shadow-xs'
                           : 'bg-white border-[#d0d5dd] text-[#344054] hover:bg-[#f9fafb]'
@@ -653,7 +794,7 @@ export const HomeDashboardView: React.FC<HomeDashboardViewProps> = ({
                       type="button"
                       key={val}
                       onClick={() => setScoreArchitecture(val)}
-                      className={`flex-1 py-1.5 rounded-lg border font-bold transition-all ${
+                      className={`flex-1 py-1.5 rounded-full border font-bold transition-all ${
                         scoreArchitecture === val
                           ? 'bg-[#1668e8] border-[#1668e8] text-white shadow-xs'
                           : 'bg-white border-[#d0d5dd] text-[#344054] hover:bg-[#f9fafb]'
@@ -674,10 +815,10 @@ export const HomeDashboardView: React.FC<HomeDashboardViewProps> = ({
                       type="button"
                       key={rec}
                       onClick={() => setScoreRecommendation(rec)}
-                      className={`py-1.5 rounded-lg border font-bold text-center transition-all ${
+                      className={`py-1.5 rounded-full border font-semibold text-center transition-all ${
                         scoreRecommendation === rec
                           ? rec === 'NO_HIRE'
-                            ? 'bg-red-600 border-red-600 text-white'
+                            ? 'bg-rose-600 border-rose-600 text-white'
                             : 'bg-[#0b7c3e] border-[#0b7c3e] text-white'
                           : 'bg-white border-[#d0d5dd] text-[#344054] hover:bg-[#f9fafb]'
                       }`}
@@ -695,7 +836,7 @@ export const HomeDashboardView: React.FC<HomeDashboardViewProps> = ({
                   rows={3}
                   value={scoreFeedback}
                   onChange={(e) => setScoreFeedback(e.target.value)}
-                  className="w-full bg-white border border-[#d0d5dd] rounded-lg p-2 text-xs text-[#344054] focus:outline-none focus:border-[#1668e8]"
+                  className="w-full bg-white border border-[#d0d5dd] rounded-xl p-2.5 text-xs text-[#344054] focus:outline-none focus:border-[#1668e8]"
                 />
               </div>
 
@@ -703,15 +844,140 @@ export const HomeDashboardView: React.FC<HomeDashboardViewProps> = ({
                 <button
                   type="button"
                   onClick={() => setEvalModalOpen(false)}
-                  className="px-3 py-1.5 rounded-lg border border-[#d0d5dd] text-[#344054] hover:bg-[#f9fafb] font-medium"
+                  className="px-4 py-2 rounded-full border border-[#d0d5dd] text-[#344054] hover:bg-[#f9fafb] font-medium"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-1.5 rounded-lg bg-[#1668e8] hover:bg-[#145ac7] text-white font-bold shadow-2xs"
+                  className="px-5 py-2 rounded-full bg-[#1668e8] hover:bg-[#145ac7] text-white font-semibold shadow-2xs transition-colors"
                 >
                   Submit Scorecard
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL 2: Create & Send New Profile to Interviewer (Coordinator Feature) */}
+      {createProfileModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-2xs p-4 animate-in fade-in">
+          <div className="bg-white rounded-2xl border border-[#eaecf0] shadow-xl max-w-lg w-full p-6 space-y-4 animate-in zoom-in-95 duration-150">
+            <div className="flex items-center justify-between border-b border-[#eaecf0] pb-3">
+              <div>
+                <span className="text-[10px] font-bold text-[#1668e8] bg-[#eff8ff] px-2.5 py-0.5 rounded-full border border-[#b2ddff] uppercase">
+                  Coordinator Action
+                </span>
+                <h3 className="text-base font-bold text-[#101828] mt-1">
+                  Create Candidate Profile to Score
+                </h3>
+              </div>
+              <button 
+                onClick={() => setCreateProfileModalOpen(false)}
+                className="text-[#98a2b3] hover:text-[#101828] p-1 rounded-full"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <form onSubmit={handleCreateAndSendProfile} className="space-y-3.5 text-xs">
+              <div className="space-y-1">
+                <label className="font-semibold text-[#344054]">Candidate Name</label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. Arjun Mehta"
+                  value={newCandName}
+                  onChange={(e) => setNewCandName(e.target.value)}
+                  className="w-full bg-[#f8f9fa] focus:bg-white border border-[#d0d5dd] rounded-full px-3.5 py-2 text-xs text-[#101828] focus:outline-none focus:border-[#1668e8]"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <label className="font-semibold text-[#344054]">Target Role</label>
+                  <input
+                    type="text"
+                    required
+                    value={newCandRole}
+                    onChange={(e) => setNewCandRole(e.target.value)}
+                    className="w-full bg-[#f8f9fa] focus:bg-white border border-[#d0d5dd] rounded-full px-3.5 py-2 text-xs text-[#101828] focus:outline-none focus:border-[#1668e8]"
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="font-semibold text-[#344054]">Assigned Interviewer</label>
+                  <select
+                    value={newInterviewerName}
+                    onChange={(e) => setNewInterviewerName(e.target.value)}
+                    className="w-full bg-[#f8f9fa] focus:bg-white border border-[#d0d5dd] rounded-full px-3.5 py-2 text-xs text-[#101828] focus:outline-none focus:border-[#1668e8]"
+                  >
+                    <option value="Dr. Sarah Chen">Dr. Sarah Chen (Google Lead)</option>
+                    <option value="Phil Dunphy">Phil Dunphy (Atlassian)</option>
+                    <option value="Claire Pritchett">Claire Pritchett (Principal)</option>
+                    <option value="Manny Delgado">Manny Delgado (Architect)</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="space-y-1">
+                <label className="font-semibold text-[#344054]">Interview Round</label>
+                <input
+                  type="text"
+                  required
+                  value={newRoundName}
+                  onChange={(e) => setNewRoundName(e.target.value)}
+                  className="w-full bg-[#f8f9fa] focus:bg-white border border-[#d0d5dd] rounded-full px-3.5 py-2 text-xs text-[#101828] focus:outline-none focus:border-[#1668e8]"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <label className="font-semibold text-[#344054]">Time Window</label>
+                  <input
+                    type="text"
+                    value={newTimeSlot}
+                    onChange={(e) => setNewTimeSlot(e.target.value)}
+                    className="w-full bg-[#f8f9fa] focus:bg-white border border-[#d0d5dd] rounded-full px-3.5 py-2 text-xs text-[#101828] focus:outline-none focus:border-[#1668e8]"
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="font-semibold text-[#344054]">Meeting Room</label>
+                  <input
+                    type="text"
+                    value={newRoomName}
+                    onChange={(e) => setNewRoomName(e.target.value)}
+                    className="w-full bg-[#f8f9fa] focus:bg-white border border-[#d0d5dd] rounded-full px-3.5 py-2 text-xs text-[#101828] focus:outline-none focus:border-[#1668e8]"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-1">
+                <label className="font-semibold text-[#344054]">Focus Areas / Criteria</label>
+                <textarea
+                  rows={2}
+                  value={newNotes}
+                  onChange={(e) => setNewNotes(e.target.value)}
+                  className="w-full bg-[#f8f9fa] focus:bg-white border border-[#d0d5dd] rounded-xl p-2.5 text-xs text-[#101828] focus:outline-none focus:border-[#1668e8]"
+                />
+              </div>
+
+              <div className="flex justify-end gap-2 pt-2 border-t border-[#eaecf0]">
+                <button
+                  type="button"
+                  onClick={() => setCreateProfileModalOpen(false)}
+                  className="px-4 py-2 rounded-full border border-[#d0d5dd] text-[#344054] hover:bg-[#f9fafb] font-medium"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-5 py-2 rounded-full bg-[#1668e8] hover:bg-[#145ac7] text-white font-semibold shadow-2xs transition-colors flex items-center gap-1.5"
+                >
+                  <Send className="w-3.5 h-3.5" />
+                  <span>Send to Interviewer Desk</span>
                 </button>
               </div>
             </form>

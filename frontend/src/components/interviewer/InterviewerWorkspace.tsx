@@ -36,59 +36,12 @@ export const InterviewerWorkspace: React.FC = () => {
   const { convertTime, currentTimezone } = useTimezone();
   const { 
     isInviteAccepted, 
-    isScorecardSubmitted, 
-    submitScorecard, 
-    interviewerDecision, 
-    interviewerRating,
+    submitScorecardForAssignment, 
+    assignments,
     isNudged 
   } = useCoordination();
 
   const [activeTab, setActiveTab] = useState<'dashboard' | 'availability'>('dashboard');
-
-  // Assigned Interviews
-  const [interviews, setInterviews] = useState<AssignedInterview[]>([
-    {
-      id: 'inv-101',
-      candidateName: 'Marcus Vance',
-      role: 'B.Tech CSE (Reg: 20214012)',
-      roundName: 'Distributed Systems & Architecture',
-      duration: 60,
-      date: 'Today, Oct 26',
-      pstTimeSlot: '10:00 AM – 11:00 AM IST',
-      meetingLink: 'https://meet.google.com/chk-dist-sys',
-      roomName: 'CCF Lab 1 (Terminal 12)',
-      status: isScorecardSubmitted ? 'EVALUATED' : 'PENDING_EVALUATION',
-      decision: isScorecardSubmitted ? (interviewerDecision as any) : undefined,
-      rating: isScorecardSubmitted ? interviewerRating : undefined
-    },
-    {
-      id: 'inv-102',
-      candidateName: 'Priya Sharma',
-      role: 'B.Tech IT (Reg: 20214088)',
-      roundName: 'Distributed Storage & Raft Consensus',
-      duration: 60,
-      date: 'Tomorrow, Oct 27',
-      pstTimeSlot: '2:00 PM – 3:00 PM IST',
-      meetingLink: 'https://meet.google.com/chk-raft-cons',
-      roomName: 'LHC Seminar Hall A',
-      status: 'PENDING_EVALUATION'
-    },
-    {
-      id: 'inv-103',
-      candidateName: 'Rahul Verma',
-      role: 'B.Tech ECE (Reg: 20215045)',
-      roundName: 'Fault Tolerance & Core Algorithms',
-      duration: 45,
-      date: 'Thursday, Oct 29',
-      pstTimeSlot: '11:00 AM – 11:45 AM IST',
-      meetingLink: 'https://meet.google.com/chk-dr-eval',
-      roomName: 'CCF Lab 2 (Terminal 08)',
-      status: 'EVALUATED',
-      decision: 'STRONG_HIRE',
-      rating: 5,
-      strengths: 'Outstanding grasp of distributed consensus and fault-tolerant algorithms.'
-    }
-  ]);
 
   // Scorecard Dialog Form State
   const [evalDialogOpen, setEvalDialogOpen] = useState(false);
@@ -125,7 +78,7 @@ export const InterviewerWorkspace: React.FC = () => {
     setAvailableSlots(prev => ({ ...prev, [key]: !prev[key] }));
   };
 
-  const openScorecard = (interview: AssignedInterview) => {
+  const openScorecard = (interview: any) => {
     setActiveInterview(interview);
     if (interview.status === 'EVALUATED') {
       setRecommendation(interview.decision || 'STRONG_HIRE');
@@ -139,21 +92,13 @@ export const InterviewerWorkspace: React.FC = () => {
     e.preventDefault();
     if (!activeInterview) return;
 
-    if (activeInterview.id === 'inv-101' || activeInterview.candidateName.includes('Marcus')) {
-      submitScorecard(recommendation, problemSolvingRating);
-    }
-
-    setInterviews(interviews.map(i => 
-      i.id === activeInterview.id 
-        ? {
-            ...i,
-            status: 'EVALUATED',
-            decision: recommendation,
-            rating: problemSolvingRating,
-            strengths
-          }
-        : i
-    ));
+    submitScorecardForAssignment(
+      activeInterview.id,
+      recommendation,
+      problemSolvingRating,
+      strengths,
+      'Evaluated through central coordination engine'
+    );
 
     setEvalDialogOpen(false);
     setEvalSuccessBanner(true);
@@ -193,7 +138,7 @@ export const InterviewerWorkspace: React.FC = () => {
             <div className="bg-[#f8f9fa] px-3 py-1.5 rounded-xl border border-[#eaecf0] space-y-1">
               <div className="flex justify-between text-[11px] font-semibold gap-3">
                 <span className="text-[#344054]">Weekly Load</span>
-                <span className="text-[#1668e8] font-bold font-mono">3 / 6 sessions</span>
+                <span className="text-[#1668e8] font-bold">3 / 6 sessions</span>
               </div>
               <div className="w-28 bg-[#eaecf0] h-1.5 rounded-full overflow-hidden">
                 <div className="bg-[#1668e8] h-full rounded-full" style={{ width: '50%' }}></div>
@@ -213,7 +158,7 @@ export const InterviewerWorkspace: React.FC = () => {
             }`}
           >
             <FileText className="w-3.5 h-3.5" />
-            <span>Assigned Candidate Sessions ({interviews.length})</span>
+            <span>Assigned Candidate Sessions ({assignments.length})</span>
           </button>
 
           <button
@@ -237,7 +182,7 @@ export const InterviewerWorkspace: React.FC = () => {
                 Scorecard successfully submitted to Central Coordination Engine!
               </span>
             </div>
-            <span className="text-[10px] font-mono font-bold bg-white px-2 py-0.5 rounded border border-[#a6f4c5]">
+            <span className="text-[10px] font-bold bg-white px-2 py-0.5 rounded-full border border-[#a6f4c5]">
               SYNCED
             </span>
           </div>
@@ -251,8 +196,8 @@ export const InterviewerWorkspace: React.FC = () => {
         {activeTab === 'dashboard' && (
           <div className="space-y-3">
             
-            {/* Urgent Nudge Alert from Coordinator (Soft light-red breathing tint, Apple rounded-2xl, no red border, no warning sign) */}
-            {isNudged && !isScorecardSubmitted && (
+            {/* Urgent Nudge Alert from Coordinator */}
+            {assignments.some(a => a.isNudged && a.status !== 'EVALUATED') && (
               <div className="bg-rose-50/70 animate-pulse border border-rose-200/50 rounded-2xl p-4.5 shadow-2xs flex flex-col sm:flex-row sm:items-center justify-between gap-4 transition-all">
                 <div className="space-y-1">
                   <div className="flex items-center gap-2">
@@ -263,15 +208,15 @@ export const InterviewerWorkspace: React.FC = () => {
                     <span className="text-xs text-rose-900/70 font-medium">• Coordinator Emma Watson</span>
                   </div>
                   <h3 className="text-sm font-bold text-[#101828] mt-1">
-                    Marcus Vance — Round 1: Problem Solving & DSA Screen
+                    {assignments.find(a => a.isNudged && a.status !== 'EVALUATED')?.candidateName} — {assignments.find(a => a.isNudged && a.status !== 'EVALUATED')?.roundName}
                   </h3>
                   <p className="text-xs text-[#475467] mt-0.5">
-                    Coordinator Emma Watson requested your scorecard for Round 1 to unblock candidate advancement to Round 2.
+                    Coordinator Emma Watson requested your scorecard to unblock candidate advancement to the next evaluation loop.
                   </p>
                 </div>
                 <button
                   onClick={() => {
-                    const targetInv = interviews.find(i => i.id === 'inv-101') || interviews[0];
+                    const targetInv = assignments.find(a => a.isNudged && a.status !== 'EVALUATED') || assignments[0];
                     openScorecard(targetInv);
                   }}
                   className="px-4 py-2 bg-[#1668e8] hover:bg-[#145ac7] text-white text-xs font-semibold rounded-full shrink-0 flex items-center justify-center gap-1.5 shadow-xs transition-all"
@@ -284,7 +229,7 @@ export const InterviewerWorkspace: React.FC = () => {
 
             <div className="flex items-center justify-between">
               <span className="text-xs font-bold text-[#101828]">
-                Assigned Candidate Loops (Google SDE Drive)
+                Assigned Candidate Loops (Active Evaluations)
               </span>
               <span className="text-[11px] text-[#667085]">
                 Times displayed in {currentTimezone.label}
@@ -292,11 +237,11 @@ export const InterviewerWorkspace: React.FC = () => {
             </div>
 
             <div className="space-y-2.5">
-              {interviews.map((inv) => {
-                const isTarget = inv.id === 'inv-101';
+              {assignments.map((inv) => {
+                const isTarget = inv.id === 'inv-101' || inv.candidateName.includes('Marcus');
                 const isConfirmed = isTarget ? isInviteAccepted : true;
-                const isEvaluated = isTarget ? (isScorecardSubmitted || inv.status === 'EVALUATED') : inv.status === 'EVALUATED';
-                const isItemNudged = isTarget && isNudged && !isEvaluated;
+                const isEvaluated = inv.status === 'EVALUATED';
+                const isItemNudged = (inv.isNudged || (isTarget && isNudged)) && !isEvaluated;
 
                 return (
                   <div 

@@ -17,6 +17,7 @@ import {
   X
 } from 'lucide-react';
 import { useTimezone } from '../../context/TimezoneContext';
+import { useCoordination } from '../../context/CoordinationContext';
 import { scheduleService } from '../../services/scheduleService';
 import { AvatarBadge } from '../common/AvatarBadge';
 
@@ -45,13 +46,14 @@ export const AutomateSchedulingView: React.FC<AutomateSchedulingViewProps> = ({
   roleName = 'Product Design Onsite'
 }) => {
   const { convertTime, convertHourLabel, currentTimezone } = useTimezone();
+  const { scheduleState, updateScheduleState } = useCoordination();
 
-  // State
-  const [scheduleApplied, setScheduleApplied] = useState(false);
+  // State (persisted across tabs)
+  const [scheduleApplied, setScheduleApplied] = useState(() => scheduleState.scheduleApplied);
   const [optionsModalOpen, setOptionsModalOpen] = useState(false);
   const [addModalOpen, setAddModalOpen] = useState(false);
-  const [selectedOption, setSelectedOption] = useState<'A' | 'B' | 'C'>('A');
-  const [currentDateIndex, setCurrentDateIndex] = useState(0);
+  const [selectedOption, setSelectedOption] = useState<'A' | 'B' | 'C'>(() => scheduleState.selectedOption || 'A');
+  const [currentDateIndex, setCurrentDateIndex] = useState(() => scheduleState.currentDateIndex || 0);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [activeInterviewerModal, setActiveInterviewerModal] = useState<any | null>(null);
   const [isSolving, setIsSolving] = useState(false);
@@ -178,14 +180,24 @@ export const AutomateSchedulingView: React.FC<AutomateSchedulingViewProps> = ({
     ]
   };
 
-  const [activeSessions, setActiveSessions] = useState<InterviewSession[]>(optionSessions.A);
+  const [activeSessions, setActiveSessions] = useState<InterviewSession[]>(() => {
+    if (scheduleState.activeSessions && scheduleState.activeSessions.length > 0) {
+      return scheduleState.activeSessions as InterviewSession[];
+    }
+    return optionSessions[scheduleState.selectedOption || 'A'];
+  });
 
-  // When selected option changes, update sessions
+  // When selected option changes, update sessions & persist
   const handleSelectOption = (opt: 'A' | 'B' | 'C') => {
     setSelectedOption(opt);
     setActiveSessions(optionSessions[opt]);
     setOptionsModalOpen(false);
     setScheduleApplied(true);
+    updateScheduleState({
+      selectedOption: opt,
+      activeSessions: optionSessions[opt],
+      scheduleApplied: true
+    });
   };
 
   // Add interview modal state
@@ -214,10 +226,15 @@ export const AutomateSchedulingView: React.FC<AutomateSchedulingViewProps> = ({
       type: 'bar_raiser'
     };
 
-    setActiveSessions([...activeSessions, newSess]);
+    const updated = [...activeSessions, newSess];
+    setActiveSessions(updated);
     setAddModalOpen(false);
     setNewTitle('');
     setScheduleApplied(true);
+    updateScheduleState({
+      activeSessions: updated,
+      scheduleApplied: true
+    });
   };
 
   // Interviewers participating in this candidate loop
@@ -348,8 +365,12 @@ export const AutomateSchedulingView: React.FC<AutomateSchedulingViewProps> = ({
                       };
                     });
                     setActiveSessions(solverSessions);
+                    setScheduleApplied(true);
+                    updateScheduleState({
+                      activeSessions: solverSessions,
+                      scheduleApplied: true
+                    });
                   }
-                  setScheduleApplied(true);
                 }
               } catch (err) {
                 console.error('Solver run failed:', err);
@@ -358,7 +379,7 @@ export const AutomateSchedulingView: React.FC<AutomateSchedulingViewProps> = ({
               }
             }}
             disabled={isSolving}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[#eaecf0] hover:bg-[#f9fafb] text-xs font-semibold text-[#1668e8] shadow-2xs transition-colors disabled:opacity-50"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-[#eaecf0] hover:bg-[#f9fafb] text-xs font-semibold text-[#1668e8] shadow-2xs transition-colors disabled:opacity-50"
           >
             {isSolving ? (
               <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -372,13 +393,16 @@ export const AutomateSchedulingView: React.FC<AutomateSchedulingViewProps> = ({
         <div className="flex items-center gap-2.5">
           <button 
             onClick={() => setAddModalOpen(true)}
-            className="px-3.5 py-1.5 rounded-lg border border-[#d0d5dd] text-xs font-medium text-[#344054] hover:bg-[#f9fafb] transition-colors"
+            className="px-3.5 py-1.5 rounded-full border border-[#d0d5dd] text-xs font-medium text-[#344054] hover:bg-[#f9fafb] transition-colors"
           >
             + Add interview
           </button>
           <button 
-            onClick={() => setScheduleApplied(true)}
-            className={`px-5 py-1.5 rounded-lg text-xs font-semibold shadow-2xs transition-colors flex items-center gap-1.5 ${
+            onClick={() => {
+              setScheduleApplied(true);
+              updateScheduleState({ scheduleApplied: true, activeSessions });
+            }}
+            className={`px-5 py-1.5 rounded-full text-xs font-semibold shadow-2xs transition-colors flex items-center gap-1.5 ${
               scheduleApplied
                 ? 'bg-[#0b7c3e] text-white hover:bg-[#096a34]'
                 : 'bg-[#1668e8] hover:bg-[#145ac7] text-white'
@@ -398,7 +422,7 @@ export const AutomateSchedulingView: React.FC<AutomateSchedulingViewProps> = ({
 
       {/* Confirmation Banner */}
       {scheduleApplied && (
-        <div className="mx-8 mt-4 p-3.5 rounded-xl bg-[#ecfdf3] text-[#0b7c3e] border border-[#abefc6] text-xs font-semibold flex flex-col sm:flex-row sm:items-center justify-between gap-2 animate-in fade-in">
+        <div className="mx-8 mt-4 p-3.5 rounded-2xl bg-[#ecfdf3] text-[#0b7c3e] border border-[#abefc6] text-xs font-semibold flex flex-col sm:flex-row sm:items-center justify-between gap-2 animate-in fade-in">
           <span className="flex items-center gap-2">
             <CheckCircle2 className="w-4 h-4 text-[#0b7c3e] shrink-0" />
             Schedule Option {selectedOption} locked into calendar for {candidateName} in {currentTimezone.shortName}!
@@ -418,9 +442,13 @@ export const AutomateSchedulingView: React.FC<AutomateSchedulingViewProps> = ({
           {/* Day Navigation */}
           <div className="flex items-center gap-1">
             <button 
-              onClick={() => setCurrentDateIndex(Math.max(0, currentDateIndex - 1))}
+              onClick={() => {
+                const newIdx = Math.max(0, currentDateIndex - 1);
+                setCurrentDateIndex(newIdx);
+                updateScheduleState({ currentDateIndex: newIdx });
+              }}
               disabled={currentDateIndex === 0}
-              className="p-1 rounded hover:bg-[#eaecf0] text-[#667085] disabled:opacity-30 disabled:hover:bg-transparent"
+              className="p-1 rounded-full hover:bg-[#eaecf0] text-[#667085] disabled:opacity-30 disabled:hover:bg-transparent"
               title="Previous Day"
             >
               <ChevronLeft className="w-4 h-4" />
@@ -429,9 +457,13 @@ export const AutomateSchedulingView: React.FC<AutomateSchedulingViewProps> = ({
               {currentDate.label}
             </span>
             <button 
-              onClick={() => setCurrentDateIndex(Math.min(availableDates.length - 1, currentDateIndex + 1))}
+              onClick={() => {
+                const newIdx = Math.min(availableDates.length - 1, currentDateIndex + 1);
+                setCurrentDateIndex(newIdx);
+                updateScheduleState({ currentDateIndex: newIdx });
+              }}
               disabled={currentDateIndex === availableDates.length - 1}
-              className="p-1 rounded hover:bg-[#eaecf0] text-[#667085] disabled:opacity-30 disabled:hover:bg-transparent"
+              className="p-1 rounded-full hover:bg-[#eaecf0] text-[#667085] disabled:opacity-30 disabled:hover:bg-transparent"
               title="Next Day"
             >
               <ChevronRight className="w-4 h-4" />
@@ -457,12 +489,12 @@ export const AutomateSchedulingView: React.FC<AutomateSchedulingViewProps> = ({
         </div>
 
         <div className="flex items-center gap-2">
-          <span className="text-[11px] text-[#667085] font-mono">
+          <span className="text-[11px] text-[#667085]">
             Timezone: <span className="font-bold text-[#101828]">{currentTimezone.shortName}</span>
           </span>
           <button 
             onClick={() => setIsFullscreen(!isFullscreen)}
-            className="p-1.5 rounded-lg border border-[#eaecf0] hover:bg-white text-[#667085] hover:text-[#101828]"
+            className="p-1.5 rounded-full border border-[#eaecf0] hover:bg-white text-[#667085] hover:text-[#101828]"
             title={isFullscreen ? 'Exit Fullscreen' : 'Expand Matrix View'}
           >
             {isFullscreen ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
@@ -483,7 +515,7 @@ export const AutomateSchedulingView: React.FC<AutomateSchedulingViewProps> = ({
                 <CalendarIcon className="w-4 h-4 text-[#667085]" />
                 <span className="font-semibold text-[13px] text-[#101828]">Candidate schedule</span>
               </div>
-              <span className="text-[10px] font-mono text-[#667085] px-1.5 py-0.5 bg-white rounded border border-[#eaecf0]">
+              <span className="text-[10px] font-semibold text-[#667085] px-2 py-0.5 bg-white rounded-full border border-[#eaecf0]">
                 {currentTimezone.shortName}
               </span>
             </div>
@@ -529,7 +561,7 @@ export const AutomateSchedulingView: React.FC<AutomateSchedulingViewProps> = ({
                       <span className="font-bold text-[#101828] text-xs">
                         {convertedHour.full}
                       </span>
-                      <span className="text-[10px] text-[#98a2b3] font-mono">
+                      <span className="text-[10px] text-[#98a2b3] font-medium">
                         ({pstHour}:00 PT)
                       </span>
                     </div>
@@ -537,11 +569,11 @@ export const AutomateSchedulingView: React.FC<AutomateSchedulingViewProps> = ({
                     {matchingCandidateSessions.map((session) => (
                       <div 
                         key={session.id}
-                        className="p-2.5 rounded-lg bg-[#1668e8] text-white shadow-2xs space-y-1 hover:bg-[#145ac7] transition-all"
+                        className="p-2.5 rounded-xl bg-[#1668e8] text-white shadow-2xs space-y-1 hover:bg-[#145ac7] transition-all"
                       >
                         <div className="flex items-center justify-between">
                           <p className="font-semibold text-xs">{session.title}</p>
-                          <span className="text-[10px] font-mono bg-white/20 px-1 rounded">
+                          <span className="text-[10px] font-semibold bg-white/20 px-1.5 py-0.2 rounded-full">
                             {session.durationMins}m
                           </span>
                         </div>
@@ -572,11 +604,11 @@ export const AutomateSchedulingView: React.FC<AutomateSchedulingViewProps> = ({
                         {matchingIntSessions.map((session) => (
                           <div 
                             key={session.id}
-                            className="p-2.5 rounded-lg bg-[#1668e8] text-white shadow-2xs space-y-1 hover:bg-[#145ac7] transition-all"
+                            className="p-2.5 rounded-xl bg-[#1668e8] text-white shadow-2xs space-y-1 hover:bg-[#145ac7] transition-all"
                           >
                             <div className="flex items-center justify-between">
                               <p className="font-semibold text-xs">{session.title}</p>
-                              <span className="text-[10px] font-mono bg-white/20 px-1 rounded">
+                              <span className="text-[10px] font-semibold bg-white/20 px-1.5 py-0.2 rounded-full">
                                 {session.durationMins}m
                               </span>
                             </div>

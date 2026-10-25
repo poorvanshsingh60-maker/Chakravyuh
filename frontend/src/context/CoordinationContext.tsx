@@ -1,5 +1,135 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 
+export interface InterviewAssignment {
+  id: string;
+  candidateName: string;
+  role: string;
+  roundName: string;
+  interviewerName: string;
+  interviewerAvatar?: string;
+  duration: number;
+  date: string;
+  pstTimeSlot: string;
+  meetingLink: string;
+  roomName: string;
+  status: 'PENDING_EVALUATION' | 'EVALUATED';
+  decision?: 'STRONG_HIRE' | 'HIRE' | 'NO_HIRE' | 'STRONG_NO_HIRE';
+  rating?: number;
+  strengths?: string;
+  growthAreas?: string;
+  notes?: string;
+  isNudged?: boolean;
+  submittedAt?: string;
+}
+
+export interface SavedScheduleSession {
+  id: string;
+  title: string;
+  interviewer: string;
+  interviewerAvatar: string;
+  interviewerRole: string;
+  pstTimeSlot: string;
+  pstRowHour: number;
+  durationMins: number;
+  room: string;
+  type: 'design' | 'values' | 'presentation' | 'bar_raiser';
+}
+
+export interface SavedScheduleState {
+  scheduleApplied: boolean;
+  selectedOption: 'A' | 'B' | 'C';
+  activeSessions: SavedScheduleSession[];
+  currentDateIndex: number;
+  lastUpdated?: string;
+}
+
+const DEFAULT_SESSIONS_OPTION_A: SavedScheduleSession[] = [
+  {
+    id: 'sess-1',
+    title: 'Design Exercise 1',
+    interviewer: 'Claire Pritchett',
+    interviewerAvatar: '',
+    interviewerRole: 'Principal Designer & Bar Raiser',
+    pstTimeSlot: '9-9:30 am PST',
+    pstRowHour: 9,
+    durationMins: 30,
+    room: 'Virtual Pod Alpha',
+    type: 'design'
+  },
+  {
+    id: 'sess-2',
+    title: 'Company Values',
+    interviewer: 'Phil Dunphy',
+    interviewerAvatar: '',
+    interviewerRole: 'Senior Product Manager',
+    pstTimeSlot: '9:30-10 am PST',
+    pstRowHour: 9,
+    durationMins: 30,
+    room: 'Virtual Pod Gamma',
+    type: 'values'
+  },
+  {
+    id: 'sess-3',
+    title: 'Design Presentation',
+    interviewer: 'Manny Delgado',
+    interviewerAvatar: '',
+    interviewerRole: 'Staff Systems Architect',
+    pstTimeSlot: '10-11 am PST',
+    pstRowHour: 10,
+    durationMins: 60,
+    room: 'Conference Suite 402',
+    type: 'presentation'
+  }
+];
+
+const INITIAL_ASSIGNMENTS: InterviewAssignment[] = [
+  {
+    id: 'inv-101',
+    candidateName: 'Marcus Vance',
+    role: 'B.Tech CSE (Reg: 20214012)',
+    roundName: 'Round 1: Problem Solving & DSA Screen',
+    interviewerName: 'Dr. Sarah Chen',
+    duration: 60,
+    date: 'Today, Oct 26',
+    pstTimeSlot: '10:00 AM – 11:00 AM IST',
+    meetingLink: 'https://meet.google.com/chk-dist-sys',
+    roomName: 'CCF Lab 1 (Terminal 12)',
+    status: 'PENDING_EVALUATION',
+    isNudged: true
+  },
+  {
+    id: 'inv-102',
+    candidateName: 'Priya Sharma',
+    role: 'B.Tech IT (Reg: 20214088)',
+    roundName: 'Round 2: Distributed Storage & Raft Consensus',
+    interviewerName: 'Phil Dunphy',
+    duration: 60,
+    date: 'Tomorrow, Oct 27',
+    pstTimeSlot: '2:00 PM – 3:00 PM IST',
+    meetingLink: 'https://meet.google.com/chk-raft-cons',
+    roomName: 'LHC Seminar Hall A',
+    status: 'PENDING_EVALUATION',
+    isNudged: false
+  },
+  {
+    id: 'inv-103',
+    candidateName: 'Rahul Verma',
+    role: 'B.Tech ECE (Reg: 20215045)',
+    roundName: 'Round 1: Fault Tolerance & Core Algorithms',
+    interviewerName: 'Dr. Sarah Chen',
+    duration: 45,
+    date: 'Thursday, Oct 29',
+    pstTimeSlot: '11:00 AM – 11:45 AM IST',
+    meetingLink: 'https://meet.google.com/chk-dr-eval',
+    roomName: 'CCF Lab 2 (Terminal 08)',
+    status: 'EVALUATED',
+    decision: 'STRONG_HIRE',
+    rating: 5,
+    strengths: 'Outstanding grasp of distributed consensus and fault-tolerant algorithms.',
+    submittedAt: 'Yesterday'
+  }
+];
+
 interface CoordinationState {
   candidateName: string;
   candidateReg: string;
@@ -11,23 +141,48 @@ interface CoordinationState {
   interviewerDecision: string;
   interviewerRating: number;
   isNudged: boolean;
+  assignments: InterviewAssignment[];
+  scheduleState: SavedScheduleState;
   acceptInvite: () => void;
   confirmSlots: () => void;
   submitScorecard: (decision: string, rating: number) => void;
   nudgeInterviewer: () => void;
   clearNudge: () => void;
   resetFlow: () => void;
+  // Assignment methods
+  submitScorecardForAssignment: (
+    assignmentId: string, 
+    decision: 'STRONG_HIRE' | 'HIRE' | 'NO_HIRE' | 'STRONG_NO_HIRE', 
+    rating: number, 
+    strengths?: string, 
+    growthAreas?: string
+  ) => void;
+  nudgeAssignment: (assignmentId: string) => void;
+  createAndSendAssignment: (newAssignment: {
+    candidateName: string;
+    role: string;
+    roundName: string;
+    interviewerName: string;
+    duration?: number;
+    date?: string;
+    pstTimeSlot?: string;
+    roomName?: string;
+    notes?: string;
+  }) => InterviewAssignment;
+  // Schedule state persistence
+  updateScheduleState: (partial: Partial<SavedScheduleState>) => void;
 }
 
 const CoordinationContext = createContext<CoordinationState | undefined>(undefined);
 
-const STORAGE_KEY = 'chakravyuh_coordination_state_v3';
+const STORAGE_KEY = 'chakravyuh_coordination_state_v4';
+const SCHEDULE_STORAGE_KEY = 'chakravyuh_schedule_state_v4';
 
 export const CoordinationProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [isInviteAccepted, setIsInviteAccepted] = useState<boolean>(() => {
     try {
       const saved = localStorage.getItem(STORAGE_KEY);
-      return saved ? JSON.parse(saved).isInviteAccepted ?? true : true; // Default true so demo is ready, but toggleable
+      return saved ? JSON.parse(saved).isInviteAccepted ?? true : true;
     } catch {
       return true;
     }
@@ -42,41 +197,80 @@ export const CoordinationProvider: React.FC<{ children: React.ReactNode }> = ({ 
     }
   });
 
-  const [isScorecardSubmitted, setIsScorecardSubmitted] = useState<boolean>(() => {
+  const [assignments, setAssignments] = useState<InterviewAssignment[]>(() => {
     try {
       const saved = localStorage.getItem(STORAGE_KEY);
-      return saved ? JSON.parse(saved).isScorecardSubmitted ?? false : false;
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed.assignments) && parsed.assignments.length > 0) {
+          return parsed.assignments;
+        }
+      }
+      return INITIAL_ASSIGNMENTS;
     } catch {
-      return false;
+      return INITIAL_ASSIGNMENTS;
     }
   });
 
-  const [isNudged, setIsNudged] = useState<boolean>(() => {
+  const [scheduleState, setScheduleState] = useState<SavedScheduleState>(() => {
     try {
-      const saved = localStorage.getItem(STORAGE_KEY);
-      return saved ? JSON.parse(saved).isNudged ?? true : true;
+      const saved = localStorage.getItem(SCHEDULE_STORAGE_KEY);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (parsed.activeSessions) return parsed;
+      }
+      return {
+        scheduleApplied: false,
+        selectedOption: 'A',
+        activeSessions: DEFAULT_SESSIONS_OPTION_A,
+        currentDateIndex: 0
+      };
     } catch {
-      return true;
+      return {
+        scheduleApplied: false,
+        selectedOption: 'A',
+        activeSessions: DEFAULT_SESSIONS_OPTION_A,
+        currentDateIndex: 0
+      };
     }
   });
 
-  const [interviewerDecision, setInterviewerDecision] = useState<string>('STRONG_HIRE');
-  const [interviewerRating, setInterviewerRating] = useState<number>(5);
+  // Backward compatible flags derived from Marcus Vance's assignment
+  const marcusAssignment = assignments.find(a => a.id === 'inv-101' || a.candidateName.includes('Marcus'));
+  const isScorecardSubmitted = marcusAssignment?.status === 'EVALUATED';
+  const interviewerDecision = marcusAssignment?.decision || 'STRONG_HIRE';
+  const interviewerRating = marcusAssignment?.rating || 5;
+  const isNudged = marcusAssignment?.isNudged ?? true;
 
+  // Persist coordination state
   useEffect(() => {
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify({
         isInviteAccepted,
         areSlotsConfirmed,
-        isScorecardSubmitted,
-        interviewerDecision,
-        interviewerRating,
-        isNudged
+        assignments
       }));
     } catch (e) {
       console.error('Failed to sync coordination state', e);
     }
-  }, [isInviteAccepted, areSlotsConfirmed, isScorecardSubmitted, interviewerDecision, interviewerRating, isNudged]);
+  }, [isInviteAccepted, areSlotsConfirmed, assignments]);
+
+  // Persist schedule state
+  useEffect(() => {
+    try {
+      localStorage.setItem(SCHEDULE_STORAGE_KEY, JSON.stringify(scheduleState));
+    } catch (e) {
+      console.error('Failed to sync schedule state', e);
+    }
+  }, [scheduleState]);
+
+  const updateScheduleState = (partial: Partial<SavedScheduleState>) => {
+    setScheduleState(prev => ({
+      ...prev,
+      ...partial,
+      lastUpdated: new Date().toISOString()
+    }));
+  };
 
   const acceptInvite = () => {
     setIsInviteAccepted(true);
@@ -86,29 +280,96 @@ export const CoordinationProvider: React.FC<{ children: React.ReactNode }> = ({ 
     setAreSlotsConfirmed(true);
   };
 
+  const submitScorecardForAssignment = (
+    assignmentId: string,
+    decision: 'STRONG_HIRE' | 'HIRE' | 'NO_HIRE' | 'STRONG_NO_HIRE',
+    rating: number,
+    strengths?: string,
+    growthAreas?: string
+  ) => {
+    setAssignments(prev => prev.map(a => {
+      if (a.id === assignmentId) {
+        return {
+          ...a,
+          status: 'EVALUATED',
+          decision,
+          rating,
+          strengths: strengths || a.strengths,
+          growthAreas: growthAreas || a.growthAreas,
+          isNudged: false,
+          submittedAt: 'Just now'
+        };
+      }
+      return a;
+    }));
+  };
+
   const submitScorecard = (decision: string, rating: number) => {
-    setInterviewerDecision(decision);
-    setInterviewerRating(rating);
-    setIsScorecardSubmitted(true);
-    setIsNudged(false);
+    // Marcus Vance submission backward compatibility
+    submitScorecardForAssignment(
+      'inv-101', 
+      decision as any, 
+      rating, 
+      'Excellent problem decomposition, clean graph traversal implementation, and optimal time complexity analysis.'
+    );
+  };
+
+  const nudgeAssignment = (assignmentId: string) => {
+    setAssignments(prev => prev.map(a => {
+      if (a.id === assignmentId) {
+        return {
+          ...a,
+          isNudged: true,
+          status: 'PENDING_EVALUATION'
+        };
+      }
+      return a;
+    }));
   };
 
   const nudgeInterviewer = () => {
-    setIsScorecardSubmitted(false);
-    setIsNudged(true);
+    nudgeAssignment('inv-101');
   };
 
   const clearNudge = () => {
-    setIsNudged(false);
+    setAssignments(prev => prev.map(a => a.id === 'inv-101' ? { ...a, isNudged: false } : a));
+  };
+
+  const createAndSendAssignment = (newAssignment: {
+    candidateName: string;
+    role: string;
+    roundName: string;
+    interviewerName: string;
+    duration?: number;
+    date?: string;
+    pstTimeSlot?: string;
+    roomName?: string;
+    notes?: string;
+  }): InterviewAssignment => {
+    const created: InterviewAssignment = {
+      id: `inv-${Date.now()}`,
+      candidateName: newAssignment.candidateName,
+      role: newAssignment.role,
+      roundName: newAssignment.roundName,
+      interviewerName: newAssignment.interviewerName,
+      duration: newAssignment.duration || 45,
+      date: newAssignment.date || 'Today, Oct 26',
+      pstTimeSlot: newAssignment.pstTimeSlot || '3:30 PM – 4:15 PM IST',
+      meetingLink: 'https://meet.google.com/chk-' + Math.random().toString(36).substring(2, 7),
+      roomName: newAssignment.roomName || 'Virtual Pod Alpha',
+      status: 'PENDING_EVALUATION',
+      isNudged: true, // Marked urgent so interviewer immediately sees it
+      notes: newAssignment.notes
+    };
+
+    setAssignments(prev => [created, ...prev]);
+    return created;
   };
 
   const resetFlow = () => {
     setIsInviteAccepted(false);
     setAreSlotsConfirmed(false);
-    setIsScorecardSubmitted(false);
-    setIsNudged(true);
-    setInterviewerDecision('STRONG_HIRE');
-    setInterviewerRating(5);
+    setAssignments(INITIAL_ASSIGNMENTS);
   };
 
   return (
@@ -123,12 +384,18 @@ export const CoordinationProvider: React.FC<{ children: React.ReactNode }> = ({ 
       interviewerDecision,
       interviewerRating,
       isNudged,
+      assignments,
+      scheduleState,
       acceptInvite,
       confirmSlots,
       submitScorecard,
       nudgeInterviewer,
       clearNudge,
-      resetFlow
+      resetFlow,
+      submitScorecardForAssignment,
+      nudgeAssignment,
+      createAndSendAssignment,
+      updateScheduleState
     }}>
       {children}
     </CoordinationContext.Provider>

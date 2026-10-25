@@ -197,7 +197,7 @@ export const JobsView: React.FC<JobsViewProps> = ({ jobs }) => {
                       <h4 className="font-semibold text-xs text-[#101828]">{round.name}</h4>
                     </div>
                     <div className="flex items-center gap-2">
-                      <span className="flex items-center gap-1 text-[11px] font-mono text-[#667085] bg-white px-2 py-0.5 rounded border border-[#eaecf0]">
+                      <span className="flex items-center gap-1 text-[11px] font-semibold text-[#667085] bg-white px-2 py-0.5 rounded-full border border-[#eaecf0]">
                         <Clock className="w-3 h-3 text-[#98a2b3]" />
                         {round.duration} min
                       </span>

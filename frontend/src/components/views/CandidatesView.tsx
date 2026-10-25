@@ -8,6 +8,8 @@ import {
 } from 'lucide-react';
 import { AvatarBadge } from '../common/AvatarBadge';
 
+import { useCoordination } from '../../context/CoordinationContext';
+
 interface CandidatesViewProps {
   candidates: CandidateItem[];
   onScheduleCandidate: (candidate: CandidateItem) => void;
@@ -19,6 +21,7 @@ export const CandidatesView: React.FC<CandidatesViewProps> = ({
   onScheduleCandidate,
   onAddCandidate 
 }) => {
+  const { createAndSendAssignment } = useCoordination();
   const [search, setSearch] = useState('');
   const [filterStage, setFilterStage] = useState('ALL');
   const [modalOpen, setModalOpen] = useState(false);
@@ -47,6 +50,16 @@ export const CandidatesView: React.FC<CandidatesViewProps> = ({
       appliedDate: 'Just now',
       recruiter: 'Sarah Jenkins',
       status: 'NEEDS_SCHEDULING'
+    });
+
+    createAndSendAssignment({
+      candidateName: name,
+      role,
+      roundName: 'Round 1: Problem Solving & DSA Screen',
+      interviewerName: 'Dr. Sarah Chen',
+      pstTimeSlot: '11:00 AM – 11:45 AM PST',
+      roomName: 'Virtual Pod Alpha',
+      notes: 'Evaluate coding, algorithmic complexity, and communication'
     });
 
     setName('');
