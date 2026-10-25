@@ -420,11 +420,10 @@ export const HomeDashboardView: React.FC<HomeDashboardViewProps> = ({
               <div className="bg-rose-50/70 animate-pulse border border-rose-200/50 rounded-2xl p-4.5 shadow-2xs flex flex-col sm:flex-row sm:items-center justify-between gap-4 transition-all">
                 <div className="space-y-1">
                   <div className="flex flex-wrap items-center gap-2">
-                    <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-rose-100 text-rose-800">
-                      <span className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-ping" />
+                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-rose-100 text-rose-800">
                       <span>Scorecard Evaluation Requested</span>
                     </span>
-                    <span className="text-xs text-rose-900/70 font-medium">• Coordinator Emma Watson</span>
+                    <span className="text-xs text-rose-900/70 font-medium">Coordinator Emma Watson</span>
                   </div>
                   <h3 className="text-sm font-bold text-[#101828] mt-1.5">
                     {pendingScorecards[0]?.candidateName} — {pendingScorecards[0]?.roundName}
