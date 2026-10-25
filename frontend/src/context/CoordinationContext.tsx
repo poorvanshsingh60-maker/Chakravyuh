@@ -46,36 +46,36 @@ export interface SavedScheduleState {
 const DEFAULT_SESSIONS_OPTION_A: SavedScheduleSession[] = [
   {
     id: 'sess-1',
-    title: 'Design Exercise 1',
+    title: 'Design Exercise 1 & Domain Screen',
     interviewer: 'Claire Pritchett',
-    interviewerAvatar: '',
+    interviewerAvatar: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=100&auto=format&fit=crop&q=80',
     interviewerRole: 'Principal Designer & Bar Raiser',
-    pstTimeSlot: '9-9:30 am PST',
+    pstTimeSlot: '9:00 AM – 9:45 AM PST',
     pstRowHour: 9,
-    durationMins: 30,
+    durationMins: 45,
     room: 'Virtual Pod Alpha',
     type: 'design'
   },
   {
     id: 'sess-2',
-    title: 'Company Values',
+    title: 'Executive Calibration & Values',
     interviewer: 'Phil Dunphy',
-    interviewerAvatar: '',
+    interviewerAvatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80',
     interviewerRole: 'Senior Product Manager',
-    pstTimeSlot: '9:30-10 am PST',
-    pstRowHour: 9,
-    durationMins: 30,
+    pstTimeSlot: '10:00 AM – 10:45 AM PST',
+    pstRowHour: 10,
+    durationMins: 45,
     room: 'Virtual Pod Gamma',
     type: 'values'
   },
   {
     id: 'sess-3',
-    title: 'Design Presentation',
+    title: 'System Architecture Assessment',
     interviewer: 'Manny Delgado',
-    interviewerAvatar: '',
+    interviewerAvatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&auto=format&fit=crop&q=80',
     interviewerRole: 'Staff Systems Architect',
-    pstTimeSlot: '10-11 am PST',
-    pstRowHour: 10,
+    pstTimeSlot: '11:00 AM – 12:00 PM PST',
+    pstRowHour: 11,
     durationMins: 60,
     room: 'Conference Suite 402',
     type: 'presentation'
@@ -176,7 +176,7 @@ interface CoordinationState {
 const CoordinationContext = createContext<CoordinationState | undefined>(undefined);
 
 const STORAGE_KEY = 'chakravyuh_coordination_state_v4';
-const SCHEDULE_STORAGE_KEY = 'chakravyuh_schedule_state_v4';
+const SCHEDULE_STORAGE_KEY = 'chakravyuh_schedule_state_v5';
 
 export const CoordinationProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [isInviteAccepted, setIsInviteAccepted] = useState<boolean>(() => {
@@ -217,7 +217,13 @@ export const CoordinationProvider: React.FC<{ children: React.ReactNode }> = ({ 
       const saved = localStorage.getItem(SCHEDULE_STORAGE_KEY);
       if (saved) {
         const parsed = JSON.parse(saved);
-        if (parsed.activeSessions) return parsed;
+        if (Array.isArray(parsed.activeSessions) && parsed.activeSessions.length >= 3) {
+          const intSet = new Set(parsed.activeSessions.map((s: any) => s.interviewer));
+          // Must not have Dr. Sarah Chen (not in loop) and must have at least 2 distinct interviewers
+          if (!intSet.has('Dr. Sarah Chen') && intSet.size >= 2) {
+            return parsed;
+          }
+        }
       }
       return {
         scheduleApplied: false,
