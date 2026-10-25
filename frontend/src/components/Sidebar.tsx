@@ -107,7 +107,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                       setSearchFocused(false);
                       setSearchTerm('');
                     }}
-                    className="w-full p-1.5 rounded-lg hover:bg-[#f9fafb] text-left flex items-center justify-between"
+                    className="w-full p-1.5 rounded-xl hover:bg-[#f9fafb] text-left flex items-center justify-between"
                   >
                     <div>
                       <span className="font-semibold text-[#101828] block">{c.name}</span>
@@ -130,7 +130,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                       setSearchFocused(false);
                       setSearchTerm('');
                     }}
-                    className="w-full p-1.5 rounded-lg hover:bg-[#f9fafb] text-left flex items-center justify-between"
+                    className="w-full p-1.5 rounded-xl hover:bg-[#f9fafb] text-left flex items-center justify-between"
                   >
                     <div>
                       <span className="font-semibold text-[#101828] block">{i.name}</span>
@@ -153,7 +153,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                       setSearchFocused(false);
                       setSearchTerm('');
                     }}
-                    className="w-full p-1.5 rounded-lg hover:bg-[#f9fafb] text-left flex items-center justify-between"
+                    className="w-full p-1.5 rounded-xl hover:bg-[#f9fafb] text-left flex items-center justify-between"
                   >
                     <div>
                       <span className="font-semibold text-[#101828] block">{j.title}</span>
@@ -179,7 +179,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           
           <button 
             onClick={() => onSelectTab('home')}
-            className={`w-full flex items-center justify-between px-3 py-2 rounded-lg font-medium transition-colors text-left ${
+            className={`w-full flex items-center justify-between px-3 py-2 rounded-xl font-medium transition-colors text-left ${
               currentTab === 'home' 
                 ? 'bg-[#1668e8] text-white shadow-xs' 
                 : 'text-[#344054] hover:bg-[#f9fafb]'
@@ -201,7 +201,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
         </div>
 
         {/* Role: COORDINATOR Sections */}
-        {/* Role: COORDINATOR Sections */}
         {(!currentUser || currentUser.role === 'COORDINATOR') && (
           <>
             {/* SECTION: OPERATIONS & SCHEDULE */}
@@ -213,7 +212,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
               {/* Automate Scheduling Matrix */}
               <button 
                 onClick={() => onSelectTab('scheduling')}
-                className={`w-full flex items-center justify-between px-3 py-2 rounded-lg font-medium transition-colors text-left ${
+                className={`w-full flex items-center justify-between px-3 py-2 rounded-xl font-medium transition-colors text-left ${
                   currentTab === 'scheduling' 
                     ? 'bg-[#1668e8] text-white shadow-xs' 
                     : 'text-[#344054] hover:bg-[#f9fafb]'
@@ -235,7 +234,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
               {/* Candidate Loops */}
               <button 
                 onClick={() => onSelectTab('candidates')}
-                className={`w-full flex items-center justify-between px-3 py-2 rounded-lg font-medium transition-colors text-left ${
+                className={`w-full flex items-center justify-between px-3 py-2 rounded-xl font-medium transition-colors text-left ${
                   currentTab === 'candidates' 
                     ? 'bg-[#1668e8] text-white shadow-xs' 
                     : 'text-[#344054] hover:bg-[#f9fafb]'
@@ -255,7 +254,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
               {/* Communications */}
               <button 
                 onClick={() => onSelectTab('communications')}
-                className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg font-medium transition-colors text-left ${
+                className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl font-medium transition-colors text-left ${
                   currentTab === 'communications' 
                     ? 'bg-[#1668e8] text-white shadow-xs' 
                     : 'text-[#344054] hover:bg-[#f9fafb]'
@@ -275,7 +274,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
               {/* Panel & Rooms Directory */}
               <button 
                 onClick={() => onSelectTab('directory')}
-                className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg font-medium transition-colors text-left ${
+                className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl font-medium transition-colors text-left ${
                   currentTab === 'directory' 
                     ? 'bg-[#1668e8] text-white shadow-xs' 
                     : 'text-[#344054] hover:bg-[#f9fafb]'
@@ -295,7 +294,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
               {/* Tasks & Approvals */}
               <button 
                 onClick={() => onSelectTab('all-tasks')}
-                className={`w-full flex items-center justify-between px-3 py-2 rounded-lg font-medium transition-colors text-left ${
+                className={`w-full flex items-center justify-between px-3 py-2 rounded-xl font-medium transition-colors text-left ${
                   currentTab === 'all-tasks' 
                     ? 'bg-[#1668e8] text-white shadow-xs' 
                     : 'text-[#344054] hover:bg-[#f9fafb]'
@@ -315,7 +314,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
               {/* Placement Metrics */}
               <button 
                 onClick={() => onSelectTab('metrics')}
-                className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg font-medium transition-colors text-left ${
+                className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl font-medium transition-colors text-left ${
                   currentTab === 'metrics' 
                     ? 'bg-[#1668e8] text-white shadow-xs' 
                     : 'text-[#344054] hover:bg-[#f9fafb]'
@@ -338,7 +337,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
               <button 
                 onClick={() => onSelectTab('flowchart')}
-                className={`w-full flex items-center justify-between px-3 py-2 rounded-lg font-medium transition-colors text-left ${
+                className={`w-full flex items-center justify-between px-3 py-2 rounded-xl font-medium transition-colors text-left ${
                   currentTab === 'flowchart' 
                     ? 'bg-[#1668e8] text-white shadow-xs' 
                     : 'text-[#344054] hover:bg-[#f9fafb]'
@@ -352,7 +351,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
               <button 
                 onClick={() => onSelectTab('my-tasks')}
-                className={`w-full flex items-center justify-between px-3 py-2 rounded-lg font-medium transition-colors text-left ${
+                className={`w-full flex items-center justify-between px-3 py-2 rounded-xl font-medium transition-colors text-left ${
                   currentTab === 'my-tasks' 
                     ? 'bg-[#1668e8] text-white shadow-xs' 
                     : 'text-[#344054] hover:bg-[#f9fafb]'
@@ -380,7 +379,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
               <button 
                 onClick={() => onSelectTab('flowchart')}
-                className={`w-full flex items-center justify-between px-3 py-2 rounded-lg font-medium transition-colors text-left ${
+                className={`w-full flex items-center justify-between px-3 py-2 rounded-xl font-medium transition-colors text-left ${
                   currentTab === 'flowchart' 
                     ? 'bg-[#1668e8] text-white shadow-xs' 
                     : 'text-[#344054] hover:bg-[#f9fafb]'
@@ -401,7 +400,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       <div className="p-2 border-t border-[#f1f3f5] text-xs">
         <button 
           onClick={() => onSelectTab('settings')}
-          className={`w-full flex items-center gap-2.5 px-3 py-1.5 rounded-lg font-medium transition-colors text-left ${
+          className={`w-full flex items-center gap-2.5 px-3 py-1.5 rounded-xl font-medium transition-colors text-left ${
             currentTab === 'settings' 
               ? 'bg-[#1668e8] text-white shadow-xs' 
               : 'text-[#475467] hover:bg-[#f9fafb]'
@@ -432,7 +431,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             <button
               onClick={onSignOut}
               title="Sign Out"
-              className="p-1.5 rounded-md text-[#667085] hover:text-red-600 hover:bg-[#f2f4f7] transition-colors"
+              className="p-1.5 rounded-full text-[#667085] hover:text-red-600 hover:bg-[#f2f4f7] transition-colors"
             >
               <LogOut className="w-3.5 h-3.5" />
             </button>

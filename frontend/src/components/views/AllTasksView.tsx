@@ -69,7 +69,7 @@ export const AllTasksView: React.FC<AllTasksViewProps> = ({
         {onSelectTaskToSchedule && (
           <button
             onClick={onSelectTaskToSchedule}
-            className="px-4 py-2 bg-[#1668e8] hover:bg-[#145ac7] text-white text-xs font-bold rounded-lg shadow-xs flex items-center gap-2 transition-colors shrink-0"
+            className="px-4 py-2 bg-[#1668e8] hover:bg-[#145ac7] text-white text-xs font-bold rounded-full shadow-xs flex items-center gap-2 transition-colors shrink-0"
           >
             <Calendar className="w-3.5 h-3.5" />
             <span>Go to Automate Schedule →</span>

@@ -129,7 +129,7 @@ export const MyTasksView: React.FC<MyTasksViewProps> = ({ tasks, onCompleteTask,
       
       {/* Toast Notification */}
       {toastMessage && (
-        <div className="fixed bottom-6 right-6 z-50 bg-[#101828] text-white text-xs px-4 py-2.5 rounded-lg shadow-xl flex items-center gap-2 animate-in fade-in">
+        <div className="fixed bottom-6 right-6 z-50 bg-[#101828] text-white text-xs px-4 py-2.5 rounded-full shadow-xl flex items-center gap-2 animate-in fade-in">
           <CheckCircle2 className="w-4 h-4 text-emerald-400" />
           <span>{toastMessage}</span>
         </div>
@@ -150,10 +150,10 @@ export const MyTasksView: React.FC<MyTasksViewProps> = ({ tasks, onCompleteTask,
           </div>
 
           <div className="flex items-center gap-2">
-            <div className="flex items-center bg-[#f2f4f7] p-1 rounded-lg text-xs font-medium">
+            <div className="flex items-center bg-[#f2f4f7] p-1 rounded-full text-xs font-medium">
               <button
                 onClick={() => setFilter('ALL')}
-                className={`px-3 py-1 rounded-md transition-all ${
+                className={`px-3 py-1 rounded-full transition-all ${
                   filter === 'ALL' ? 'bg-white text-[#101828] shadow-2xs font-semibold' : 'text-[#667085]'
                 }`}
               >
@@ -161,7 +161,7 @@ export const MyTasksView: React.FC<MyTasksViewProps> = ({ tasks, onCompleteTask,
               </button>
               <button
                 onClick={() => setFilter('PENDING')}
-                className={`px-3 py-1 rounded-md transition-all ${
+                className={`px-3 py-1 rounded-full transition-all ${
                   filter === 'PENDING' ? 'bg-white text-[#101828] shadow-2xs font-semibold' : 'text-[#667085]'
                 }`}
               >
@@ -171,7 +171,7 @@ export const MyTasksView: React.FC<MyTasksViewProps> = ({ tasks, onCompleteTask,
               </button>
               <button
                 onClick={() => setFilter('COMPLETED')}
-                className={`px-3 py-1 rounded-md transition-all ${
+                className={`px-3 py-1 rounded-full transition-all ${
                   filter === 'COMPLETED' ? 'bg-white text-[#101828] shadow-2xs font-semibold' : 'text-[#667085]'
                 }`}
               >
@@ -238,13 +238,13 @@ export const MyTasksView: React.FC<MyTasksViewProps> = ({ tasks, onCompleteTask,
                   {item.status === 'PENDING' && item.actionLabel ? (
                     <button 
                       onClick={() => handleTestEquipment(item.id)}
-                      className="px-3.5 py-1.5 rounded-lg bg-[#1668e8] hover:bg-[#145ac7] text-white text-xs font-semibold shadow-2xs transition-colors flex items-center gap-1.5"
+                      className="px-3.5 py-1.5 rounded-full bg-[#1668e8] hover:bg-[#145ac7] text-white text-xs font-semibold shadow-2xs transition-colors flex items-center gap-1.5"
                     >
                       <Video className="w-3.5 h-3.5" />
                       <span>{item.actionLabel}</span>
                     </button>
                   ) : item.status === 'COMPLETED' ? (
-                    <span className="text-xs font-semibold text-[#0b7c3e] bg-[#ecfdf3] px-2.5 py-1 rounded-md border border-[#abefc6] flex items-center gap-1">
+                    <span className="text-xs font-semibold text-[#0b7c3e] bg-[#ecfdf3] px-2.5 py-1 rounded-full border border-[#abefc6] flex items-center gap-1">
                       <Check className="w-3.5 h-3.5" />
                       <span>Completed</span>
                     </span>
@@ -302,13 +302,13 @@ export const MyTasksView: React.FC<MyTasksViewProps> = ({ tasks, onCompleteTask,
                   {task.status === 'PENDING' ? (
                     <button 
                       onClick={() => setActiveScorecardTask(task)}
-                      className="px-3.5 py-1.5 rounded-lg bg-[#1668e8] hover:bg-[#145ac7] text-white text-xs font-semibold shadow-2xs transition-colors flex items-center gap-1.5"
+                      className="px-3.5 py-1.5 rounded-full bg-[#1668e8] hover:bg-[#145ac7] text-white text-xs font-semibold shadow-2xs transition-colors flex items-center gap-1.5"
                     >
                       <FileEdit className="w-3.5 h-3.5" />
                       <span>Fill Scorecard</span>
                     </button>
                   ) : (
-                    <span className="text-xs font-semibold text-[#0b7c3e] bg-[#ecfdf3] px-2.5 py-1 rounded-md border border-[#abefc6]">
+                    <span className="text-xs font-semibold text-[#0b7c3e] bg-[#ecfdf3] px-2.5 py-1 rounded-full border border-[#abefc6]">
                       Completed
                     </span>
                   )}
@@ -322,11 +322,11 @@ export const MyTasksView: React.FC<MyTasksViewProps> = ({ tasks, onCompleteTask,
       {/* Interactive Scorecard Modal (Only for interviewers) */}
       {activeScorecardTask && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-2xs p-4">
-          <div className="bg-white rounded-xl border border-[#eaecf0] shadow-xl max-w-lg w-full p-6 space-y-5 animate-in fade-in zoom-in-95 duration-150">
+          <div className="bg-white rounded-3xl border border-[#eaecf0] shadow-2xl max-w-lg w-full p-6 space-y-5 animate-in fade-in zoom-in-95 duration-150">
             
             <div className="flex items-center justify-between border-b border-[#eaecf0] pb-3">
               <div>
-                <span className="text-[11px] font-semibold text-[#1668e8] bg-[#e7f2fe] px-2 py-0.5 rounded border border-[#bcd7fd]">
+                <span className="text-[11px] font-semibold text-[#1668e8] bg-[#e7f2fe] px-2.5 py-0.5 rounded-full border border-[#bcd7fd]">
                   EVALUATION SCORECARD
                 </span>
                 <h3 className="text-base font-bold text-[#101828] mt-1">
@@ -363,7 +363,7 @@ export const MyTasksView: React.FC<MyTasksViewProps> = ({ tasks, onCompleteTask,
                         type="button"
                         key={val}
                         onClick={() => setRatings({ ...ratings, problemSolving: val })}
-                        className={`flex-1 py-1.5 rounded-lg border font-bold transition-all ${
+                        className={`flex-1 py-2 rounded-xl border font-bold transition-all ${
                           ratings.problemSolving === val
                             ? 'bg-[#1668e8] border-[#1668e8] text-white shadow-xs'
                             : 'bg-white border-[#d0d5dd] text-[#344054] hover:bg-[#f9fafb]'
@@ -387,7 +387,7 @@ export const MyTasksView: React.FC<MyTasksViewProps> = ({ tasks, onCompleteTask,
                         type="button"
                         key={val}
                         onClick={() => setRatings({ ...ratings, technical: val })}
-                        className={`flex-1 py-1.5 rounded-lg border font-bold transition-all ${
+                        className={`flex-1 py-2 rounded-xl border font-bold transition-all ${
                           ratings.technical === val
                             ? 'bg-[#1668e8] border-[#1668e8] text-white shadow-xs'
                             : 'bg-white border-[#d0d5dd] text-[#344054] hover:bg-[#f9fafb]'
@@ -408,11 +408,11 @@ export const MyTasksView: React.FC<MyTasksViewProps> = ({ tasks, onCompleteTask,
                         type="button"
                         key={rec}
                         onClick={() => setRecommendation(rec)}
-                        className={`py-1.5 rounded-lg border font-bold text-center transition-all ${
+                        className={`py-2 rounded-xl border font-bold text-center transition-all ${
                           recommendation === rec
                             ? rec === 'NO_HIRE'
-                              ? 'bg-red-600 border-red-600 text-white'
-                              : 'bg-[#0b7c3e] border-[#0b7c3e] text-white'
+                              ? 'bg-rose-600 border-rose-600 text-white'
+                              : 'bg-emerald-600 border-emerald-600 text-white'
                             : 'bg-white border-[#d0d5dd] text-[#344054] hover:bg-[#f9fafb]'
                         }`}
                       >
@@ -429,7 +429,7 @@ export const MyTasksView: React.FC<MyTasksViewProps> = ({ tasks, onCompleteTask,
                     rows={3}
                     value={feedback}
                     onChange={(e) => setFeedback(e.target.value)}
-                    className="w-full bg-white border border-[#d0d5dd] rounded-lg p-2.5 text-xs text-[#344054] focus:outline-none focus:border-[#1668e8]"
+                    className="w-full bg-white border border-[#d0d5dd] rounded-xl p-2.5 text-xs text-[#344054] focus:outline-none focus:border-[#1668e8]"
                   />
                 </div>
 
@@ -437,13 +437,13 @@ export const MyTasksView: React.FC<MyTasksViewProps> = ({ tasks, onCompleteTask,
                   <button
                     type="button"
                     onClick={() => setActiveScorecardTask(null)}
-                    className="px-3 py-1.5 rounded-lg border border-[#d0d5dd] text-[#344054] hover:bg-[#f9fafb] font-medium"
+                    className="px-4 py-2 rounded-full border border-[#d0d5dd] text-[#344054] hover:bg-[#f9fafb] font-medium"
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
-                    className="px-4 py-1.5 rounded-lg bg-[#1668e8] hover:bg-[#145ac7] text-white font-bold shadow-2xs"
+                    className="px-5 py-2 rounded-full bg-[#1668e8] hover:bg-[#145ac7] text-white font-bold shadow-2xs"
                   >
                     Submit Scorecard
                   </button>

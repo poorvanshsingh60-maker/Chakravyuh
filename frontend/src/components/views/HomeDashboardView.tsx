@@ -47,7 +47,8 @@ export const HomeDashboardView: React.FC<HomeDashboardViewProps> = ({
     assignments,
     submitScorecardForAssignment,
     nudgeAssignment,
-    createAndSendAssignment
+    createAndSendAssignment,
+    messages
   } = useCoordination();
 
   const [toastMessage, setToastMessage] = useState<string | null>(null);
@@ -118,7 +119,8 @@ export const HomeDashboardView: React.FC<HomeDashboardViewProps> = ({
   // Filter assignments
   const pendingScorecards = assignments.filter(a => a.status !== 'EVALUATED');
   const evaluatedScorecards = assignments.filter(a => a.status === 'EVALUATED');
-  const urgentCount = pendingScorecards.length + (!isInviteAccepted ? 1 : 0);
+  const rescheduleRequests = messages.filter(m => m.type === 'RESCHEDULE_REQUEST');
+  const urgentCount = pendingScorecards.length + (!isInviteAccepted ? 1 : 0) + rescheduleRequests.length;
 
   return (
     <div className="h-full flex flex-col bg-[#f8f9fa] overflow-y-auto">
@@ -197,6 +199,35 @@ export const HomeDashboardView: React.FC<HomeDashboardViewProps> = ({
                   </span>
                 </div>
               </div>
+
+              {/* Incoming Candidate Reschedule Requests */}
+              {rescheduleRequests.map((req) => (
+                <div key={req.id} className="bg-amber-50/60 border border-amber-200/80 rounded-2xl p-4 shadow-2xs space-y-2.5 animate-in fade-in">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2">
+                        <span className="text-[10px] font-semibold text-amber-800 bg-amber-100 border border-amber-200 px-2 py-0.5 rounded-full">
+                          Reschedule Requested
+                        </span>
+                        <span className="text-[11px] text-[#667085]">• From {req.senderName} ({req.timestamp})</span>
+                      </div>
+                      <h3 className="text-xs font-bold text-[#101828]">
+                        {req.subject}
+                      </h3>
+                      <p className="text-[11px] text-[#475467]">
+                        {req.body}
+                      </p>
+                    </div>
+                    <button
+                      onClick={() => onNavigate('scheduling')}
+                      className="px-3.5 py-1.5 bg-[#1668e8] hover:bg-[#145ac7] text-white text-xs font-semibold rounded-full shrink-0 flex items-center gap-1 shadow-xs transition-colors"
+                    >
+                      <Sparkles className="w-3.5 h-3.5" />
+                      <span>Re-solve Matrix</span>
+                    </button>
+                  </div>
+                </div>
+              ))}
 
               {/* Pending Scorecards List */}
               {pendingScorecards.length > 0 ? (

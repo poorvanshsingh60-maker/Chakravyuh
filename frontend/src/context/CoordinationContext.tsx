@@ -22,6 +22,62 @@ export interface InterviewAssignment {
   submittedAt?: string;
 }
 
+export interface CoordinationMessage {
+  id: string;
+  senderName: string;
+  senderRole: string;
+  recipientName: string;
+  recipientRole: 'COORDINATOR' | 'INTERVIEWER' | 'CANDIDATE' | 'ALL';
+  subject: string;
+  body: string;
+  timestamp: string;
+  type: 'INVITE' | 'NUDGE' | 'SCHEDULE_CONFIRMATION' | 'RESCHEDULE_REQUEST' | 'DIRECT';
+  isRead: boolean;
+  status: 'DELIVERED' | 'READ' | 'PENDING';
+}
+
+const INITIAL_MESSAGES: CoordinationMessage[] = [
+  {
+    id: 'msg-1',
+    senderName: 'Emma Watson',
+    senderRole: 'Lead Coordinator',
+    recipientName: 'Marcus Vance',
+    recipientRole: 'CANDIDATE',
+    subject: 'Welcome to Google SDE Technical Loop — Schedule Confirmation',
+    body: 'Hi Marcus, your technical interview timetable has been confirmed across 3 rounds. All virtual meeting links and preparation packets are attached.',
+    timestamp: 'Today, 9:00 AM',
+    type: 'SCHEDULE_CONFIRMATION',
+    isRead: false,
+    status: 'DELIVERED'
+  },
+  {
+    id: 'msg-2',
+    senderName: 'Emma Watson',
+    senderRole: 'Lead Coordinator',
+    recipientName: 'Dr. Sarah Chen',
+    recipientRole: 'INTERVIEWER',
+    subject: 'Urgent: Scorecard Evaluation Needed for Marcus Vance',
+    body: 'Hi Sarah, please complete your scorecard evaluation for Marcus Vance (Round 1: Problem Solving & DSA Screen) to unblock loop advancement.',
+    timestamp: 'Today, 10:30 AM',
+    type: 'NUDGE',
+    isRead: false,
+    status: 'DELIVERED'
+  },
+  {
+    id: 'msg-3',
+    senderName: 'Emma Watson',
+    senderRole: 'Lead Coordinator',
+    recipientName: 'Claire Pritchett',
+    recipientRole: 'INTERVIEWER',
+    subject: 'New Panel Assignment: Product Design Onsite with Marcus Vance',
+    body: 'Hi Claire, you have been assigned as the Bar Raiser for Marcus Vance. The session is scheduled for 9:00 AM – 9:45 AM PST in Virtual Pod Alpha.',
+    timestamp: 'Today, 11:15 AM',
+    type: 'INVITE',
+    isRead: true,
+    status: 'READ'
+  }
+];
+
 export interface SavedScheduleSession {
   id: string;
   title: string;
@@ -171,6 +227,20 @@ interface CoordinationState {
   }) => InterviewAssignment;
   // Schedule state persistence
   updateScheduleState: (partial: Partial<SavedScheduleState>) => void;
+  // Messages & Tripartite Communications
+  messages: CoordinationMessage[];
+  sendMessage: (msg: {
+    senderName?: string;
+    senderRole?: string;
+    recipientName: string;
+    recipientRole: 'COORDINATOR' | 'INTERVIEWER' | 'CANDIDATE' | 'ALL';
+    subject: string;
+    body: string;
+    type?: 'INVITE' | 'NUDGE' | 'SCHEDULE_CONFIRMATION' | 'RESCHEDULE_REQUEST' | 'DIRECT';
+  }) => CoordinationMessage;
+  markMessageAsRead: (id: string) => void;
+  dispatchSchedule: (candidateName: string, candidateEmail: string, sessions: SavedScheduleSession[]) => void;
+  requestReschedule: (candidateName: string, roundName: string, reason: string) => void;
 }
 
 const CoordinationContext = createContext<CoordinationState | undefined>(undefined);
@@ -372,6 +442,130 @@ export const CoordinationProvider: React.FC<{ children: React.ReactNode }> = ({ 
     return created;
   };
 
+  const MESSAGES_STORAGE_KEY = 'chakravyuh_messages_v1';
+  const [messages, setMessages] = useState<CoordinationMessage[]>(() => {
+    try {
+      const saved = localStorage.getItem(MESSAGES_STORAGE_KEY);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+      return INITIAL_MESSAGES;
+    } catch {
+      return INITIAL_MESSAGES;
+    }
+  });
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(MESSAGES_STORAGE_KEY, JSON.stringify(messages));
+    } catch (e) {
+      console.error('Failed to sync messages', e);
+    }
+  }, [messages]);
+
+  const sendMessage = (msg: {
+    senderName?: string;
+    senderRole?: string;
+    recipientName: string;
+    recipientRole: 'COORDINATOR' | 'INTERVIEWER' | 'CANDIDATE' | 'ALL';
+    subject: string;
+    body: string;
+    type?: 'INVITE' | 'NUDGE' | 'SCHEDULE_CONFIRMATION' | 'RESCHEDULE_REQUEST' | 'DIRECT';
+  }): CoordinationMessage => {
+    const newMsg: CoordinationMessage = {
+      id: `msg-${Date.now()}`,
+      senderName: msg.senderName || 'Emma Watson',
+      senderRole: msg.senderRole || 'Lead Coordinator',
+      recipientName: msg.recipientName,
+      recipientRole: msg.recipientRole,
+      subject: msg.subject,
+      body: msg.body,
+      timestamp: 'Just now',
+      type: msg.type || 'DIRECT',
+      isRead: false,
+      status: 'DELIVERED',
+    };
+    setMessages(prev => [newMsg, ...prev]);
+    return newMsg;
+  };
+
+  const markMessageAsRead = (id: string) => {
+    setMessages(prev => prev.map(m => m.id === id ? { ...m, isRead: true, status: 'READ' as const } : m));
+  };
+
+  const dispatchSchedule = (candidateName: string, _candidateEmail: string, sessions: SavedScheduleSession[]) => {
+    setScheduleState(prev => ({
+      ...prev,
+      scheduleApplied: true,
+      activeSessions: sessions
+    }));
+
+    const newAssignments: InterviewAssignment[] = sessions.map((sess, idx) => ({
+      id: `inv-dispatch-${Date.now()}-${idx}`,
+      candidateName,
+      role: 'Product Design Onsite',
+      roundName: sess.title,
+      interviewerName: sess.interviewer,
+      duration: sess.durationMins,
+      date: 'Saturday, May 18',
+      pstTimeSlot: sess.pstTimeSlot,
+      meetingLink: `https://meet.google.com/chk-${sess.room.toLowerCase().replace(/[^a-z0-9]/g, '-')}`,
+      roomName: sess.room,
+      status: 'PENDING_EVALUATION',
+      isNudged: idx === 0
+    }));
+
+    setAssignments(prev => [...newAssignments, ...prev]);
+
+    const candidateMsg: CoordinationMessage = {
+      id: `msg-${Date.now()}-cand`,
+      senderName: 'Emma Watson',
+      senderRole: 'Lead Coordinator',
+      recipientName: candidateName,
+      recipientRole: 'CANDIDATE',
+      subject: `Official Timetable Confirmation: ${candidateName} — Product Design Onsite`,
+      body: `Your interview loop has been confirmed with ${sessions.map(s => s.interviewer).join(', ')}. All calendar invites and meeting links are active in your portal.`,
+      timestamp: 'Just now',
+      type: 'SCHEDULE_CONFIRMATION',
+      isRead: false,
+      status: 'DELIVERED'
+    };
+
+    const interviewerMsgs: CoordinationMessage[] = sessions.map((sess, i) => ({
+      id: `msg-${Date.now()}-int-${i}`,
+      senderName: 'Emma Watson',
+      senderRole: 'Lead Coordinator',
+      recipientName: sess.interviewer,
+      recipientRole: 'INTERVIEWER',
+      subject: `Calendar Invite: ${sess.title} with ${candidateName}`,
+      body: `You are scheduled to interview ${candidateName} for ${sess.title} (${sess.pstTimeSlot}) in ${sess.room}. Please review the candidate dossier in your workspace.`,
+      timestamp: 'Just now',
+      type: 'INVITE',
+      isRead: false,
+      status: 'DELIVERED'
+    }));
+
+    setMessages(prev => [candidateMsg, ...interviewerMsgs, ...prev]);
+  };
+
+  const requestReschedule = (candName: string, roundName: string, reason: string) => {
+    const rescheduleMsg: CoordinationMessage = {
+      id: `msg-resched-${Date.now()}`,
+      senderName: candName,
+      senderRole: 'Candidate',
+      recipientName: 'Emma Watson',
+      recipientRole: 'COORDINATOR',
+      subject: `Reschedule Requested: ${candName} — ${roundName}`,
+      body: `Reason: ${reason}. Please evaluate alternate zero-conflict time slots via CP-SAT engine.`,
+      timestamp: 'Just now',
+      type: 'RESCHEDULE_REQUEST',
+      isRead: false,
+      status: 'DELIVERED'
+    };
+    setMessages(prev => [rescheduleMsg, ...prev]);
+  };
+
   const resetFlow = () => {
     setIsInviteAccepted(false);
     setAreSlotsConfirmed(false);
@@ -392,6 +586,11 @@ export const CoordinationProvider: React.FC<{ children: React.ReactNode }> = ({ 
       isNudged,
       assignments,
       scheduleState,
+      messages,
+      sendMessage,
+      markMessageAsRead,
+      dispatchSchedule,
+      requestReschedule,
       acceptInvite,
       confirmSlots,
       submitScorecard,

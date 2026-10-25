@@ -229,7 +229,7 @@ export const CoordinatorWorkspace: React.FC<CoordinatorWorkspaceProps> = ({ onSi
       {/* Coordinator Header & Live Status */}
       <div className="bg-white border-b border-[#eaecf0] px-6 py-2.5 shrink-0 flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <span className="flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold bg-[#eff8ff] text-[#175cd3] border border-[#b2ddff]">
+          <span className="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-[#eff8ff] text-[#175cd3] border border-[#b2ddff]">
             <Sparkles className="w-3.5 h-3.5 text-amber-500 fill-amber-500" />
             <span>Schedule Solver & Calendar</span>
           </span>
@@ -240,7 +240,7 @@ export const CoordinatorWorkspace: React.FC<CoordinatorWorkspaceProps> = ({ onSi
 
         {/* Publish Banner */}
         {publishBanner && (
-          <div className="p-1.5 px-3 rounded-lg bg-[#ecfdf3] border border-[#a6f4c5] flex items-center gap-2 text-xs text-[#027a48] animate-in fade-in">
+          <div className="p-1.5 px-3 rounded-2xl bg-[#ecfdf3] border border-[#a6f4c5] flex items-center gap-2 text-xs text-[#027a48] animate-in fade-in shadow-2xs">
             <CheckCircle2 className="w-3.5 h-3.5 text-[#12b76a]" />
             <span className="font-semibold text-[11px]">Schedule version v2.4 published & live!</span>
           </div>
@@ -297,7 +297,7 @@ export const CoordinatorWorkspace: React.FC<CoordinatorWorkspaceProps> = ({ onSi
                         type="date"
                         value={startDate}
                         onChange={(e) => setStartDate(e.target.value)}
-                        className="w-full border border-[#d0d5dd] rounded-lg p-2 text-xs bg-white text-[#101828] focus:border-[#1668e8] focus:ring-1 focus:ring-[#1668e8] outline-none"
+                        className="w-full border border-[#d0d5dd] rounded-xl p-2 text-xs bg-white text-[#101828] focus:border-[#1668e8] focus:ring-1 focus:ring-[#1668e8] outline-none"
                       />
                     </div>
                     <div>
@@ -306,7 +306,7 @@ export const CoordinatorWorkspace: React.FC<CoordinatorWorkspaceProps> = ({ onSi
                         type="date"
                         value={endDate}
                         onChange={(e) => setEndDate(e.target.value)}
-                        className="w-full border border-[#d0d5dd] rounded-lg p-2 text-xs bg-white text-[#101828] focus:border-[#1668e8] focus:ring-1 focus:ring-[#1668e8] outline-none"
+                        className="w-full border border-[#d0d5dd] rounded-xl p-2 text-xs bg-white text-[#101828] focus:border-[#1668e8] focus:ring-1 focus:ring-[#1668e8] outline-none"
                       />
                     </div>
                   </div>
@@ -443,7 +443,7 @@ export const CoordinatorWorkspace: React.FC<CoordinatorWorkspaceProps> = ({ onSi
 
                   <div className="pt-2 border-t border-[#eaecf0]">
                     {isScorecardSubmitted ? (
-                      <span className="w-full py-1.5 px-3 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-lg font-bold text-[11px] flex items-center justify-center gap-1.5">
+                      <span className="w-full py-1.5 px-3 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-full font-bold text-[11px] flex items-center justify-center gap-1.5">
                         <Check className="w-3.5 h-3.5" />
                         <span>Scorecard Received (Hire)</span>
                       </span>
@@ -454,7 +454,7 @@ export const CoordinatorWorkspace: React.FC<CoordinatorWorkspaceProps> = ({ onSi
                           setNudgeToast("Urgent notification sent to Dr. Sarah Chen! Interviewer panel updated with high-priority alert.");
                           setTimeout(() => setNudgeToast(null), 4000);
                         }}
-                        className={`w-full py-1.5 px-3 rounded-lg font-bold text-[11px] flex items-center justify-center gap-1.5 shadow-xs transition-all ${
+                        className={`w-full py-1.5 px-3 rounded-full font-bold text-[11px] flex items-center justify-center gap-1.5 shadow-xs transition-all ${
                           isNudged
                             ? 'bg-amber-600 hover:bg-amber-700 text-white'
                             : 'bg-red-600 hover:bg-red-700 text-white'
@@ -478,7 +478,7 @@ export const CoordinatorWorkspace: React.FC<CoordinatorWorkspaceProps> = ({ onSi
                           <span className="text-[10px] text-[#667085]">Atlassian Panel</span>
                         </div>
                       </div>
-                      <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-200">
+                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200">
                         Due in 2h
                       </span>
                     </div>
@@ -496,7 +496,7 @@ export const CoordinatorWorkspace: React.FC<CoordinatorWorkspaceProps> = ({ onSi
                         setNudgeToast("Gentle reminder queued for Phil Dunphy upon session completion.");
                         setTimeout(() => setNudgeToast(null), 3000);
                       }}
-                      className="w-full py-1.5 px-3 bg-white border border-[#d0d5dd] hover:bg-[#f9fafb] text-[#344054] rounded-lg font-semibold text-[11px] flex items-center justify-center gap-1.5 transition-colors"
+                      className="w-full py-1.5 px-3 bg-white border border-[#d0d5dd] hover:bg-[#f9fafb] text-[#344054] rounded-full font-semibold text-[11px] flex items-center justify-center gap-1.5 transition-colors"
                     >
                       <Send className="w-3.5 h-3.5 text-[#667085]" />
                       <span>Send Friendly Ping</span>
@@ -515,7 +515,7 @@ export const CoordinatorWorkspace: React.FC<CoordinatorWorkspaceProps> = ({ onSi
                           <span className="text-[10px] text-[#667085]">Values & Leadership Lead</span>
                         </div>
                       </div>
-                      <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200">
+                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
                         Submitted
                       </span>
                     </div>
@@ -528,7 +528,7 @@ export const CoordinatorWorkspace: React.FC<CoordinatorWorkspaceProps> = ({ onSi
                   </div>
 
                   <div className="pt-2 border-t border-[#eaecf0]">
-                    <span className="w-full py-1.5 px-3 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-lg font-bold text-[11px] flex items-center justify-center gap-1.5">
+                    <span className="w-full py-1.5 px-3 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-full font-bold text-[11px] flex items-center justify-center gap-1.5">
                       <Check className="w-3.5 h-3.5" />
                       <span>Scorecard Verified</span>
                     </span>
@@ -550,10 +550,10 @@ export const CoordinatorWorkspace: React.FC<CoordinatorWorkspaceProps> = ({ onSi
                   {/* Draft Version Selector */}
                   <div className="flex items-center gap-1.5 text-xs font-semibold">
                     <span className="text-[#667085]">Version:</span>
-                    <div className="flex p-0.5 bg-white border border-[#d0d5dd] rounded-lg">
+                    <div className="flex p-0.5 bg-white border border-[#d0d5dd] rounded-full">
                       <button
                         onClick={() => setSelectedVersion('v1.0')}
-                        className={`px-2.5 py-1 rounded text-xs transition-all ${
+                        className={`px-3 py-1 rounded-full text-xs transition-all ${
                           selectedVersion === 'v1.0'
                             ? 'bg-[#1668e8] text-white font-bold'
                             : 'text-[#667085] hover:text-[#101828]'
@@ -610,7 +610,7 @@ export const CoordinatorWorkspace: React.FC<CoordinatorWorkspaceProps> = ({ onSi
                       <span>Time ({currentTimezone.shortName})</span>
                     </div>
                     {weekDays.map((day) => (
-                      <div key={day.fullDate} className="col-span-1 text-center py-1.5 bg-[#f9fafb] rounded-lg border border-[#eaecf0] mx-1">
+                      <div key={day.fullDate} className="col-span-1 text-center py-1.5 bg-[#f9fafb] rounded-xl border border-[#eaecf0] mx-1">
                         <span className="block text-[11px] text-[#101828] font-bold">{day.formattedDate}</span>
                       </div>
                     ))}
@@ -643,7 +643,7 @@ export const CoordinatorWorkspace: React.FC<CoordinatorWorkspaceProps> = ({ onSi
                                   <div
                                     key={evt.id}
                                     onClick={() => setSelectedEvent(evt)}
-                                    className={`p-2.5 rounded-lg border text-left space-y-1 shadow-2xs transition-transform hover:scale-[1.02] cursor-pointer ${
+                                    className={`p-2.5 rounded-xl border text-left space-y-1 shadow-2xs transition-transform hover:scale-[1.02] cursor-pointer ${
                                       evt.roundType === 'tech'
                                         ? 'bg-[#eff8ff] border-[#b2ddff] text-[#175cd3]'
                                         : evt.roundType === 'arch'
@@ -712,7 +712,7 @@ export const CoordinatorWorkspace: React.FC<CoordinatorWorkspaceProps> = ({ onSi
           title={`Session Details: ${selectedEvent.roundName}`}
         >
           <div className="space-y-4 text-xs">
-            <div className="p-3 rounded-lg bg-[#f9fafb] border border-[#eaecf0] space-y-2">
+            <div className="p-4 rounded-2xl bg-[#f9fafb] border border-[#eaecf0] space-y-2">
               <div className="flex items-center justify-between">
                 <div>
                   <span className="font-bold text-[#101828] text-sm block">{selectedEvent.candidateName}</span>
@@ -746,7 +746,7 @@ export const CoordinatorWorkspace: React.FC<CoordinatorWorkspaceProps> = ({ onSi
                 href="https://meet.google.com/chk-dist-sys"
                 target="_blank"
                 rel="noreferrer"
-                className="px-4 py-2 rounded-lg bg-[#1668e8] text-white font-bold flex items-center gap-1.5 shadow-2xs hover:bg-[#145ac7]"
+                className="px-4 py-2 rounded-full bg-[#1668e8] text-white font-bold flex items-center gap-1.5 shadow-2xs hover:bg-[#145ac7]"
               >
                 <Video className="w-3.5 h-3.5" />
                 <span>Join Google Meet Call</span>
@@ -788,7 +788,7 @@ export const CoordinatorWorkspace: React.FC<CoordinatorWorkspaceProps> = ({ onSi
             Scheduling interview rounds without any conflicts across candidates, interviewers, and rooms.
           </p>
 
-          <div className="space-y-3 bg-[#fafafa] p-4 rounded-lg border border-[#eaecf0]">
+          <div className="space-y-3 bg-[#fafafa] p-4 rounded-2xl border border-[#eaecf0]">
             <div className="flex items-center justify-between">
               <span className="font-semibold text-[#344054]">1. Loading Availability</span>
               {solverStep >= 1 ? (
@@ -835,7 +835,7 @@ export const CoordinatorWorkspace: React.FC<CoordinatorWorkspaceProps> = ({ onSi
           </div>
 
           {solverStep >= 4 && (
-            <div className="p-3 bg-[#ecfdf3] border border-[#a6f4c5] rounded-lg text-[#027a48] font-semibold text-center">
+            <div className="p-3 bg-[#ecfdf3] border border-[#a6f4c5] rounded-2xl text-[#027a48] font-semibold text-center shadow-2xs">
               Schedule v2.4 successfully generated with 0 conflicts!
             </div>
           )}

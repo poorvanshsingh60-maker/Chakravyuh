@@ -342,11 +342,11 @@ export const AutomateSchedulingView: React.FC<AutomateSchedulingViewProps> = ({
         <div className="flex items-center gap-3">
           <button 
             onClick={() => setOptionsModalOpen(true)}
-            className="flex items-center gap-2 px-3.5 py-1.5 rounded-lg border border-[#d0d5dd] text-xs font-medium text-[#344054] hover:bg-[#f9fafb] shadow-2xs transition-colors"
+            className="flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-[#d0d5dd] text-xs font-medium text-[#344054] hover:bg-[#f9fafb] shadow-2xs transition-colors"
           >
             <Menu className="w-3.5 h-3.5 text-[#667085]" />
             <span>All schedule options</span>
-            <span className="text-[10px] bg-[#e7f2fe] text-[#1668e8] px-1.5 py-0.2 rounded font-bold">
+            <span className="text-[10px] bg-[#e7f2fe] text-[#1668e8] px-2 py-0.5 rounded-full font-bold">
               Option {selectedOption} Active
             </span>
           </button>
@@ -854,13 +854,13 @@ export const AutomateSchedulingView: React.FC<AutomateSchedulingViewProps> = ({
             <div className="pt-3 border-t border-[#eaecf0] flex items-center justify-end gap-2">
               <button 
                 onClick={() => setOptionsModalOpen(false)}
-                className="px-3.5 py-1.5 rounded-lg border border-[#d0d5dd] text-[#344054] text-xs font-medium hover:bg-[#f9fafb]"
+                className="px-4 py-2 rounded-full border border-[#d0d5dd] text-[#344054] text-xs font-medium hover:bg-[#f9fafb]"
               >
                 Cancel
               </button>
               <button 
                 onClick={() => handleSelectOption(selectedOption)}
-                className="px-4 py-1.5 rounded-lg bg-[#1668e8] hover:bg-[#145ac7] text-white text-xs font-semibold shadow-2xs"
+                className="px-5 py-2 rounded-full bg-[#1668e8] hover:bg-[#145ac7] text-white text-xs font-semibold shadow-2xs"
               >
                 Apply Option {selectedOption} to Matrix
               </button>
@@ -872,7 +872,7 @@ export const AutomateSchedulingView: React.FC<AutomateSchedulingViewProps> = ({
       {/* Modal: Add Interview Session */}
       {addModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-2xs p-4">
-          <div className="bg-white rounded-xl border border-[#eaecf0] shadow-xl max-w-md w-full p-6 space-y-4 animate-in fade-in zoom-in-95 duration-150 text-xs">
+          <div className="bg-white rounded-3xl border border-[#eaecf0] shadow-2xl max-w-md w-full p-6 space-y-4 animate-in fade-in zoom-in-95 duration-150 text-xs">
             <div className="flex items-center justify-between border-b border-[#eaecf0] pb-3">
               <h3 className="text-base font-bold text-[#101828]">Add Interview Round</h3>
               <button onClick={() => setAddModalOpen(false)} className="text-[#98a2b3] hover:text-[#101828]">
@@ -889,7 +889,7 @@ export const AutomateSchedulingView: React.FC<AutomateSchedulingViewProps> = ({
                   placeholder="e.g. Executive Bar Raiser"
                   value={newTitle}
                   onChange={(e) => setNewTitle(e.target.value)}
-                  className="w-full border border-[#d0d5dd] rounded-lg p-2 text-xs text-[#101828] focus:outline-none focus:border-[#1668e8]"
+                  className="w-full border border-[#d0d5dd] rounded-xl p-2.5 text-xs text-[#101828] focus:outline-none focus:border-[#1668e8]"
                 />
               </div>
 
@@ -898,7 +898,7 @@ export const AutomateSchedulingView: React.FC<AutomateSchedulingViewProps> = ({
                 <select 
                   value={newInterviewer}
                   onChange={(e) => setNewInterviewer(e.target.value)}
-                  className="w-full border border-[#d0d5dd] rounded-lg p-2 text-xs text-[#101828] bg-white"
+                  className="w-full border border-[#d0d5dd] rounded-xl p-2.5 text-xs text-[#101828] bg-white focus:outline-none focus:border-[#1668e8]"
                 >
                   <option value="Claire Pritchett">Claire Pritchett (Principal Designer & Bar Raiser)</option>
                   <option value="Phil Dunphy">Phil Dunphy (Senior Product Manager)</option>
@@ -912,7 +912,7 @@ export const AutomateSchedulingView: React.FC<AutomateSchedulingViewProps> = ({
                   <select 
                     value={newHour}
                     onChange={(e) => setNewHour(e.target.value)}
-                    className="w-full border border-[#d0d5dd] rounded-lg p-2 text-xs text-[#101828] bg-white"
+                    className="w-full border border-[#d0d5dd] rounded-xl p-2.5 text-xs text-[#101828] bg-white focus:outline-none focus:border-[#1668e8]"
                   >
                     <option value="8">8:00 AM PT</option>
                     <option value="9">9:00 AM PT</option>
@@ -929,7 +929,7 @@ export const AutomateSchedulingView: React.FC<AutomateSchedulingViewProps> = ({
                   <select 
                     value={newDuration}
                     onChange={(e) => setNewDuration(e.target.value)}
-                    className="w-full border border-[#d0d5dd] rounded-lg p-2 text-xs text-[#101828] bg-white"
+                    className="w-full border border-[#d0d5dd] rounded-xl p-2.5 text-xs text-[#101828] bg-white focus:outline-none focus:border-[#1668e8]"
                   >
                     <option value="30">30 minutes</option>
                     <option value="45">45 minutes</option>
@@ -942,13 +942,13 @@ export const AutomateSchedulingView: React.FC<AutomateSchedulingViewProps> = ({
                 <button 
                   type="button"
                   onClick={() => setAddModalOpen(false)}
-                  className="px-3.5 py-1.5 rounded-lg border border-[#d0d5dd] text-[#344054] font-medium hover:bg-[#f9fafb]"
+                  className="px-4 py-2 rounded-full border border-[#d0d5dd] text-[#344054] font-medium hover:bg-[#f9fafb]"
                 >
                   Cancel
                 </button>
                 <button 
                   type="submit"
-                  className="px-4 py-1.5 rounded-lg bg-[#1668e8] hover:bg-[#145ac7] text-white font-semibold shadow-2xs"
+                  className="px-5 py-2 rounded-full bg-[#1668e8] hover:bg-[#145ac7] text-white font-semibold shadow-2xs"
                 >
                   Append to Schedule
                 </button>
@@ -961,7 +961,7 @@ export const AutomateSchedulingView: React.FC<AutomateSchedulingViewProps> = ({
       {/* Modal: Interviewer Details */}
       {activeInterviewerModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-2xs p-4">
-          <div className="bg-white rounded-xl border border-[#eaecf0] shadow-xl max-w-md w-full p-6 space-y-4 animate-in fade-in zoom-in-95 duration-150 text-xs">
+          <div className="bg-white rounded-3xl border border-[#eaecf0] shadow-2xl max-w-md w-full p-6 space-y-4 animate-in fade-in zoom-in-95 duration-150 text-xs">
             <div className="flex items-start justify-between border-b border-[#eaecf0] pb-3">
               <div className="flex items-center gap-3">
                 <AvatarBadge name={activeInterviewerModal.name} size="lg" />
@@ -976,7 +976,7 @@ export const AutomateSchedulingView: React.FC<AutomateSchedulingViewProps> = ({
             </div>
 
             <div className="space-y-3">
-              <div className="p-3 bg-[#fafafa] rounded-lg border border-[#eaecf0] space-y-1">
+              <div className="p-3.5 bg-[#fafafa] rounded-2xl border border-[#eaecf0] space-y-1">
                 <span className="font-semibold text-[#344054] block">Weekly Burnout Status</span>
                 <p className="text-[#101828] font-bold">{activeInterviewerModal.load}</p>
                 <span className="text-[11px] text-[#0b7c3e] flex items-center gap-1">
@@ -989,7 +989,7 @@ export const AutomateSchedulingView: React.FC<AutomateSchedulingViewProps> = ({
                 <span className="font-semibold text-[#344054] block">Calibrated Competencies</span>
                 <div className="flex flex-wrap gap-1.5">
                   {activeInterviewerModal.skills.map((sk: string) => (
-                    <span key={sk} className="px-2 py-0.5 rounded bg-[#f2f4f7] text-[#344054] border border-[#eaecf0] font-medium">
+                    <span key={sk} className="px-2.5 py-0.5 rounded-full bg-[#f2f4f7] text-[#344054] border border-[#eaecf0] font-medium text-[11px]">
                       {sk}
                     </span>
                   ))}
@@ -1001,7 +1001,7 @@ export const AutomateSchedulingView: React.FC<AutomateSchedulingViewProps> = ({
               <button
                 type="button"
                 onClick={() => setActiveInterviewerModal(null)}
-                className="px-4 py-1.5 rounded-lg bg-[#1668e8] text-white font-semibold"
+                className="px-5 py-2 rounded-full bg-[#1668e8] hover:bg-[#145ac7] text-white font-semibold transition-colors"
               >
                 Close Profile
               </button>

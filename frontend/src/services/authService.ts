@@ -109,4 +109,40 @@ export const authService = {
     localStorage.removeItem(TOKEN_KEY);
     localStorage.removeItem(USER_KEY);
   },
+
+  loginAsGuest(role: UserRole = 'COORDINATOR'): AuthResponse {
+    const guestUser: AuthUser = {
+      id: `guest-${Date.now()}`,
+      email: 'guest.scheduler@chakravyuh.ai',
+      full_name: 'Guest Coordinator (Scheduler)',
+      role,
+      isActive: true,
+    };
+    const mockToken = `guest-token-${Date.now()}`;
+    localStorage.setItem(TOKEN_KEY, mockToken);
+    localStorage.setItem(USER_KEY, JSON.stringify(guestUser));
+    return {
+      access_token: mockToken,
+      token_type: 'bearer',
+      user: guestUser,
+    };
+  },
+
+  loginWithGoogle(account: { email: string; name: string; role: UserRole }): AuthResponse {
+    const googleUser: AuthUser = {
+      id: `google-${Date.now()}`,
+      email: account.email,
+      full_name: account.name,
+      role: account.role,
+      isActive: true,
+    };
+    const mockToken = `google-jwt-token-${Date.now()}`;
+    localStorage.setItem(TOKEN_KEY, mockToken);
+    localStorage.setItem(USER_KEY, JSON.stringify(googleUser));
+    return {
+      access_token: mockToken,
+      token_type: 'bearer',
+      user: googleUser,
+    };
+  },
 };

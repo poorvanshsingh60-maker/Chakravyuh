@@ -303,6 +303,13 @@ export function App() {
     }
   });
 
+  const [isSwitchingRole, setIsSwitchingRole] = useState(false);
+  const [transitionTarget, setTransitionTarget] = useState<{
+    role: UserRole;
+    name: string;
+    title: string;
+  } | null>(null);
+
   const handleLogin = (user: AuthUser) => {
     setCurrentUser(user);
     try {
@@ -318,13 +325,22 @@ export function App() {
   };
 
   const handleSwitchRole = (newRole: UserRole) => {
+    if (currentUser?.role === newRole) return;
+
     let updated: AuthUser;
+    let targetMeta: { role: UserRole; name: string; title: string };
+
     if (newRole === 'COORDINATOR') {
       updated = {
         id: 'coord-1',
         email: 'admin@chakravyuh.ai',
         full_name: 'Emma Watson (Lead Scheduler)',
         role: 'COORDINATOR'
+      };
+      targetMeta = {
+        role: 'COORDINATOR',
+        name: 'Emma Watson',
+        title: 'Lead Coordinator & Campus Scheduler'
       };
     } else if (newRole === 'INTERVIEWER') {
       updated = {
@@ -333,6 +349,11 @@ export function App() {
         full_name: 'Dr. Sarah Chen (Google Lead)',
         role: 'INTERVIEWER'
       };
+      targetMeta = {
+        role: 'INTERVIEWER',
+        name: 'Dr. Sarah Chen',
+        title: 'Staff Engineer & Google Panel Lead'
+      };
     } else {
       updated = {
         id: 'cand-1',
@@ -340,13 +361,27 @@ export function App() {
         full_name: 'Marcus Vance (Candidate)',
         role: 'CANDIDATE'
       };
+      targetMeta = {
+        role: 'CANDIDATE',
+        name: 'Marcus Vance',
+        title: 'B.Tech CSE Candidate (20214012)'
+      };
     }
-    setCurrentUser(updated);
-    try {
-      localStorage.setItem('chakravyuh_user', JSON.stringify(updated));
-    } catch (e) {
-      console.error('Failed to update session:', e);
-    }
+
+    // Trigger smooth Apple-style role hydration transition
+    setTransitionTarget(targetMeta);
+    setIsSwitchingRole(true);
+
+    setTimeout(() => {
+      setCurrentUser(updated);
+      try {
+        localStorage.setItem('chakravyuh_user', JSON.stringify(updated));
+      } catch (e) {
+        console.error('Failed to update session:', e);
+      }
+      setIsSwitchingRole(false);
+      setTransitionTarget(null);
+    }, 420);
   };
 
   return (
@@ -354,11 +389,46 @@ export function App() {
       {!currentUser ? (
         <LoginPage onLogin={handleLogin} initialMode="SIGNUP" />
       ) : (
-        <MainLayout 
-          currentUser={currentUser} 
-          onLogout={handleLogout} 
-          onSwitchRole={handleSwitchRole} 
-        />
+        <>
+          <MainLayout 
+            currentUser={currentUser} 
+            onLogout={handleLogout} 
+            onSwitchRole={handleSwitchRole} 
+          />
+
+          {/* Apple HIG Role Switch Smooth Transition Overlay */}
+          {isSwitchingRole && transitionTarget && (
+            <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-white/70 backdrop-blur-md transition-all duration-300 animate-in fade-in">
+              <div className="bg-white/95 border border-[#eaecf0] shadow-2xl rounded-3xl p-6 flex flex-col items-center gap-4 max-w-sm w-full mx-4 text-center transform transition-all scale-100 animate-in zoom-in-95">
+                <div className="relative flex items-center justify-center">
+                  <div className="w-14 h-14 rounded-full border-2 border-[#1668e8]/20 border-t-[#1668e8] animate-spin" />
+                  <div className="absolute w-9 h-9 rounded-full bg-[#1668e8] text-white flex items-center justify-center font-bold text-sm shadow-xs select-none">
+                    {transitionTarget.name.charAt(0)}
+                  </div>
+                </div>
+
+                <div className="space-y-1">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-[#1668e8] bg-[#eff8ff] px-2.5 py-0.5 rounded-full border border-[#b2ddff]">
+                    Switching Workspace
+                  </span>
+                  <h3 className="font-bold text-base text-[#101828] mt-1.5 tracking-tight">
+                    {transitionTarget.name}
+                  </h3>
+                  <p className="text-xs text-[#667085]">
+                    {transitionTarget.title}
+                  </p>
+                </div>
+
+                <div className="w-full bg-[#f2f4f7] h-1.5 rounded-full overflow-hidden">
+                  <div className="bg-[#1668e8] h-full rounded-full animate-pulse w-3/4" />
+                </div>
+                <span className="text-[11px] text-[#98a2b3]">
+                  Hydrating calendar views, panel credentials & coordination bus...
+                </span>
+              </div>
+            </div>
+          )}
+        </>
       )}
     </CoordinationProvider>
   );

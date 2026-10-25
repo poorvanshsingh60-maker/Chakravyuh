@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { 
   Calendar as CalendarIcon, 
   CheckCircle2, 
@@ -6,7 +6,9 @@ import {
   Video, 
   FileText, 
   Check, 
-  MapPin
+  MapPin,
+  MessageSquare,
+  MailCheck
 } from 'lucide-react';
 import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
@@ -38,10 +40,21 @@ export const InterviewerWorkspace: React.FC = () => {
     isInviteAccepted, 
     submitScorecardForAssignment, 
     assignments,
-    isNudged 
+    isNudged,
+    messages,
+    markMessageAsRead
   } = useCoordination();
 
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'availability'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'notices' | 'availability'>('dashboard');
+
+  // Messages directed to Interviewer panel
+  const panelMessages = useMemo(() => {
+    return messages.filter(
+      m => m.recipientRole === 'INTERVIEWER' || m.recipientRole === 'ALL' || m.recipientName.toLowerCase().includes('sarah')
+    );
+  }, [messages]);
+
+  const unreadCount = panelMessages.filter(m => !m.isRead).length;
 
   // Scorecard Dialog Form State
   const [evalDialogOpen, setEvalDialogOpen] = useState(false);
@@ -70,8 +83,6 @@ export const InterviewerWorkspace: React.FC = () => {
     'Friday-13': true,
     'Friday-14': true,
   });
-
-  const [availabilitySaved, setAvailabilitySaved] = useState(false);
 
   const toggleSlot = (day: string, hour: number) => {
     const key = `${day}-${hour}`;
@@ -105,11 +116,6 @@ export const InterviewerWorkspace: React.FC = () => {
     setTimeout(() => setEvalSuccessBanner(false), 4000);
   };
 
-  const handleSaveAvailability = () => {
-    setAvailabilitySaved(true);
-    setTimeout(() => setAvailabilitySaved(false), 3000);
-  };
-
   return (
     <div className="h-full flex flex-col bg-[#f8f9fa] overflow-hidden font-['Inter',-apple-system,BlinkMacSystemFont,'Segoe_UI',Roboto,sans-serif]">
       
@@ -120,7 +126,7 @@ export const InterviewerWorkspace: React.FC = () => {
             <AvatarBadge name="Dr. Sarah Chen" size="lg" />
             <div>
               <div className="flex items-center gap-2">
-                <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-[#ecfdf3] text-[#027a48] border border-[#a6f4c5] uppercase tracking-wider">
+                <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-[#ecfdf3] text-[#027a48] border border-[#a6f4c5] uppercase tracking-wider">
                   Interviewer Workspace
                 </span>
                 <span className="font-bold text-sm text-[#101828]">Dr. Sarah Chen</span>
@@ -134,8 +140,7 @@ export const InterviewerWorkspace: React.FC = () => {
 
           {/* Workload Fatigue Meter */}
           <div className="flex items-center gap-3">
-
-            <div className="bg-[#f8f9fa] px-3 py-1.5 rounded-xl border border-[#eaecf0] space-y-1">
+            <div className="bg-[#f8f9fa] px-3.5 py-1.5 rounded-2xl border border-[#eaecf0] space-y-1">
               <div className="flex justify-between text-[11px] font-semibold gap-3">
                 <span className="text-[#344054]">Weekly Load</span>
                 <span className="text-[#1668e8] font-bold">3 / 6 sessions</span>
@@ -147,7 +152,7 @@ export const InterviewerWorkspace: React.FC = () => {
           </div>
         </div>
 
-        {/* Workspace Mode Sub-Tabs */}
+        {/* Workspace Mode Sub-Tabs (Apple HIG Pills) */}
         <div className="flex items-center gap-2 mt-3 pt-2 border-t border-[#f2f4f7]">
           <button
             onClick={() => setActiveTab('dashboard')}
@@ -159,6 +164,23 @@ export const InterviewerWorkspace: React.FC = () => {
           >
             <FileText className="w-3.5 h-3.5" />
             <span>Assigned Candidate Sessions ({assignments.length})</span>
+          </button>
+
+          <button
+            onClick={() => setActiveTab('notices')}
+            className={`px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all flex items-center gap-1.5 ${
+              activeTab === 'notices'
+                ? 'bg-[#1668e8] text-white shadow-xs'
+                : 'bg-white border border-[#d0d5dd] text-[#344054] hover:bg-[#f9fafb]'
+            }`}
+          >
+            <MessageSquare className="w-3.5 h-3.5" />
+            <span>Panel Briefings & Notices</span>
+            {unreadCount > 0 && (
+              <span className="px-1.5 py-0.2 rounded-full text-[9px] font-bold bg-rose-500 text-white">
+                {unreadCount}
+              </span>
+            )}
           </button>
 
           <button
@@ -175,14 +197,14 @@ export const InterviewerWorkspace: React.FC = () => {
         </div>
 
         {evalSuccessBanner && (
-          <div className="mt-2.5 p-2 rounded-lg bg-[#ecfdf3] border border-[#a6f4c5] flex items-center justify-between text-xs text-[#027a48]">
+          <div className="mt-2.5 p-2.5 rounded-2xl bg-[#ecfdf3] border border-[#a6f4c5] flex items-center justify-between text-xs text-[#027a48] shadow-2xs animate-in fade-in">
             <div className="flex items-center gap-2">
               <CheckCircle2 className="w-4 h-4 text-[#12b76a]" />
               <span className="font-semibold text-[11px]">
                 Scorecard successfully submitted to Central Coordination Engine!
               </span>
             </div>
-            <span className="text-[10px] font-bold bg-white px-2 py-0.5 rounded-full border border-[#a6f4c5]">
+            <span className="text-[10px] font-bold bg-white px-2.5 py-0.5 rounded-full border border-[#a6f4c5]">
               SYNCED
             </span>
           </div>
@@ -196,7 +218,7 @@ export const InterviewerWorkspace: React.FC = () => {
         {activeTab === 'dashboard' && (
           <div className="space-y-3">
             
-            {/* Urgent Nudge Alert from Coordinator */}
+            {/* Urgent Nudge Alert from Coordinator (Smooth Apple HIG style) */}
             {assignments.some(a => a.isNudged && a.status !== 'EVALUATED') && (
               <div className="bg-rose-50/70 animate-pulse border border-rose-200/50 rounded-2xl p-4.5 shadow-2xs flex flex-col sm:flex-row sm:items-center justify-between gap-4 transition-all">
                 <div className="space-y-1">
@@ -227,7 +249,7 @@ export const InterviewerWorkspace: React.FC = () => {
             )}
 
             <div className="flex items-center justify-between">
-              <span className="text-xs font-bold text-[#101828]">
+              <span className="text-xs font-bold text-[#101828] uppercase tracking-wider">
                 Assigned Candidate Loops (Active Evaluations)
               </span>
               <span className="text-[11px] text-[#667085]">
@@ -245,7 +267,7 @@ export const InterviewerWorkspace: React.FC = () => {
                 return (
                   <div 
                     key={inv.id}
-                    className={`rounded-2xl shadow-2xs p-3.5 flex flex-col md:flex-row md:items-center justify-between gap-3 transition-all ${
+                    className={`rounded-2xl shadow-2xs p-4 flex flex-col md:flex-row md:items-center justify-between gap-3 transition-all ${
                       isItemNudged
                         ? 'bg-rose-50/40 animate-pulse border border-rose-200/60'
                         : 'bg-white border border-[#eaecf0] hover:border-[#1668e8]/30'
@@ -277,7 +299,7 @@ export const InterviewerWorkspace: React.FC = () => {
                           )}
                         </div>
 
-                        <div className="flex flex-wrap items-center gap-3 text-xs text-[#475467]">
+                        <div className="flex flex-wrap items-center gap-3 text-xs text-[#475467] pt-0.5">
                           <span className="font-semibold text-[#101828]">{inv.roundName}</span>
                           <span className="flex items-center gap-1 text-[#1668e8]">
                             <Clock className="w-3 h-3" />
@@ -296,75 +318,136 @@ export const InterviewerWorkspace: React.FC = () => {
                         href={inv.meetingLink}
                         target="_blank"
                         rel="noreferrer"
-                        className="px-3.5 py-1.5 rounded-full border border-[#d0d5dd] hover:bg-[#f9fafb] text-[#344054] text-xs font-semibold flex items-center gap-1.5 transition-colors"
+                        className="px-3.5 py-1.5 rounded-full border border-[#d0d5dd] hover:bg-[#f9fafb] text-[#344054] text-xs font-semibold flex items-center gap-1.5 transition-colors shadow-2xs"
                       >
-                        <Video className="w-3.5 h-3.5 text-[#1668e8]" />
-                        <span>Google Meet</span>
+                        <Video className="w-3.5 h-3.5" />
+                        <span>Join Call</span>
                       </a>
 
                       <button
                         onClick={() => openScorecard(inv)}
-                        className={`px-3.5 py-1.5 rounded-full text-xs font-semibold flex items-center gap-1.5 shadow-xs transition-colors ${
+                        className={`px-4 py-1.5 rounded-full text-xs font-semibold flex items-center gap-1.5 transition-all shadow-xs ${
                           isEvaluated
-                            ? 'bg-[#f2f4f7] text-[#344054] hover:bg-[#eaecf0]'
+                            ? 'bg-[#f2f4f7] hover:bg-[#eaecf0] text-[#344054]'
                             : 'bg-[#1668e8] hover:bg-[#145ac7] text-white'
                         }`}
                       >
                         <FileText className="w-3.5 h-3.5" />
-                        <span>{isEvaluated ? 'Review Scorecard' : 'Submit Scorecard'}</span>
+                        <span>{isEvaluated ? 'Edit Scorecard' : 'Fill Scorecard'}</span>
                       </button>
                     </div>
                   </div>
                 );
               })}
             </div>
-
-            {/* Quick Context Tip */}
-            <div className="p-3 bg-white rounded-xl border border-[#eaecf0] shadow-2xs space-y-1 text-xs">
-              <span className="font-bold text-[#101828] block">Interviewer Calibration Guidelines:</span>
-              <p className="text-[11px] text-[#475467]">
-                Submitting a scorecard immediately marks the candidate’s round complete in the coordinator's master schedule and unlocks the next sequence round in the CP-SAT engine.
-              </p>
-            </div>
           </div>
         )}
 
-        {/* VIEW 2: AVAILABILITY MATRIX */}
+        {/* VIEW 2: PANEL NOTICES & COMMUNICATIONS */}
+        {activeTab === 'notices' && (
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-bold text-[#101828] uppercase tracking-wider flex items-center gap-2">
+                <MessageSquare className="w-4 h-4 text-[#1668e8]" />
+                Panel Briefings & Coordinator Instructions
+              </span>
+              <span className="text-[11px] text-[#667085]">
+                {panelMessages.length} Messages
+              </span>
+            </div>
+
+            {panelMessages.length > 0 ? (
+              <div className="space-y-2.5">
+                {panelMessages.map((msg) => (
+                  <div 
+                    key={msg.id}
+                    className={`rounded-2xl p-4.5 border transition-all shadow-2xs ${
+                      !msg.isRead 
+                        ? 'bg-[#eff8ff]/50 border-[#b2ddff]' 
+                        : 'bg-white border-[#eaecf0]'
+                    }`}
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="space-y-1 flex-1">
+                        <div className="flex items-center gap-2">
+                          <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-[#eff8ff] text-[#175cd3] border border-[#b2ddff]">
+                            From: {msg.senderName} ({msg.senderRole})
+                          </span>
+                          <span className="text-[11px] text-[#667085]">• {msg.timestamp}</span>
+                          {!msg.isRead && (
+                            <span className="px-2 py-0.2 rounded-full text-[9px] font-bold bg-blue-600 text-white">
+                              NEW
+                            </span>
+                          )}
+                          {msg.type === 'NUDGE' && (
+                            <span className="px-2 py-0.2 rounded-full text-[9px] font-bold bg-rose-100 text-rose-800 border border-rose-200">
+                              URGENT
+                            </span>
+                          )}
+                        </div>
+                        <h3 className="text-sm font-bold text-[#101828] mt-1">
+                          {msg.subject}
+                        </h3>
+                        <p className="text-xs text-[#344054] leading-relaxed whitespace-pre-line mt-1">
+                          {msg.body}
+                        </p>
+                      </div>
+
+                      {!msg.isRead && (
+                        <button
+                          onClick={() => markMessageAsRead(msg.id)}
+                          className="px-3 py-1.5 rounded-full bg-white border border-[#d0d5dd] hover:bg-[#f9fafb] text-[#344054] text-xs font-semibold shrink-0 flex items-center gap-1.5 shadow-2xs"
+                        >
+                          <MailCheck className="w-3.5 h-3.5 text-[#1668e8]" />
+                          <span>Mark Read</span>
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="p-8 bg-white rounded-2xl border border-[#eaecf0] text-center space-y-2">
+                <CheckCircle2 className="w-8 h-8 text-emerald-600 mx-auto" />
+                <h3 className="text-sm font-bold text-[#101828]">No Pending Panel Briefings</h3>
+                <p className="text-xs text-[#667085]">You are up to date on all coordinator briefings.</p>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* VIEW 3: AVAILABILITY MATRIX */}
         {activeTab === 'availability' && (
           <div className="space-y-3">
-            <div className="bg-white rounded-xl border border-[#eaecf0] p-4 shadow-2xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="bg-white rounded-2xl border border-[#eaecf0] p-4.5 shadow-2xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div>
-                <h2 className="text-xs font-bold text-[#101828]">My Weekly Availability Matrix</h2>
+                <h2 className="text-xs font-bold text-[#101828] uppercase tracking-wider">Weekly Panel Availability</h2>
                 <p className="text-[11px] text-[#667085] mt-0.5">
-                  Toggle slots when you are available to interview candidates in {currentTimezone.label}.
+                  Click hour slots to toggle availability. The CP-SAT engine will schedule within your open windows.
                 </p>
               </div>
 
-              <button
-                onClick={handleSaveAvailability}
-                className="px-3.5 py-1.5 rounded-lg bg-[#1668e8] hover:bg-[#145ac7] text-white text-xs font-bold shadow-xs flex items-center gap-1.5 transition-colors"
-              >
-                <Check className="w-3.5 h-3.5" />
-                <span>Save Availability</span>
-              </button>
+              <div className="flex items-center gap-3">
+                <div className="flex items-center gap-1.5 text-xs text-[#475467]">
+                  <span className="w-3 h-3 rounded-full bg-emerald-100 border border-emerald-400"></span>
+                  <span>Available</span>
+                </div>
+                <div className="flex items-center gap-1.5 text-xs text-[#475467]">
+                  <span className="w-3 h-3 rounded-full bg-[#f8f9fa] border border-[#eaecf0]"></span>
+                  <span>Busy</span>
+                </div>
+              </div>
             </div>
 
-            {availabilitySaved && (
-              <div className="p-2.5 rounded-lg bg-[#ecfdf3] border border-[#a6f4c5] text-xs text-[#027a48] flex items-center gap-2">
-                <CheckCircle2 className="w-4 h-4 text-[#12b76a]" />
-                <span>Availability saved! The CP-SAT engine will enforce your burnout limits and time preferences.</span>
-              </div>
-            )}
-
-            <div className="bg-white rounded-xl border border-[#eaecf0] shadow-2xs p-3">
-              <div className="grid grid-cols-5 gap-2.5">
+            <div className="bg-white rounded-2xl border border-[#eaecf0] shadow-2xs p-4">
+              <div className="grid grid-cols-1 sm:grid-cols-5 gap-3">
                 {daysOfWeek.map((day) => (
-                  <div key={day} className="space-y-1.5">
-                    <div className="p-1.5 bg-[#f9fafb] rounded border border-[#eaecf0] font-bold text-[11px] text-[#101828] text-center">
+                  <div key={day} className="space-y-2">
+                    <div className="p-2 bg-[#f9fafb] rounded-xl border border-[#eaecf0] font-bold text-[11px] text-[#101828] text-center">
                       {day}
                     </div>
 
-                    <div className="space-y-1">
+                    <div className="space-y-1.5">
                       {pstHours.map((hour) => {
                         const isAvailable = availableSlots[`${day}-${hour}`];
 
@@ -373,10 +456,10 @@ export const InterviewerWorkspace: React.FC = () => {
                             key={hour}
                             type="button"
                             onClick={() => toggleSlot(day, hour)}
-                            className={`w-full p-2 rounded-lg border text-left text-xs transition-all ${
+                            className={`w-full p-2.5 rounded-xl border text-left text-xs transition-all ${
                               isAvailable
-                                ? 'bg-[#ecfdf3] border-[#a6f4c5] text-[#027a48] font-bold'
-                                : 'bg-white border-[#eaecf0] text-[#98a2b3] hover:bg-[#f9fafb]'
+                                ? 'bg-emerald-50/70 border-emerald-300 text-emerald-800 font-semibold'
+                                : 'bg-[#fafafa] border-[#eaecf0] text-[#98a2b3] hover:bg-[#f2f4f7]'
                             }`}
                           >
                             <div className="flex items-center justify-between">
@@ -399,7 +482,7 @@ export const InterviewerWorkspace: React.FC = () => {
 
       </div>
 
-      {/* Scorecard Dialog */}
+      {/* Scorecard Dialog (Apple HIG Styling) */}
       {evalDialogOpen && activeInterview && (
         <Dialog 
           isOpen={evalDialogOpen} 
@@ -407,7 +490,7 @@ export const InterviewerWorkspace: React.FC = () => {
           title={`Interviewer Scorecard: ${activeInterview.candidateName}`}
         >
           <form onSubmit={handleScorecardSubmit} className="space-y-3.5 text-xs">
-            <div className="p-2.5 bg-[#f8f9fa] rounded-lg border border-[#eaecf0] flex items-center justify-between">
+            <div className="p-3 bg-[#f8f9fa] rounded-xl border border-[#eaecf0] flex items-center justify-between">
               <div>
                 <span className="font-bold text-[#101828] block">{activeInterview.candidateName}</span>
                 <span className="text-[#667085]">{activeInterview.roundName}</span>
@@ -423,11 +506,11 @@ export const InterviewerWorkspace: React.FC = () => {
                     key={rec}
                     type="button"
                     onClick={() => setRecommendation(rec)}
-                    className={`py-1.5 px-2 rounded-md border text-[10px] font-bold text-center transition-all ${
+                    className={`py-2 px-2 rounded-xl border text-[10px] font-bold text-center transition-all ${
                       recommendation === rec
                         ? rec.includes('HIRE') && !rec.includes('NO')
-                          ? 'border-emerald-600 bg-emerald-50 text-emerald-800'
-                          : 'border-red-600 bg-red-50 text-red-800'
+                          ? 'border-emerald-600 bg-emerald-50 text-emerald-800 shadow-2xs'
+                          : 'border-rose-600 bg-rose-50 text-rose-800 shadow-2xs'
                         : 'border-[#dadce0] text-[#444746] hover:bg-[#f9fafb]'
                     }`}
                   >
@@ -443,7 +526,7 @@ export const InterviewerWorkspace: React.FC = () => {
                 <select
                   value={problemSolvingRating}
                   onChange={(e) => setProblemSolvingRating(Number(e.target.value))}
-                  className="w-full border border-[#d0d5dd] rounded-lg p-1.5 text-xs"
+                  className="w-full border border-[#d0d5dd] rounded-xl p-2 text-xs focus:outline-none focus:border-[#1668e8]"
                 >
                   <option value={5}>5 - Excellent</option>
                   <option value={4}>4 - Good</option>
@@ -457,7 +540,7 @@ export const InterviewerWorkspace: React.FC = () => {
                 <select
                   value={architectureRating}
                   onChange={(e) => setArchitectureRating(Number(e.target.value))}
-                  className="w-full border border-[#d0d5dd] rounded-lg p-1.5 text-xs"
+                  className="w-full border border-[#d0d5dd] rounded-xl p-2 text-xs focus:outline-none focus:border-[#1668e8]"
                 >
                   <option value={5}>5 - Excellent</option>
                   <option value={4}>4 - Good</option>
@@ -470,7 +553,7 @@ export const InterviewerWorkspace: React.FC = () => {
                 <select
                   value={communicationRating}
                   onChange={(e) => setCommunicationRating(Number(e.target.value))}
-                  className="w-full border border-[#d0d5dd] rounded-lg p-1.5 text-xs"
+                  className="w-full border border-[#d0d5dd] rounded-xl p-2 text-xs focus:outline-none focus:border-[#1668e8]"
                 >
                   <option value={5}>5 - Clear & Concise</option>
                   <option value={4}>4 - Effective</option>
@@ -485,12 +568,12 @@ export const InterviewerWorkspace: React.FC = () => {
                 value={strengths}
                 onChange={(e) => setStrengths(e.target.value)}
                 rows={2}
-                className="w-full border border-[#d0d5dd] rounded-lg p-2 text-xs"
+                className="w-full border border-[#d0d5dd] rounded-xl p-2 text-xs focus:outline-none focus:border-[#1668e8]"
                 required
               />
             </div>
 
-            <div className="flex justify-end gap-2 pt-2 border-t border-[#eaecf0]">
+            <div className="flex justify-end gap-2 pt-3 border-t border-[#eaecf0]">
               <Button variant="secondary" onClick={() => setEvalDialogOpen(false)}>
                 Cancel
               </Button>

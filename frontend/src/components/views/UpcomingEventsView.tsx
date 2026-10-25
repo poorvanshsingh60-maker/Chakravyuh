@@ -109,10 +109,10 @@ export const UpcomingEventsView: React.FC = () => {
             Confirmed candidate loops and room bookings across calendar slots.
           </p>
 
-          <div className="flex items-center gap-1.5 bg-[#f2f4f7] p-1 rounded-lg text-xs font-medium">
+          <div className="flex items-center gap-1.5 bg-[#f2f4f7] p-1 rounded-full text-xs font-medium">
               <button
                 onClick={() => setTimeframe('TODAY')}
-                className={`px-3 py-1 rounded-md transition-all ${
+                className={`px-3 py-1 rounded-full transition-all ${
                   timeframe === 'TODAY' ? 'bg-white text-[#101828] shadow-2xs font-semibold' : 'text-[#667085]'
                 }`}
               >
@@ -120,7 +120,7 @@ export const UpcomingEventsView: React.FC = () => {
               </button>
               <button
                 onClick={() => setTimeframe('WEEK')}
-                className={`px-3 py-1 rounded-md transition-all ${
+                className={`px-3 py-1 rounded-full transition-all ${
                   timeframe === 'WEEK' ? 'bg-white text-[#101828] shadow-2xs font-semibold' : 'text-[#667085]'
                 }`}
               >
@@ -128,7 +128,7 @@ export const UpcomingEventsView: React.FC = () => {
               </button>
               <button
                 onClick={() => setTimeframe('MONTH')}
-                className={`px-3 py-1 rounded-md transition-all ${
+                className={`px-3 py-1 rounded-full transition-all ${
                   timeframe === 'MONTH' ? 'bg-white text-[#101828] shadow-2xs font-semibold' : 'text-[#667085]'
                 }`}
               >
@@ -140,20 +140,20 @@ export const UpcomingEventsView: React.FC = () => {
 
       {/* Events Agenda */}
       <div className="flex-1 min-h-0 overflow-y-auto p-6 max-w-5xl space-y-4">
-        <div className="border border-[#eaecf0] rounded-xl overflow-hidden bg-white shadow-2xs divide-y divide-[#eaecf0]">
+        <div className="border border-[#eaecf0] rounded-2xl overflow-hidden bg-white shadow-2xs divide-y divide-[#eaecf0]">
           {filteredEvents.map((ev) => (
             <div 
               key={ev.id} 
               className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:bg-[#f9fafb] transition-colors"
             >
               <div className="flex items-start gap-4">
-                <div className="p-2.5 rounded-lg bg-[#e7f2fe] text-[#1668e8] shrink-0 mt-0.5">
+                <div className="p-2.5 rounded-xl bg-[#e7f2fe] text-[#1668e8] shrink-0 mt-0.5">
                   <Calendar className="w-4 h-4" />
                 </div>
                 <div className="space-y-1">
                   <div className="flex items-center gap-2">
                     <span className="font-bold text-sm text-[#101828]">{ev.round}</span>
-                    <span className="text-[11px] font-medium text-[#1668e8] bg-[#e7f2fe] px-2 py-0.2 rounded border border-[#bcd7fd]">
+                    <span className="text-[11px] font-medium text-[#1668e8] bg-[#e7f2fe] px-2.5 py-0.5 rounded-full border border-[#bcd7fd]">
                       {ev.candidate} ({ev.role})
                     </span>
                   </div>
@@ -178,7 +178,7 @@ export const UpcomingEventsView: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setSelectedEvent(ev)}
-                  className="px-3 py-1.5 rounded-lg border border-[#d0d5dd] text-xs font-semibold text-[#344054] hover:bg-white"
+                  className="px-3.5 py-1.5 rounded-full border border-[#d0d5dd] text-xs font-semibold text-[#344054] hover:bg-white transition-colors shadow-2xs"
                 >
                   View Details
                 </button>
@@ -186,7 +186,7 @@ export const UpcomingEventsView: React.FC = () => {
                   href={ev.meetingUrl}
                   target="_blank" 
                   rel="noreferrer"
-                  className="px-3.5 py-1.5 rounded-lg bg-[#1668e8] hover:bg-[#145ac7] text-white text-xs font-semibold shadow-2xs flex items-center gap-1.5"
+                  className="px-4 py-1.5 rounded-full bg-[#1668e8] hover:bg-[#145ac7] text-white text-xs font-semibold shadow-2xs flex items-center gap-1.5 transition-colors"
                 >
                   <Video className="w-3.5 h-3.5" />
                   <span>Join Room</span>
@@ -205,7 +205,7 @@ export const UpcomingEventsView: React.FC = () => {
           title={`Session Details: ${selectedEvent.round}`}
         >
           <div className="space-y-4 text-xs">
-            <div className="p-3.5 rounded-xl bg-[#f9fafb] border border-[#eaecf0] space-y-2">
+            <div className="p-4 rounded-2xl bg-[#f9fafb] border border-[#eaecf0] space-y-2">
               <div className="flex items-center justify-between">
                 <div>
                   <h3 className="font-bold text-sm text-[#101828]">{selectedEvent.candidate}</h3>
@@ -228,7 +228,7 @@ export const UpcomingEventsView: React.FC = () => {
                 href={selectedEvent.meetingUrl}
                 target="_blank"
                 rel="noreferrer"
-                className="px-4 py-2 rounded-lg bg-[#1668e8] text-white font-bold flex items-center gap-1.5 shadow-2xs hover:bg-[#145ac7]"
+                className="px-4 py-2 rounded-full bg-[#1668e8] text-white font-bold flex items-center gap-1.5 shadow-2xs hover:bg-[#145ac7]"
               >
                 <Video className="w-3.5 h-3.5" />
                 <span>Open Google Meet Video Call</span>
