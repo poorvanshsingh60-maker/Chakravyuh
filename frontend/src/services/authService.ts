@@ -133,7 +133,11 @@ export const authService = {
     if (envClientId && typeof envClientId === 'string' && envClientId.trim()) {
       return envClientId.trim();
     }
-    return localStorage.getItem('chakravyuh_google_client_id') || '';
+    const stored = localStorage.getItem('chakravyuh_google_client_id');
+    if (stored && stored.trim()) {
+      return stored.trim();
+    }
+    return '1086710915799-guosai45oj81h4sp0kqhuvgo3j5vfhi2.apps.googleusercontent.com';
   },
 
   setGoogleClientId(clientId: string): void {
