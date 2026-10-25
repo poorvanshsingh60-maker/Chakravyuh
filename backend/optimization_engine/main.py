@@ -7,9 +7,9 @@ from .models import Candidate, Interviewer, Room, InterviewReq, TimeSlot, Solver
 from .engine import SchedulingEngine
 from .validator import ScheduleValidator
 from .auth import (
-    SignUpRequest, LoginRequest, AuthResponse, UserProfile,
+    SignUpRequest, LoginRequest, GoogleAuthRequest, AuthResponse, UserProfile,
     load_users, save_users, hash_password, verify_password,
-    create_jwt_token, decode_jwt_token
+    create_jwt_token, decode_jwt_token, verify_google_token
 )
 
 app = FastAPI(title="Chakravyuh Optimization Engine")
@@ -80,6 +80,57 @@ async def login(req: LoginRequest):
             email=user["email"],
             full_name=user["full_name"],
             role=user["role"]
+        )
+    )
+
+@app.post("/auth/google", response_model=AuthResponse)
+@app.post("/api/v1/auth/google", response_model=AuthResponse)
+async def google_auth(req: GoogleAuthRequest):
+    try:
+        google_profile = verify_google_token(credential=req.credential, access_token=req.access_token)
+    except ValueError as e:
+        raise HTTPException(status_code=401, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Google authentication failed: {str(e)}")
+
+    users = load_users()
+    email_key = google_profile["email"].lower().strip()
+
+    if email_key in users:
+        user = users[email_key]
+        if google_profile.get("name"):
+            user["full_name"] = google_profile["name"]
+        if google_profile.get("picture"):
+            user["picture"] = google_profile["picture"]
+        user["auth_provider"] = "google"
+        users[email_key] = user
+        save_users(users)
+    else:
+        user_id = f"google-{google_profile.get('sub', secrets.token_hex(4))[:12]}"
+        user = {
+            "id": user_id,
+            "email": email_key,
+            "full_name": google_profile.get("name", email_key.split("@")[0]),
+            "role": req.role,
+            "picture": google_profile.get("picture", ""),
+            "auth_provider": "google",
+            "salt": "",
+            "password_hash": "",
+            "created_at": datetime.datetime.now(datetime.timezone.utc).isoformat()
+        }
+        users[email_key] = user
+        save_users(users)
+
+    token = create_jwt_token(user)
+    return AuthResponse(
+        access_token=token,
+        token_type="bearer",
+        user=UserProfile(
+            id=user["id"],
+            email=user["email"],
+            full_name=user["full_name"],
+            role=user["role"],
+            picture=user.get("picture")
         )
     )
 

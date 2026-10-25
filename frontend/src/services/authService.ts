@@ -128,21 +128,47 @@ export const authService = {
     };
   },
 
-  loginWithGoogle(account: { email: string; name: string; role: UserRole }): AuthResponse {
-    const googleUser: AuthUser = {
-      id: `google-${Date.now()}`,
-      email: account.email,
-      full_name: account.name,
-      role: account.role,
-      isActive: true,
-    };
-    const mockToken = `google-jwt-token-${Date.now()}`;
-    localStorage.setItem(TOKEN_KEY, mockToken);
-    localStorage.setItem(USER_KEY, JSON.stringify(googleUser));
-    return {
-      access_token: mockToken,
-      token_type: 'bearer',
-      user: googleUser,
-    };
+  getGoogleClientId(): string {
+    const envClientId = (import.meta as any).env?.VITE_GOOGLE_CLIENT_ID;
+    if (envClientId && typeof envClientId === 'string' && envClientId.trim()) {
+      return envClientId.trim();
+    }
+    return localStorage.getItem('chakravyuh_google_client_id') || '';
+  },
+
+  setGoogleClientId(clientId: string): void {
+    if (clientId && clientId.trim()) {
+      localStorage.setItem('chakravyuh_google_client_id', clientId.trim());
+    } else {
+      localStorage.removeItem('chakravyuh_google_client_id');
+    }
+  },
+
+  async loginWithGoogle(params: {
+    credential?: string;
+    accessToken?: string;
+    role?: UserRole;
+  }): Promise<AuthResponse> {
+    const res = await fetch('/auth/google', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        credential: params.credential,
+        access_token: params.accessToken,
+        role: params.role || 'COORDINATOR',
+      }),
+    });
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ detail: 'Google authentication failed' }));
+      throw new Error(err.detail || 'Failed to authenticate with Google');
+    }
+
+    const data: AuthResponse = await res.json();
+    localStorage.setItem(TOKEN_KEY, data.access_token);
+    localStorage.setItem(USER_KEY, JSON.stringify(data.user));
+    return data;
   },
 };

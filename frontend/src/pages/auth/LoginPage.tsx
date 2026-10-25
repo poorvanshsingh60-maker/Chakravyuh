@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { UserRole } from '../../types/user';
 import { ChakravyuhLogo } from '../../components/ChakravyuhLogo';
-import { AlertCircle, Loader2, Mail, X, Sparkles, CheckCircle2 } from 'lucide-react';
+import { AlertCircle, Loader2, Mail, X, Sparkles, Settings, ExternalLink, ShieldCheck } from 'lucide-react';
 import { authService } from '../../services/authService';
 
 interface LoginPageProps {
@@ -10,58 +10,15 @@ interface LoginPageProps {
   inviteCode?: string | null;
 }
 
-interface DemoGoogleAccount {
-  email: string;
-  name: string;
-  role: UserRole;
-  avatarBg: string;
-  initials: string;
-  tagline: string;
-}
-
-const DEMO_GOOGLE_ACCOUNTS: DemoGoogleAccount[] = [
-  {
-    email: 'aditya.singh@gmail.com',
-    name: 'Aditya Singh',
-    role: 'COORDINATOR',
-    avatarBg: 'bg-blue-600',
-    initials: 'AS',
-    tagline: 'Lead Recruiter & System Admin'
-  },
-  {
-    email: 'emma.watson@chakravyuh.ai',
-    name: 'Emma Watson',
-    role: 'COORDINATOR',
-    avatarBg: 'bg-indigo-600',
-    initials: 'EW',
-    tagline: 'Lead Scheduling Coordinator'
-  },
-  {
-    email: 'sarah.chen@google.com',
-    name: 'Dr. Sarah Chen',
-    role: 'INTERVIEWER',
-    avatarBg: 'bg-emerald-600',
-    initials: 'SC',
-    tagline: 'Staff Systems Interviewer (Google Panel)'
-  },
-  {
-    email: 'marcus.vance@candidate.com',
-    name: 'Marcus Vance',
-    role: 'CANDIDATE',
-    avatarBg: 'bg-purple-600',
-    initials: 'MV',
-    tagline: 'SDE Finalist (Candidate Portal)'
-  }
-];
-
 export const LoginPage: React.FC<LoginPageProps> = ({ 
   onLogin, 
   initialMode = 'LOGIN',
   inviteCode: propInviteCode
 }) => {
   const [mode, setMode] = useState<'SIGNUP' | 'LOGIN'>(initialMode);
-  const [googleModalOpen, setGoogleModalOpen] = useState(false);
-  const [customGoogleEmail, setCustomGoogleEmail] = useState('');
+  const [configModalOpen, setConfigModalOpen] = useState(false);
+  const [configuredClientId, setConfiguredClientId] = useState<string>(() => authService.getGoogleClientId());
+  const [clientIdInput, setClientIdInput] = useState<string>(() => authService.getGoogleClientId());
   
   // Detect invite link in URL query params
   const [inviteParam, setInviteParam] = useState<string | null>(propInviteCode || null);
@@ -84,6 +41,47 @@ export const LoginPage: React.FC<LoginPageProps> = ({
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
+  // Initialize Google Identity Services credential listener if Client ID is configured
+  useEffect(() => {
+    if (!configuredClientId) return;
+
+    const checkGoogleGSI = () => {
+      const google = (window as any).google;
+      if (google?.accounts?.id) {
+        try {
+          google.accounts.id.initialize({
+            client_id: configuredClientId,
+            callback: async (response: any) => {
+              if (response.credential) {
+                setLoading(true);
+                setErrorMessage(null);
+                try {
+                  const res = await authService.loginWithGoogle({
+                    credential: response.credential,
+                    role,
+                  });
+                  onLogin(res.user, false);
+                } catch (err: any) {
+                  setErrorMessage(err.message || 'Google account verification failed on server');
+                } finally {
+                  setLoading(false);
+                }
+              }
+            },
+            auto_select: false,
+          });
+        } catch {
+          // GSI init exception silently handled
+        }
+      }
+    };
+
+    // Attempt init immediately and after short delay if script is still loading
+    checkGoogleGSI();
+    const timer = setTimeout(checkGoogleGSI, 1000);
+    return () => clearTimeout(timer);
+  }, [configuredClientId, role, onLogin]);
+
   // 1-Click Guest Login
   const handleGuestLogin = () => {
     setLoading(true);
@@ -95,41 +93,90 @@ export const LoginPage: React.FC<LoginPageProps> = ({
     }
   };
 
-  // Google Login from Account Chooser
-  const handleGoogleAccountSelect = (acc: DemoGoogleAccount) => {
-    setGoogleModalOpen(false);
+  // Direct Role Jump In
+  const handleQuickLogin = (quickRole: UserRole) => {
     setLoading(true);
     try {
-      const res = authService.loginWithGoogle({
-        email: acc.email,
-        name: acc.name,
-        role: acc.role
-      });
+      const res = authService.loginAsGuest(quickRole);
       onLogin(res.user, false);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleCustomGoogleSubmit = (e: React.FormEvent) => {
+  // Real Google OAuth Flow
+  const triggerGoogleOAuth = useCallback((cid: string) => {
+    const google = (window as any).google;
+    if (!google?.accounts?.oauth2) {
+      setErrorMessage('Google Identity Services script is still loading. Please check your internet connection or retry in a moment.');
+      return;
+    }
+
+    setLoading(true);
+    setErrorMessage(null);
+
+    try {
+      const client = google.accounts.oauth2.initTokenClient({
+        client_id: cid,
+        scope: 'openid email profile',
+        callback: async (tokenResponse: any) => {
+          if (tokenResponse.error) {
+            setErrorMessage(`Google sign-in error: ${tokenResponse.error_description || tokenResponse.error}`);
+            setLoading(false);
+            return;
+          }
+          if (tokenResponse.access_token) {
+            try {
+              const res = await authService.loginWithGoogle({
+                accessToken: tokenResponse.access_token,
+                role,
+              });
+              onLogin(res.user, false);
+            } catch (err: any) {
+              setErrorMessage(err.message || 'Failed to authenticate Google account on server');
+            } finally {
+              setLoading(false);
+            }
+          }
+        },
+        error_callback: (err: any) => {
+          setLoading(false);
+          setErrorMessage(err.message || 'Google authentication popup was closed or cancelled.');
+        }
+      });
+
+      client.requestAccessToken({ prompt: 'select_account' });
+    } catch (err: any) {
+      setLoading(false);
+      setErrorMessage(err.message || 'Failed to initialize Google OAuth prompt.');
+    }
+  }, [role, onLogin]);
+
+  const handleGoogleClick = () => {
+    const activeClientId = configuredClientId || authService.getGoogleClientId();
+    if (!activeClientId) {
+      // Need user to enter Google Client ID
+      setConfigModalOpen(true);
+    } else {
+      triggerGoogleOAuth(activeClientId);
+    }
+  };
+
+  const handleSaveClientIdAndProceed = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!customGoogleEmail.trim()) return;
-    setGoogleModalOpen(false);
-    setLoading(true);
-    try {
-      const name = customGoogleEmail.split('@')[0].replace(/[._]/g, ' ');
-      const formattedName = name.charAt(0).toUpperCase() + name.slice(1);
-      const res = authService.loginWithGoogle({
-        email: customGoogleEmail.trim(),
-        name: formattedName,
-        role: 'COORDINATOR'
-      });
-      onLogin(res.user, false);
-    } finally {
-      setLoading(false);
+    const trimmed = clientIdInput.trim();
+    if (!trimmed) {
+      setErrorMessage('Please provide a valid Google Cloud Client ID');
+      return;
     }
+    authService.setGoogleClientId(trimmed);
+    setConfiguredClientId(trimmed);
+    setConfigModalOpen(false);
+    setErrorMessage(null);
+    triggerGoogleOAuth(trimmed);
   };
 
+  // Standard Email/Password Submission
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email) return;
@@ -138,15 +185,10 @@ export const LoginPage: React.FC<LoginPageProps> = ({
 
     try {
       if (mode === 'SIGNUP') {
-        const res = await authService.signup(
-          email,
-          password || 'demo123',
-          fullName || email.split('@')[0],
-          role
-        );
+        const res = await authService.signup(email, password, fullName, role);
         onLogin(res.user, false);
       } else {
-        const res = await authService.login(email, password || 'demo123');
+        const res = await authService.login(email, password);
         onLogin(res.user, false);
       }
     } catch (err: any) {
@@ -154,11 +196,6 @@ export const LoginPage: React.FC<LoginPageProps> = ({
     } finally {
       setLoading(false);
     }
-  };
-
-  const handleQuickLogin = (quickRole: UserRole) => {
-    const acc = DEMO_GOOGLE_ACCOUNTS.find(a => a.role === quickRole) || DEMO_GOOGLE_ACCOUNTS[0];
-    handleGoogleAccountSelect(acc);
   };
 
   return (
@@ -200,29 +237,55 @@ export const LoginPage: React.FC<LoginPageProps> = ({
             </div>
           )}
 
-          {/* Fast Track Actions: Google Sign-In & Instant Guest Access */}
+          {/* Fast Track Actions: Real Google Sign-In & Instant Guest Access */}
           <div className="mt-4 space-y-2">
             
-            {/* Google Sign-In Pill Button */}
+            {/* Real Google Sign-In Pill Button */}
             <button
               type="button"
-              onClick={() => setGoogleModalOpen(true)}
-              className="w-full flex items-center justify-center gap-2.5 py-2.5 px-4 rounded-full border border-[#dadce0] hover:bg-[#f8fafd] hover:border-[#b4b7ba] text-xs font-semibold text-[#3c4043] transition-all shadow-2xs"
+              disabled={loading}
+              onClick={handleGoogleClick}
+              className="w-full flex items-center justify-center gap-2.5 py-2.5 px-4 rounded-full border border-[#dadce0] hover:bg-[#f8fafd] hover:border-[#b4b7ba] text-xs font-semibold text-[#3c4043] transition-all shadow-2xs cursor-pointer active:scale-[0.99] disabled:opacity-50"
             >
-              <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24">
-                <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-                <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-                <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
-                <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
-              </svg>
+              {loading ? (
+                <Loader2 className="w-4 h-4 animate-spin text-[#1668e8]" />
+              ) : (
+                <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24">
+                  <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                  <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                  <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
+                  <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
+                </svg>
+              )}
               <span>Continue with Google</span>
             </button>
+
+            {/* Google OAuth Configuration Status & Trigger */}
+            <div className="flex items-center justify-between px-1">
+              {configuredClientId ? (
+                <div className="flex items-center gap-1.5 text-[10px] text-[#027a48]">
+                  <ShieldCheck className="w-3 h-3 text-[#12b76a]" />
+                  <span className="truncate max-w-[200px]">Client ID active</span>
+                </div>
+              ) : (
+                <span className="text-[10px] text-[#667085]">OAuth Web Client required for Google</span>
+              )}
+              <button
+                type="button"
+                onClick={() => setConfigModalOpen(true)}
+                className="text-[10px] text-[#1668e8] hover:underline flex items-center gap-1 font-medium cursor-pointer"
+              >
+                <Settings className="w-2.5 h-2.5" />
+                <span>{configuredClientId ? 'Change Client ID' : 'Setup Client ID'}</span>
+              </button>
+            </div>
 
             {/* 1-Click Guest Login Button */}
             <button
               type="button"
+              disabled={loading}
               onClick={handleGuestLogin}
-              className="w-full flex items-center justify-center gap-2 py-2 px-4 rounded-full bg-[#f0f4f9] hover:bg-[#e4e8ef] text-xs font-semibold text-[#1f1f1f] transition-all"
+              className="w-full flex items-center justify-center gap-2 py-2 px-4 rounded-full bg-[#f0f4f9] hover:bg-[#e4e8ef] text-xs font-semibold text-[#1f1f1f] transition-all cursor-pointer disabled:opacity-50"
             >
               <Sparkles className="w-3.5 h-3.5 text-[#1668e8]" />
               <span>Continue as Guest (1-Click Instant Demo)</span>
@@ -244,7 +307,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
             <button
               type="button"
               onClick={() => setMode('LOGIN')}
-              className={`flex-1 py-1 text-xs font-semibold rounded-full transition-all ${
+              className={`flex-1 py-1 text-xs font-semibold rounded-full transition-all cursor-pointer ${
                 mode === 'LOGIN' 
                   ? 'bg-white text-[#101828] shadow-2xs border border-[#dadce0]' 
                   : 'text-[#667085] hover:text-[#101828]'
@@ -255,7 +318,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
             <button
               type="button"
               onClick={() => setMode('SIGNUP')}
-              className={`flex-1 py-1 text-xs font-semibold rounded-full transition-all ${
+              className={`flex-1 py-1 text-xs font-semibold rounded-full transition-all cursor-pointer ${
                 mode === 'SIGNUP' 
                   ? 'bg-white text-[#101828] shadow-2xs border border-[#dadce0]' 
                   : 'text-[#667085] hover:text-[#101828]'
@@ -334,7 +397,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
                     key={r}
                     type="button"
                     onClick={() => setRole(r)}
-                    className={`py-1.5 px-2 rounded-full border text-center text-[10px] font-semibold transition-all ${
+                    className={`py-1.5 px-2 rounded-full border text-center text-[10px] font-semibold transition-all cursor-pointer ${
                       role === r
                         ? 'border-[#1668e8] bg-[#eff8ff] text-[#1668e8]'
                         : 'border-[#dadce0] hover:border-[#747775] text-[#444746]'
@@ -352,7 +415,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
             <button 
               type="submit"
               disabled={loading}
-              className="w-full bg-[#1668e8] hover:bg-[#145ac7] disabled:opacity-50 text-white text-xs font-semibold py-2.5 rounded-full transition-colors shadow-2xs flex items-center justify-center gap-2"
+              className="w-full bg-[#1668e8] hover:bg-[#145ac7] disabled:opacity-50 text-white text-xs font-semibold py-2.5 rounded-full transition-colors shadow-2xs flex items-center justify-center gap-2 cursor-pointer"
             >
               {loading && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
               <span>{mode === 'SIGNUP' ? 'Create Account' : 'Sign In'}</span>
@@ -370,7 +433,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
             <button
               type="button"
               onClick={() => handleQuickLogin('COORDINATOR')}
-              className="p-2 rounded-xl border border-[#eaecf0] hover:border-[#1668e8] hover:bg-[#f8fafd] text-left transition-colors"
+              className="p-2 rounded-xl border border-[#eaecf0] hover:border-[#1668e8] hover:bg-[#f8fafd] text-left transition-colors cursor-pointer"
             >
               <span className="text-[11px] font-bold text-[#101828] block truncate">
                 Coordinator
@@ -383,7 +446,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
             <button
               type="button"
               onClick={() => handleQuickLogin('INTERVIEWER')}
-              className="p-2 rounded-xl border border-[#eaecf0] hover:border-[#1668e8] hover:bg-[#f8fafd] text-left transition-colors"
+              className="p-2 rounded-xl border border-[#eaecf0] hover:border-[#1668e8] hover:bg-[#f8fafd] text-left transition-colors cursor-pointer"
             >
               <span className="text-[11px] font-bold text-[#101828] block truncate">
                 Interviewer
@@ -396,7 +459,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
             <button
               type="button"
               onClick={() => handleQuickLogin('CANDIDATE')}
-              className="p-2 rounded-xl border border-[#eaecf0] hover:border-[#1668e8] hover:bg-[#f8fafd] text-left transition-colors"
+              className="p-2 rounded-xl border border-[#eaecf0] hover:border-[#1668e8] hover:bg-[#f8fafd] text-left transition-colors cursor-pointer"
             >
               <span className="text-[11px] font-bold text-[#101828] block truncate">
                 Candidate
@@ -410,77 +473,89 @@ export const LoginPage: React.FC<LoginPageProps> = ({
 
       </div>
 
-      {/* Google Account Chooser Modal */}
-      {googleModalOpen && (
+      {/* Real Google Cloud OAuth 2.0 Configuration Modal */}
+      {configModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-2xs p-4 animate-in fade-in">
-          <div className="bg-white rounded-2xl border border-[#dadce0] shadow-2xl max-w-sm w-full p-6 space-y-4 animate-in zoom-in-95 duration-150">
+          <div className="bg-white rounded-3xl border border-[#dadce0] shadow-2xl max-w-md w-full p-6 space-y-4 animate-in zoom-in-95 duration-150">
             <div className="flex items-center justify-between border-b border-[#eaecf0] pb-3">
               <div className="flex items-center gap-2">
-                <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24">
+                <svg className="w-5 h-5 shrink-0" viewBox="0 0 24 24">
                   <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
                   <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
                   <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
                   <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
                 </svg>
-                <h3 className="text-sm font-bold text-[#101828]">Choose an Account</h3>
+                <h3 className="text-sm font-bold text-[#101828]">Google OAuth 2.0 Configuration</h3>
               </div>
               <button 
-                onClick={() => setGoogleModalOpen(false)}
-                className="text-[#98a2b3] hover:text-[#101828] p-1 rounded-full hover:bg-[#f2f4f7]"
+                type="button"
+                onClick={() => setConfigModalOpen(false)}
+                className="text-[#98a2b3] hover:text-[#101828] p-1 rounded-full hover:bg-[#f2f4f7] cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
 
-            <p className="text-xs text-[#475467]">
-              Select an account to sign in to Chakravyuh Enterprise:
-            </p>
+            <div className="space-y-3 text-xs text-[#475467]">
+              <p>
+                To authenticate real Google accounts on localhost, enter your Google Cloud OAuth 2.0 Web Client ID.
+              </p>
 
-            <div className="space-y-1.5 divide-y divide-[#f2f4f7]">
-              {DEMO_GOOGLE_ACCOUNTS.map((acc) => (
-                <button
-                  key={acc.email}
-                  onClick={() => handleGoogleAccountSelect(acc)}
-                  className="w-full pt-2 pb-2 px-2.5 rounded-xl hover:bg-[#f8fafd] flex items-center justify-between text-left transition-colors group"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className={`w-8 h-8 rounded-full ${acc.avatarBg} text-white flex items-center justify-center font-bold text-xs shrink-0 shadow-2xs`}>
-                      {acc.initials}
-                    </div>
-                    <div className="min-w-0">
-                      <h4 className="text-xs font-bold text-[#101828] group-hover:text-[#1668e8] truncate">
-                        {acc.name}
-                      </h4>
-                      <p className="text-[11px] text-[#667085] truncate">{acc.email}</p>
-                      <p className="text-[10px] text-[#98a2b3] truncate">{acc.tagline}</p>
-                    </div>
-                  </div>
-                  <CheckCircle2 className="w-4 h-4 text-[#1668e8] opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
-                </button>
-              ))}
-            </div>
-
-            {/* Custom Google Email input */}
-            <form onSubmit={handleCustomGoogleSubmit} className="pt-2 border-t border-[#eaecf0] space-y-2">
-              <label className="block text-[11px] font-semibold text-[#344054]">
-                Or enter another Google account
-              </label>
-              <div className="flex gap-2">
-                <input
-                  type="email"
-                  placeholder="yourname@gmail.com"
-                  value={customGoogleEmail}
-                  onChange={(e) => setCustomGoogleEmail(e.target.value)}
-                  className="flex-1 border border-[#d0d5dd] focus:border-[#1668e8] rounded-full px-3 py-1.5 text-xs text-[#101828] outline-none"
-                />
-                <button
-                  type="submit"
-                  className="px-4 py-1.5 bg-[#1668e8] hover:bg-[#145ac7] text-white text-xs font-semibold rounded-full shadow-2xs shrink-0"
-                >
-                  Sign In
-                </button>
+              <div className="bg-[#f8f9fa] border border-[#eaecf0] rounded-2xl p-3 space-y-1.5 text-[11px]">
+                <div className="font-semibold text-[#101828] flex items-center justify-between">
+                  <span>Quick Setup:</span>
+                  <a 
+                    href="https://console.cloud.google.com/apis/credentials" 
+                    target="_blank" 
+                    rel="noreferrer"
+                    className="text-[#1668e8] flex items-center gap-1 hover:underline"
+                  >
+                    <span>Google Cloud Console</span>
+                    <ExternalLink className="w-3 h-3" />
+                  </a>
+                </div>
+                <ol className="list-decimal list-inside space-y-1 text-[#667085]">
+                  <li>Create an <strong>OAuth 2.0 Client ID</strong> (Web Application).</li>
+                  <li>Add <code className="bg-[#eaecf0] px-1 py-0.5 rounded-sm text-[#101828]">http://localhost:3000</code> to <strong>Authorized JavaScript origins</strong>.</li>
+                  <li>Paste the Client ID below:</li>
+                </ol>
               </div>
-            </form>
+
+              <form onSubmit={handleSaveClientIdAndProceed} className="space-y-3 pt-1">
+                <div>
+                  <label className="block text-[11px] font-semibold text-[#344054] mb-1">
+                    Google OAuth Client ID
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="xxxxxxxxxxxx-xxxxxxxxxxxxxxxxxxxxxxxx.apps.googleusercontent.com"
+                    value={clientIdInput}
+                    onChange={(e) => setClientIdInput(e.target.value)}
+                    className="w-full border border-[#d0d5dd] focus:border-[#1668e8] focus:ring-2 focus:ring-[#1668e8]/15 rounded-xl px-3 py-2 text-xs text-[#101828] outline-none font-mono"
+                  />
+                  <p className="text-[10px] text-[#98a2b3] mt-1">
+                    Can also be placed into <code className="font-mono">frontend/.env</code> as <code className="font-mono">VITE_GOOGLE_CLIENT_ID</code>.
+                  </p>
+                </div>
+
+                <div className="flex items-center justify-end gap-2 pt-2">
+                  <button
+                    type="button"
+                    onClick={() => setConfigModalOpen(false)}
+                    className="px-4 py-2 text-xs font-semibold text-[#344054] hover:bg-[#f2f4f7] rounded-full transition-colors cursor-pointer"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="px-5 py-2 bg-[#1668e8] hover:bg-[#145ac7] text-white text-xs font-semibold rounded-full shadow-2xs transition-colors cursor-pointer"
+                  >
+                    Save & Open Google Sign-In
+                  </button>
+                </div>
+              </form>
+            </div>
           </div>
         </div>
       )}
