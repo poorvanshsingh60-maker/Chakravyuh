@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { UserRole } from './types/user';
 import { LoginPage } from './pages/auth/LoginPage';
 import { CoordinatorWorkspace } from './components/coordinator/CoordinatorWorkspace';
@@ -28,28 +28,108 @@ import { HelpSupportView } from './components/views/HelpSupportView';
 import { TimezoneSelector } from './components/common/TimezoneSelector';
 import { authService } from './services/authService';
 import { CoordinationProvider, useCoordination } from './context/CoordinationContext';
+import { Sparkles } from 'lucide-react';
 
 interface AuthUser {
   id: string;
   email: string;
   full_name: string;
   role: UserRole;
+  picture?: string;
 }
 
 interface MainLayoutProps {
   currentUser: AuthUser;
+  isDemoMode: boolean;
   onLogout: () => void;
   onSwitchRole: (role: UserRole) => void;
+  onEnterDemoMode: () => void;
+  onExitDemoMode: () => void;
 }
 
-function MainLayout({ currentUser, onLogout, onSwitchRole }: MainLayoutProps) {
+function MainLayout({ 
+  currentUser, 
+  isDemoMode,
+  onLogout, 
+  onSwitchRole,
+  onEnterDemoMode,
+  onExitDemoMode
+}: MainLayoutProps) {
   const { assignments } = useCoordination();
   const [currentTab, setCurrentTab] = useState<NavTab>('home');
-  const [tasks, setTasks] = useState<Task[]>(INITIAL_TASKS);
-  const [candidates, setCandidates] = useState<CandidateItem[]>(INITIAL_CANDIDATES);
-  const [jobs] = useState<JobPosition[]>(INITIAL_JOBS);
-  const [directory] = useState<InterviewerDirectoryItem[]>(INITIAL_DIRECTORY);
-  const [activeCandidate, setActiveCandidate] = useState<CandidateItem>(INITIAL_CANDIDATES[0]);
+  
+  // Isolate tasks: live account starts fresh, demo mode loads mock database
+  const [tasks, setTasks] = useState<Task[]>(() => {
+    if (isDemoMode) return INITIAL_TASKS;
+    try {
+      const saved = localStorage.getItem(`chakravyuh_live_tasks_${currentUser.id}`);
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
+  });
+
+  // Isolate candidates: live account starts fresh, demo mode loads mock database
+  const [candidates, setCandidates] = useState<CandidateItem[]>(() => {
+    if (isDemoMode) return INITIAL_CANDIDATES;
+    try {
+      const saved = localStorage.getItem(`chakravyuh_live_candidates_${currentUser.id}`);
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
+  });
+
+  const [jobs] = useState<JobPosition[]>(() => isDemoMode ? INITIAL_JOBS : []);
+  const [directory] = useState<InterviewerDirectoryItem[]>(() => isDemoMode ? INITIAL_DIRECTORY : []);
+  const [activeCandidate, setActiveCandidate] = useState<CandidateItem | null>(() => {
+    if (isDemoMode) return INITIAL_CANDIDATES[0];
+    return null;
+  });
+
+  // Re-sync tasks and candidates when toggling between demo and live mode
+  useEffect(() => {
+    if (isDemoMode) {
+      setTasks(INITIAL_TASKS);
+      setCandidates(INITIAL_CANDIDATES);
+      setActiveCandidate(INITIAL_CANDIDATES[0]);
+    } else {
+      try {
+        const savedT = localStorage.getItem(`chakravyuh_live_tasks_${currentUser.id}`);
+        setTasks(savedT ? JSON.parse(savedT) : []);
+        const savedC = localStorage.getItem(`chakravyuh_live_candidates_${currentUser.id}`);
+        const cList = savedC ? JSON.parse(savedC) : [];
+        setCandidates(cList);
+        setActiveCandidate(cList[0] || null);
+      } catch {
+        setTasks([]);
+        setCandidates([]);
+        setActiveCandidate(null);
+      }
+    }
+  }, [isDemoMode, currentUser.id]);
+
+  // Persist live tasks
+  useEffect(() => {
+    if (!isDemoMode && currentUser?.id) {
+      try {
+        localStorage.setItem(`chakravyuh_live_tasks_${currentUser.id}`, JSON.stringify(tasks));
+      } catch (e) {
+        console.error('Failed to save live tasks:', e);
+      }
+    }
+  }, [tasks, isDemoMode, currentUser?.id]);
+
+  // Persist live candidates
+  useEffect(() => {
+    if (!isDemoMode && currentUser?.id) {
+      try {
+        localStorage.setItem(`chakravyuh_live_candidates_${currentUser.id}`, JSON.stringify(candidates));
+      } catch (e) {
+        console.error('Failed to save live candidates:', e);
+      }
+    }
+  }, [candidates, isDemoMode, currentUser?.id]);
 
   // Sync tasks dynamically with evaluated scorecards from CoordinationContext
   const effectiveTasks = tasks.map(t => {
@@ -115,7 +195,7 @@ function MainLayout({ currentUser, onLogout, onSwitchRole }: MainLayoutProps) {
       {/* Main Area with Clean, Aligned Header */}
       <div className="flex-1 flex flex-col min-w-0 h-screen overflow-hidden">
         
-        {/* Top Header Bar with 1-Click Role Demo Switcher */}
+        {/* Top Header Bar */}
         <header className="h-14 bg-white border-b border-[#eaecf0] px-5 flex items-center justify-between shrink-0 select-none">
           <div className="flex items-center gap-3 min-w-0">
             <h2 className="font-semibold text-sm text-[#101828] tracking-tight truncate">
@@ -123,54 +203,89 @@ function MainLayout({ currentUser, onLogout, onSwitchRole }: MainLayoutProps) {
             </h2>
           </div>
 
-          {/* Middle: 1-Click Role Demo Switcher */}
-          <div className="flex items-center gap-1 bg-[#f0f4f9] p-1 rounded-full border border-[#dadce0]">
-            <span className="text-[10px] font-bold text-[#5f6368] uppercase px-2 tracking-wider hidden lg:inline">
-              Role Demo:
-            </span>
-            <button
-              type="button"
-              onClick={() => onSwitchRole('COORDINATOR')}
-              className={`px-3 py-1 rounded-full text-xs font-bold transition-all ${
-                currentUser.role === 'COORDINATOR'
-                  ? 'bg-[#1668e8] text-white shadow-xs'
-                  : 'text-[#444746] hover:bg-white hover:text-[#1f1f1f]'
-              }`}
-            >
-              Coordinator (Scheduler)
-            </button>
-            <button
-              type="button"
-              onClick={() => onSwitchRole('INTERVIEWER')}
-              className={`px-3 py-1 rounded-full text-xs font-bold transition-all ${
-                currentUser.role === 'INTERVIEWER'
-                  ? 'bg-[#1668e8] text-white shadow-xs'
-                  : 'text-[#444746] hover:bg-white hover:text-[#1f1f1f]'
-              }`}
-            >
-              Interviewer (Google Panel)
-            </button>
-            <button
-              type="button"
-              onClick={() => onSwitchRole('CANDIDATE')}
-              className={`px-3 py-1 rounded-full text-xs font-bold transition-all ${
-                currentUser.role === 'CANDIDATE'
-                  ? 'bg-[#1668e8] text-white shadow-xs'
-                  : 'text-[#444746] hover:bg-white hover:text-[#1f1f1f]'
-              }`}
-            >
-              Candidate (Marcus Vance)
-            </button>
-          </div>
+          {/* Middle: Live Account Status OR Demo Sandbox Switcher */}
+          {isDemoMode ? (
+            <div className="flex items-center gap-2 bg-amber-50/80 border border-amber-300/80 p-1 pl-3 pr-1.5 rounded-full shadow-2xs">
+              <span className="text-[10px] font-bold text-amber-900 uppercase tracking-wider flex items-center gap-1.5 hidden md:flex">
+                <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
+                Demo Sandbox:
+              </span>
+              <div className="flex items-center gap-1">
+                <button
+                  type="button"
+                  onClick={() => onSwitchRole('COORDINATOR')}
+                  className={`px-3 py-1 rounded-full text-xs font-bold transition-all cursor-pointer ${
+                    currentUser.role === 'COORDINATOR'
+                      ? 'bg-[#1668e8] text-white shadow-xs'
+                      : 'text-[#444746] hover:bg-white hover:text-[#1f1f1f]'
+                  }`}
+                >
+                  Coordinator
+                </button>
+                <button
+                  type="button"
+                  onClick={() => onSwitchRole('INTERVIEWER')}
+                  className={`px-3 py-1 rounded-full text-xs font-bold transition-all cursor-pointer ${
+                    currentUser.role === 'INTERVIEWER'
+                      ? 'bg-[#1668e8] text-white shadow-xs'
+                      : 'text-[#444746] hover:bg-white hover:text-[#1f1f1f]'
+                  }`}
+                >
+                  Interviewer
+                </button>
+                <button
+                  type="button"
+                  onClick={() => onSwitchRole('CANDIDATE')}
+                  className={`px-3 py-1 rounded-full text-xs font-bold transition-all cursor-pointer ${
+                    currentUser.role === 'CANDIDATE'
+                      ? 'bg-[#1668e8] text-white shadow-xs'
+                      : 'text-[#444746] hover:bg-white hover:text-[#1f1f1f]'
+                  }`}
+                >
+                  Candidate
+                </button>
+              </div>
+              <button
+                type="button"
+                onClick={onExitDemoMode}
+                className="ml-1 text-[11px] font-bold text-rose-700 hover:text-rose-900 bg-white hover:bg-rose-50 border border-rose-200 px-2.5 py-1 rounded-full shadow-2xs transition-colors cursor-pointer"
+              >
+                Exit Demo
+              </button>
+            </div>
+          ) : (
+            <div className="flex items-center gap-2.5">
+              <span className="text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-[#eff8ff] text-[#175cd3] border border-[#b2ddff]">
+                Live Account • {currentUser.role}
+              </span>
+              <button
+                type="button"
+                onClick={onEnterDemoMode}
+                className="text-xs font-semibold text-[#1668e8] hover:text-[#145ac7] bg-[#f0f4f9] hover:bg-[#e4e8ef] border border-[#dadce0] px-3 py-1 rounded-full transition-all cursor-pointer flex items-center gap-1.5"
+              >
+                <Sparkles className="w-3.5 h-3.5 text-[#1668e8]" />
+                <span className="hidden sm:inline">Explore Demo Sandbox</span>
+                <span className="sm:hidden">Demo</span>
+              </button>
+            </div>
+          )}
 
           {/* Right: Timezone & Active Profile */}
           <div className="flex items-center gap-3 shrink-0">
             <TimezoneSelector variant="compact" />
             <div className="h-4 w-px bg-[#eaecf0]" />
             <div className="flex items-center gap-2">
-              <div className="w-7 h-7 rounded-full bg-[#1668e8] text-white flex items-center justify-center font-bold text-xs select-none">
-                {currentUser.full_name.charAt(0)}
-              </div>
+              {currentUser.picture ? (
+                <img 
+                  src={currentUser.picture} 
+                  alt={currentUser.full_name} 
+                  className="w-7 h-7 rounded-full object-cover border border-[#eaecf0]"
+                />
+              ) : (
+                <div className="w-7 h-7 rounded-full bg-[#1668e8] text-white flex items-center justify-center font-bold text-xs select-none">
+                  {currentUser.full_name.charAt(0)}
+                </div>
+              )}
               <span className="text-xs font-semibold text-[#344054] hidden sm:inline max-w-[120px] truncate">
                 {currentUser.full_name.split(' ')[0]}
               </span>
@@ -200,44 +315,47 @@ function MainLayout({ currentUser, onLogout, onSwitchRole }: MainLayoutProps) {
                   onSimulateCandidate={() => onSwitchRole('CANDIDATE')}
                 />
               )}
-              {currentUser.role === 'INTERVIEWER' && <InterviewerWorkspace />}
-              {currentUser.role === 'CANDIDATE' && <CandidateWorkspace />}
+              {currentUser.role === 'INTERVIEWER' && (
+                <InterviewerWorkspace currentUser={currentUser} />
+              )}
+              {currentUser.role === 'CANDIDATE' && (
+                <CandidateWorkspace />
+              )}
             </div>
-          )}
-
-          {/* My Tasks */}
-          {currentTab === 'my-tasks' && (
-            <MyTasksView 
-              tasks={effectiveTasks} 
-              onCompleteTask={handleCompleteTask} 
-              currentUser={currentUser}
-            />
-          )}
-
-          {/* All Tasks */}
-          {currentTab === 'all-tasks' && (
-            <AllTasksView 
-              tasks={effectiveTasks} 
-              onCompleteTask={handleCompleteTask}
-              onSelectTaskToSchedule={() => setCurrentTab('scheduling')} 
-            />
-          )}
-
-          {/* Upcoming Events */}
-          {currentTab === 'upcoming' && (
-            <UpcomingEventsView />
           )}
 
           {/* Candidates View */}
           {currentTab === 'candidates' && (
             <CandidatesView 
               candidates={candidates} 
-              onScheduleCandidate={(c) => {
-                setActiveCandidate(c);
+              onScheduleCandidate={(cand) => {
+                setActiveCandidate(cand);
                 setCurrentTab('scheduling');
               }}
               onAddCandidate={handleAddCandidate}
             />
+          )}
+
+          {/* Tasks & Approvals */}
+          {currentTab === 'all-tasks' && (
+            <AllTasksView 
+              tasks={effectiveTasks} 
+              onCompleteTask={handleCompleteTask}
+              onSelectTaskToSchedule={() => setCurrentTab('scheduling')}
+            />
+          )}
+
+          {/* My Tasks Checklist */}
+          {currentTab === 'my-tasks' && (
+            <MyTasksView 
+              tasks={effectiveTasks} 
+              onCompleteTask={handleCompleteTask} 
+            />
+          )}
+
+          {/* Upcoming Events / Calendar Grid */}
+          {currentTab === 'upcoming' && (
+            <UpcomingEventsView />
           )}
 
           {/* Jobs View */}
@@ -249,8 +367,8 @@ function MainLayout({ currentUser, onLogout, onSwitchRole }: MainLayoutProps) {
           {currentTab === 'scheduling' && (
             <AutomateSchedulingView 
               onGoToCommunications={() => setCurrentTab('communications')}
-              candidateName={activeCandidate.name}
-              roleName={activeCandidate.role}
+              candidateName={activeCandidate?.name || currentUser.full_name}
+              roleName={activeCandidate?.role || 'Senior Software Engineer'}
             />
           )}
 
@@ -293,10 +411,27 @@ function MainLayout({ currentUser, onLogout, onSwitchRole }: MainLayoutProps) {
 }
 
 export function App() {
-  // Current logged in user (defaults to null if not stored -> opens Sign Up page)
   const [currentUser, setCurrentUser] = useState<AuthUser | null>(() => {
     try {
       const saved = localStorage.getItem('chakravyuh_user');
+      return saved ? JSON.parse(saved) : null;
+    } catch {
+      return null;
+    }
+  });
+
+  const [isDemoMode, setIsDemoMode] = useState<boolean>(() => {
+    try {
+      const saved = localStorage.getItem('chakravyuh_is_demo_mode');
+      return saved === 'true';
+    } catch {
+      return false;
+    }
+  });
+
+  const [liveUserBackup, setLiveUserBackup] = useState<AuthUser | null>(() => {
+    try {
+      const saved = localStorage.getItem('chakravyuh_live_user_backup');
       return saved ? JSON.parse(saved) : null;
     } catch {
       return null;
@@ -312,8 +447,12 @@ export function App() {
 
   const handleLogin = (user: AuthUser) => {
     setCurrentUser(user);
+    setLiveUserBackup(user);
+    setIsDemoMode(false);
     try {
       localStorage.setItem('chakravyuh_user', JSON.stringify(user));
+      localStorage.setItem('chakravyuh_live_user_backup', JSON.stringify(user));
+      localStorage.setItem('chakravyuh_is_demo_mode', 'false');
     } catch (e) {
       console.error('Failed to save session:', e);
     }
@@ -322,6 +461,60 @@ export function App() {
   const handleLogout = () => {
     authService.logout();
     setCurrentUser(null);
+    setLiveUserBackup(null);
+    setIsDemoMode(false);
+    localStorage.removeItem('chakravyuh_is_demo_mode');
+    localStorage.removeItem('chakravyuh_live_user_backup');
+  };
+
+  const enterDemoMode = () => {
+    if (currentUser) {
+      setLiveUserBackup(currentUser);
+      try {
+        localStorage.setItem('chakravyuh_live_user_backup', JSON.stringify(currentUser));
+      } catch (e) {
+        console.error('Failed to backup live user:', e);
+      }
+    }
+    const demoUser: AuthUser = {
+      id: 'coord-demo-1',
+      email: 'emma.watson@chakravyuh.ai',
+      full_name: 'Emma Watson (Lead Scheduler)',
+      role: 'COORDINATOR'
+    };
+    setCurrentUser(demoUser);
+    setIsDemoMode(true);
+    try {
+      localStorage.setItem('chakravyuh_is_demo_mode', 'true');
+      localStorage.setItem('chakravyuh_user', JSON.stringify(demoUser));
+    } catch (e) {
+      console.error('Failed to enter demo mode:', e);
+    }
+  };
+
+  const exitDemoMode = () => {
+    setIsDemoMode(false);
+    try {
+      localStorage.setItem('chakravyuh_is_demo_mode', 'false');
+    } catch (e) {
+      console.error('Failed to exit demo mode:', e);
+    }
+    if (liveUserBackup) {
+      setCurrentUser(liveUserBackup);
+      try {
+        localStorage.setItem('chakravyuh_user', JSON.stringify(liveUserBackup));
+      } catch (e) {
+        console.error('Failed to restore live user:', e);
+      }
+    } else {
+      const realUser = authService.getStoredUser();
+      if (realUser) {
+        setCurrentUser(realUser);
+      } else {
+        authService.logout();
+        setCurrentUser(null);
+      }
+    }
   };
 
   const handleSwitchRole = (newRole: UserRole) => {
@@ -368,7 +561,6 @@ export function App() {
       };
     }
 
-    // Trigger smooth Apple-style role hydration transition
     setTransitionTarget(targetMeta);
     setIsSwitchingRole(true);
 
@@ -385,15 +577,18 @@ export function App() {
   };
 
   return (
-    <CoordinationProvider>
+    <CoordinationProvider isDemoMode={isDemoMode} userId={currentUser?.id} currentUser={currentUser}>
       {!currentUser ? (
         <LoginPage onLogin={handleLogin} initialMode="SIGNUP" />
       ) : (
         <>
           <MainLayout 
             currentUser={currentUser} 
+            isDemoMode={isDemoMode}
             onLogout={handleLogout} 
             onSwitchRole={handleSwitchRole} 
+            onEnterDemoMode={enterDemoMode}
+            onExitDemoMode={exitDemoMode}
           />
 
           {/* Apple HIG Role Switch Smooth Transition Overlay */}
@@ -408,10 +603,10 @@ export function App() {
                 </div>
 
                 <div className="space-y-1">
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-[#1668e8] bg-[#eff8ff] px-2.5 py-0.5 rounded-full border border-[#b2ddff]">
-                    Switching Workspace
+                  <span className="text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-[#eff8ff] text-[#175cd3] border border-[#b2ddff]">
+                    {transitionTarget.role} Portal Active
                   </span>
-                  <h3 className="font-bold text-base text-[#101828] mt-1.5 tracking-tight">
+                  <h3 className="text-base font-bold text-[#101828] mt-1">
                     {transitionTarget.name}
                   </h3>
                   <p className="text-xs text-[#667085]">
@@ -419,12 +614,9 @@ export function App() {
                   </p>
                 </div>
 
-                <div className="w-full bg-[#f2f4f7] h-1.5 rounded-full overflow-hidden">
-                  <div className="bg-[#1668e8] h-full rounded-full animate-pulse w-3/4" />
-                </div>
-                <span className="text-[11px] text-[#98a2b3]">
+                <p className="text-[11px] text-[#98a2b3] italic animate-pulse">
                   Hydrating calendar views, panel credentials & coordination bus...
-                </span>
+                </p>
               </div>
             </div>
           )}

@@ -43,5 +43,16 @@
     "salt": "5eb6334e23d5c15cc66072c21a3c977c",
     "password_hash": "bf2775a886ffa970a86dbf93162b21f6a9c05eaaf30f55c972a34e72e8081128",
     "created_at": "2026-10-24T19:41:48.298274+00:00"
+  },
+  "sunilsingh802220@gmail.com": {
+    "id": "google-100212049926",
+    "email": "sunilsingh802220@gmail.com",
+    "full_name": "Sunil Singh",
+    "role": "COORDINATOR",
+    "picture": "https://lh3.googleusercontent.com/a/ACg8ocI69U6Mly-_CZml_7DHmyyv6lgI_tdPKVtbQODYsMZEtA2PJCK4=s96-c",
+    "auth_provider": "google",
+    "salt": "",
+    "password_hash": "",
+    "created_at": "2026-10-25T22:33:22.613504+00:00"
   }
 }

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Calendar as CalendarIcon, 
   CheckCircle2, 
@@ -8,7 +8,7 @@ import {
   Video, 
   User, 
   Check, 
-  Send,
+  Send, 
   ShieldCheck
 } from 'lucide-react';
 import { Button } from '../ui/button';
@@ -33,13 +33,100 @@ interface CalendarEventItem {
   durationMins: number;
 }
 
+const DEMO_CALENDAR_EVENTS: CalendarEventItem[] = [
+  {
+    id: 'inv-1',
+    candidateName: 'Marcus Vance',
+    candidateRole: '20224012 (CSE) — Google SDE',
+    roundName: 'Round 1: DSA & Problem Solving',
+    roundType: 'tech',
+    interviewer: 'Dr. Sarah Chen (Google Panel)',
+    interviewerAvatar: '',
+    room: 'CCF Lab 1',
+    dayIndex: 0, // Mon
+    pstHour: 10,
+    durationMins: 45
+  },
+  {
+    id: 'inv-2',
+    candidateName: 'Priya Sharma',
+    candidateRole: '20225043 (IT) — Atlassian Core',
+    roundName: 'Round 2: Distributed Systems',
+    roundType: 'arch',
+    interviewer: 'Phil Dunphy (Atlassian Panel)',
+    interviewerAvatar: '',
+    room: 'CCF Lab 2',
+    dayIndex: 0, // Mon
+    pstHour: 14,
+    durationMins: 60
+  },
+  {
+    id: 'inv-3',
+    candidateName: 'Rahul Verma',
+    candidateRole: '20223089 (ECE) — Microsoft Cloud',
+    roundName: 'Round 1: Core Fundamentals',
+    roundType: 'tech',
+    interviewer: 'Manny Delgado (Microsoft)',
+    interviewerAvatar: '',
+    room: 'LHC Seminar Hall',
+    dayIndex: 1, // Tue
+    pstHour: 11,
+    durationMins: 45
+  },
+  {
+    id: 'inv-4',
+    candidateName: 'Marcus Vance',
+    candidateRole: '20224012 (CSE) — Google SDE',
+    roundName: 'Round 2: Systems Architecture',
+    roundType: 'arch',
+    interviewer: 'Phil Dunphy (Atlassian Panel)',
+    interviewerAvatar: '',
+    room: 'CCF Lab 2',
+    dayIndex: 2, // Wed
+    pstHour: 13,
+    durationMins: 60
+  },
+  {
+    id: 'inv-5',
+    candidateName: 'Ananya Patel',
+    candidateRole: '20224056 (CSE) — Oracle Systems',
+    roundName: 'Round 2: Core Engineering',
+    roundType: 'values',
+    interviewer: 'Claire Pritchett (T&P Lead)',
+    interviewerAvatar: '',
+    room: 'T&P Boardroom',
+    dayIndex: 3, // Thu
+    pstHour: 15,
+    durationMins: 45
+  },
+  {
+    id: 'inv-6',
+    candidateName: 'Marcus Vance',
+    candidateRole: '20224012 (CSE) — Google SDE',
+    roundName: 'Round 3: Leadership & Values',
+    roundType: 'values',
+    interviewer: 'Claire Pritchett (T&P Lead)',
+    interviewerAvatar: '',
+    room: 'T&P Boardroom',
+    dayIndex: 4, // Fri
+    pstHour: 14,
+    durationMins: 45
+  }
+];
+
 interface CoordinatorWorkspaceProps {
   onSimulateCandidate?: (candidateId: string) => void;
 }
 
 export const CoordinatorWorkspace: React.FC<CoordinatorWorkspaceProps> = ({ onSimulateCandidate: _onSimulateCandidate }) => {
   const { convertHourLabel, currentTimezone } = useTimezone();
-  const { isScorecardSubmitted, isNudged, nudgeInterviewer } = useCoordination();
+  const { 
+    isNudged, 
+    assignments,
+    nudgeAssignment,
+    scheduleState,
+    isDemoMode
+  } = useCoordination();
   const [nudgeToast, setNudgeToast] = useState<string | null>(null);
 
   // --- Solver & Master Calendar State ---
@@ -63,86 +150,47 @@ export const CoordinatorWorkspace: React.FC<CoordinatorWorkspaceProps> = ({ onSi
   const [selectedEvent, setSelectedEvent] = useState<CalendarEventItem | null>(null);
 
   // Master schedule calendar events
-  const [calendarEvents, setCalendarEvents] = useState<CalendarEventItem[]>([
-    {
-      id: 'inv-1',
-      candidateName: 'Marcus Vance',
-      candidateRole: '20224012 (CSE) — Google SDE',
-      roundName: 'Round 1: DSA & Problem Solving',
-      roundType: 'tech',
-      interviewer: 'Dr. Sarah Chen (Google Panel)',
-      interviewerAvatar: '',
-      room: 'CCF Lab 1',
-      dayIndex: 0, // Mon
-      pstHour: 10,
-      durationMins: 45
-    },
-    {
-      id: 'inv-2',
-      candidateName: 'Priya Sharma',
-      candidateRole: '20225043 (IT) — Atlassian Core',
-      roundName: 'Round 2: Distributed Systems',
-      roundType: 'arch',
-      interviewer: 'Phil Dunphy (Atlassian Panel)',
-      interviewerAvatar: '',
-      room: 'CCF Lab 2',
-      dayIndex: 0, // Mon
-      pstHour: 14,
-      durationMins: 60
-    },
-    {
-      id: 'inv-3',
-      candidateName: 'Rahul Verma',
-      candidateRole: '20223089 (ECE) — Microsoft Cloud',
-      roundName: 'Round 1: Core Fundamentals',
-      roundType: 'tech',
-      interviewer: 'Manny Delgado (Microsoft)',
-      interviewerAvatar: '',
-      room: 'LHC Seminar Hall',
-      dayIndex: 1, // Tue
-      pstHour: 11,
-      durationMins: 45
-    },
-    {
-      id: 'inv-4',
-      candidateName: 'Marcus Vance',
-      candidateRole: '20224012 (CSE) — Google SDE',
-      roundName: 'Round 2: Systems Architecture',
-      roundType: 'arch',
-      interviewer: 'Phil Dunphy (Atlassian Panel)',
-      interviewerAvatar: '',
-      room: 'CCF Lab 2',
-      dayIndex: 2, // Wed
-      pstHour: 13,
-      durationMins: 60
-    },
-    {
-      id: 'inv-5',
-      candidateName: 'Ananya Patel',
-      candidateRole: '20224056 (CSE) — Oracle Systems',
-      roundName: 'Round 2: Core Engineering',
-      roundType: 'values',
-      interviewer: 'Claire Pritchett (T&P Lead)',
-      interviewerAvatar: '',
-      room: 'T&P Boardroom',
-      dayIndex: 3, // Thu
-      pstHour: 15,
-      durationMins: 45
-    },
-    {
-      id: 'inv-6',
-      candidateName: 'Marcus Vance',
-      candidateRole: '20224012 (CSE) — Google SDE',
-      roundName: 'Round 3: Leadership & Values',
-      roundType: 'values',
-      interviewer: 'Claire Pritchett (T&P Lead)',
-      interviewerAvatar: '',
-      room: 'T&P Boardroom',
-      dayIndex: 4, // Fri
-      pstHour: 14,
-      durationMins: 45
+  const [calendarEvents, setCalendarEvents] = useState<CalendarEventItem[]>(() => {
+    if (isDemoMode) return DEMO_CALENDAR_EVENTS;
+    if (scheduleState?.activeSessions && scheduleState.activeSessions.length > 0) {
+      return scheduleState.activeSessions.map((sess, idx) => ({
+        id: sess.id,
+        candidateName: 'Candidate',
+        candidateRole: sess.interviewerRole,
+        roundName: sess.title,
+        roundType: sess.type === 'design' ? 'tech' : sess.type === 'presentation' ? 'arch' : 'values',
+        interviewer: sess.interviewer,
+        interviewerAvatar: sess.interviewerAvatar,
+        room: sess.room,
+        dayIndex: idx % 5,
+        pstHour: sess.pstRowHour,
+        durationMins: sess.durationMins
+      }));
     }
-  ]);
+    return [];
+  });
+
+  useEffect(() => {
+    if (isDemoMode) {
+      setCalendarEvents(DEMO_CALENDAR_EVENTS);
+    } else if (scheduleState?.activeSessions && scheduleState.activeSessions.length > 0) {
+      setCalendarEvents(scheduleState.activeSessions.map((sess, idx) => ({
+        id: sess.id,
+        candidateName: 'Candidate',
+        candidateRole: sess.interviewerRole,
+        roundName: sess.title,
+        roundType: sess.type === 'design' ? 'tech' : sess.type === 'presentation' ? 'arch' : 'values',
+        interviewer: sess.interviewer,
+        interviewerAvatar: sess.interviewerAvatar,
+        room: sess.room,
+        dayIndex: idx % 5,
+        pstHour: sess.pstRowHour,
+        durationMins: sess.durationMins
+      })));
+    } else {
+      setCalendarEvents([]);
+    }
+  }, [isDemoMode, scheduleState]);
 
   // Compute dynamic day column headers based on startDate
   const getDaysForWeek = (startStr: string) => {
@@ -389,13 +437,18 @@ export const CoordinatorWorkspace: React.FC<CoordinatorWorkspaceProps> = ({ onSi
                     Track completed rounds awaiting panel evaluations. Nudging an evaluator immediately triggers an urgent high-priority alert in their interview panel.
                   </p>
                 </div>
-                <span className={`text-[11px] font-semibold px-2 py-0.5 rounded border self-start sm:self-auto ${
-                  isScorecardSubmitted
-                    ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
-                    : 'bg-red-50 text-red-700 border-red-200'
-                }`}>
-                  {isScorecardSubmitted ? '0 Overdue' : '1 Overdue Scorecard'}
-                </span>
+                {(() => {
+                  const overdueCount = assignments.filter(a => a.status !== 'EVALUATED').length;
+                  return (
+                    <span className={`text-[11px] font-semibold px-2 py-0.5 rounded border self-start sm:self-auto ${
+                      overdueCount === 0
+                        ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                        : 'bg-red-50 text-red-700 border-red-200'
+                    }`}>
+                      {overdueCount === 0 ? '0 Overdue' : `${overdueCount} Overdue Scorecard${overdueCount > 1 ? 's' : ''}`}
+                    </span>
+                  );
+                })()}
               </div>
 
               {nudgeToast && (
@@ -405,136 +458,85 @@ export const CoordinatorWorkspace: React.FC<CoordinatorWorkspaceProps> = ({ onSi
                 </div>
               )}
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 text-xs">
-                {/* Evaluator 1: Dr. Sarah Chen */}
-                <div className={`p-3.5 rounded-xl border flex flex-col justify-between space-y-3 transition-all ${
-                  isScorecardSubmitted
-                    ? 'bg-[#f8f9fa] border-[#eaecf0]'
-                    : isNudged
-                    ? 'bg-amber-50/60 border-amber-300 shadow-2xs'
-                    : 'bg-white border-red-200 shadow-2xs'
-                }`}>
-                  <div className="space-y-1.5">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <AvatarBadge name="Dr. Sarah Chen" size="sm" />
-                        <div>
-                          <strong className="text-[#101828] block leading-tight">Dr. Sarah Chen</strong>
-                          <span className="text-[10px] text-[#667085]">Google Engineering Panel</span>
-                        </div>
-                      </div>
-                      <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${
-                        isScorecardSubmitted
-                          ? 'bg-emerald-100 text-emerald-800'
-                          : isNudged
-                          ? 'bg-amber-100 text-amber-900 border border-amber-300 animate-pulse'
-                          : 'bg-red-100 text-red-800'
-                      }`}>
-                        {isScorecardSubmitted ? 'Submitted' : isNudged ? 'Nudged' : 'Overdue 3h'}
-                      </span>
-                    </div>
+              {assignments.length > 0 ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 text-xs">
+                  {assignments.map((assign) => {
+                    const isEvaluated = assign.status === 'EVALUATED';
+                    const isItemNudged = (assign.isNudged || isNudged) && !isEvaluated;
 
-                    <div className="pt-1.5 border-t border-[#eaecf0] space-y-0.5 text-[11px] text-[#475467]">
-                      <p><strong>Candidate:</strong> Marcus Vance</p>
-                      <p><strong>Round:</strong> Problem Solving & DSA Screen</p>
-                      <p className="text-[10px] text-[#667085]">Completed Today at 11:00 AM • Virtual Pod Alpha</p>
-                    </div>
-                  </div>
-
-                  <div className="pt-2 border-t border-[#eaecf0]">
-                    {isScorecardSubmitted ? (
-                      <span className="w-full py-1.5 px-3 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-full font-bold text-[11px] flex items-center justify-center gap-1.5">
-                        <Check className="w-3.5 h-3.5" />
-                        <span>Scorecard Received (Hire)</span>
-                      </span>
-                    ) : (
-                      <button
-                        onClick={() => {
-                          nudgeInterviewer();
-                          setNudgeToast("Urgent notification sent to Dr. Sarah Chen! Interviewer panel updated with high-priority alert.");
-                          setTimeout(() => setNudgeToast(null), 4000);
-                        }}
-                        className={`w-full py-1.5 px-3 rounded-full font-bold text-[11px] flex items-center justify-center gap-1.5 shadow-xs transition-all ${
-                          isNudged
-                            ? 'bg-amber-600 hover:bg-amber-700 text-white'
-                            : 'bg-red-600 hover:bg-red-700 text-white'
+                    return (
+                      <div 
+                        key={assign.id}
+                        className={`p-3.5 rounded-xl border flex flex-col justify-between space-y-3 transition-all ${
+                          isEvaluated
+                            ? 'bg-[#f8f9fa] border-[#eaecf0]'
+                            : isItemNudged
+                            ? 'bg-amber-50/60 border-amber-300 shadow-2xs'
+                            : 'bg-white border-red-200 shadow-2xs'
                         }`}
                       >
-                        <Send className="w-3.5 h-3.5" />
-                        <span>{isNudged ? 'Re-send Urgent Nudge' : 'Nudge Interviewer'}</span>
-                      </button>
-                    )}
-                  </div>
-                </div>
+                        <div className="space-y-1.5">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                              <AvatarBadge name={assign.interviewerName} size="sm" />
+                              <div>
+                                <strong className="text-[#101828] block leading-tight">{assign.interviewerName}</strong>
+                                <span className="text-[10px] text-[#667085]">Evaluator Panel</span>
+                              </div>
+                            </div>
+                            <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${
+                              isEvaluated
+                                ? 'bg-emerald-100 text-emerald-800'
+                                : isItemNudged
+                                ? 'bg-amber-100 text-amber-900 border border-amber-300 animate-pulse'
+                                : 'bg-red-100 text-red-800'
+                            }`}>
+                              {isEvaluated ? `Submitted (${assign.decision || 'HIRE'})` : isItemNudged ? 'Nudged' : 'Overdue'}
+                            </span>
+                          </div>
 
-                {/* Evaluator 2: Phil Dunphy */}
-                <div className="p-3.5 bg-white border border-[#eaecf0] rounded-xl flex flex-col justify-between space-y-3">
-                  <div className="space-y-1.5">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <AvatarBadge name="Phil Dunphy" size="sm" />
-                        <div>
-                          <strong className="text-[#101828] block leading-tight">Phil Dunphy</strong>
-                          <span className="text-[10px] text-[#667085]">Atlassian Panel</span>
+                          <div className="pt-1.5 border-t border-[#eaecf0] space-y-0.5 text-[11px] text-[#475467]">
+                            <p><strong>Candidate:</strong> {assign.candidateName}</p>
+                            <p><strong>Round:</strong> {assign.roundName}</p>
+                            <p className="text-[10px] text-[#667085]">{assign.roomName || 'Virtual Pod'} • {assign.pstTimeSlot}</p>
+                          </div>
+                        </div>
+
+                        <div className="pt-2 border-t border-[#eaecf0]">
+                          {isEvaluated ? (
+                            <span className="w-full py-1.5 px-3 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-full font-bold text-[11px] flex items-center justify-center gap-1.5">
+                              <Check className="w-3.5 h-3.5" />
+                              <span>Scorecard Verified</span>
+                            </span>
+                          ) : (
+                            <button
+                              onClick={() => {
+                                nudgeAssignment(assign.id);
+                                setNudgeToast(`Urgent notification sent to ${assign.interviewerName}! Interviewer panel updated.`);
+                                setTimeout(() => setNudgeToast(null), 4000);
+                              }}
+                              className={`w-full py-1.5 px-3 rounded-full font-bold text-[11px] flex items-center justify-center gap-1.5 shadow-xs transition-all ${
+                                isItemNudged
+                                  ? 'bg-amber-600 hover:bg-amber-700 text-white'
+                                  : 'bg-red-600 hover:bg-red-700 text-white'
+                              }`}
+                            >
+                              <Send className="w-3.5 h-3.5" />
+                              <span>{isItemNudged ? 'Re-send Urgent Nudge' : 'Nudge Interviewer'}</span>
+                            </button>
+                          )}
                         </div>
                       </div>
-                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200">
-                        Due in 2h
-                      </span>
-                    </div>
-
-                    <div className="pt-1.5 border-t border-[#eaecf0] space-y-0.5 text-[11px] text-[#475467]">
-                      <p><strong>Candidate:</strong> Priya Sharma</p>
-                      <p><strong>Round:</strong> Systems Architecture Review</p>
-                      <p className="text-[10px] text-[#667085]">Session in progress • Virtual Pod Beta</p>
-                    </div>
-                  </div>
-
-                  <div className="pt-2 border-t border-[#eaecf0]">
-                    <button
-                      onClick={() => {
-                        setNudgeToast("Gentle reminder queued for Phil Dunphy upon session completion.");
-                        setTimeout(() => setNudgeToast(null), 3000);
-                      }}
-                      className="w-full py-1.5 px-3 bg-white border border-[#d0d5dd] hover:bg-[#f9fafb] text-[#344054] rounded-full font-semibold text-[11px] flex items-center justify-center gap-1.5 transition-colors"
-                    >
-                      <Send className="w-3.5 h-3.5 text-[#667085]" />
-                      <span>Send Friendly Ping</span>
-                    </button>
-                  </div>
+                    );
+                  })}
                 </div>
-
-                {/* Evaluator 3: Claire Pritchett */}
-                <div className="p-3.5 bg-[#f8f9fa] border border-[#eaecf0] rounded-xl flex flex-col justify-between space-y-3">
-                  <div className="space-y-1.5">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <AvatarBadge name="Claire Pritchett" size="sm" />
-                        <div>
-                          <strong className="text-[#101828] block leading-tight">Claire Pritchett</strong>
-                          <span className="text-[10px] text-[#667085]">Values & Leadership Lead</span>
-                        </div>
-                      </div>
-                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
-                        Submitted
-                      </span>
-                    </div>
-
-                    <div className="pt-1.5 border-t border-[#eaecf0] space-y-0.5 text-[11px] text-[#475467]">
-                      <p><strong>Candidate:</strong> Elena Rostova</p>
-                      <p><strong>Round:</strong> Engineering Culture & Values</p>
-                      <p className="text-[10px] text-[#667085]">Scorecard submitted • Decision: Strong Hire</p>
-                    </div>
-                  </div>
-
-                  <div className="pt-2 border-t border-[#eaecf0]">
-                    <span className="w-full py-1.5 px-3 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-full font-bold text-[11px] flex items-center justify-center gap-1.5">
-                      <Check className="w-3.5 h-3.5" />
-                      <span>Scorecard Verified</span>
-                    </span>
-                  </div>
+              ) : (
+                <div className="bg-[#f9fafb] border border-dashed border-[#eaecf0] rounded-xl p-6 text-center text-xs text-[#667085] space-y-1">
+                  <ShieldCheck className="w-6 h-6 text-[#98a2b3] mx-auto mb-1" />
+                  <p className="font-semibold text-[#344054]">No pending scorecards in pipeline</p>
+                  <p className="text-[11px]">When candidates are scheduled with interviewers, scorecard progress and nudge controls will show up here.</p>
                 </div>
-              </div>
+              )}
             </div>
 
             {/* Master Schedule Calendar & Version Bar */}
@@ -601,6 +603,15 @@ export const CoordinatorWorkspace: React.FC<CoordinatorWorkspaceProps> = ({ onSi
               </div>
 
               {/* Master Calendar Matrix Grid */}
+              {calendarEvents.length === 0 && (
+                <div className="m-4 p-5 rounded-2xl bg-[#f9fafb] border border-dashed border-[#eaecf0] text-center space-y-1">
+                  <CalendarIcon className="w-5 h-5 text-[#98a2b3] mx-auto mb-1" />
+                  <p className="font-semibold text-xs text-[#344054]">No Published Master Schedule</p>
+                  <p className="text-[11px] text-[#667085]">
+                    Configure your placement parameters and click "Run Live CP-SAT Optimization Engine" above to generate a conflict-free master schedule.
+                  </p>
+                </div>
+              )}
               <div className="p-4 overflow-x-auto">
                 <div className="min-w-[840px]">
                   {/* Day Headers */}

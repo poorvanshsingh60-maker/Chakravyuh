@@ -7,91 +7,113 @@ import {
   UserRound
 } from 'lucide-react';
 import { useTimezone } from '../../context/TimezoneContext';
+import { useCoordination } from '../../context/CoordinationContext';
 import { Dialog } from '../ui/dialog';
 import { Button } from '../ui/button';
 
+const DEMO_EVENTS = [
+  {
+    id: 'ev-1',
+    candidate: 'Zach Buechler',
+    role: 'Product Designer',
+    round: 'Design Exercise 1',
+    interviewer: 'Claire Pritchett',
+    interviewerAvatar: '',
+    pstTime: '9:00 AM – 9:30 AM PST',
+    room: 'Virtual Pod Alpha (Google Meet)',
+    meetingUrl: 'https://meet.google.com/chk-design-ex1',
+    type: 'VIRTUAL',
+    date: 'May 18, 2024',
+    isToday: true,
+    isWeek: true
+  },
+  {
+    id: 'ev-2',
+    candidate: 'Zach Buechler',
+    role: 'Product Designer',
+    round: 'Company Values',
+    interviewer: 'Phil Dunphy',
+    interviewerAvatar: '',
+    pstTime: '9:30 AM – 10:00 AM PST',
+    room: 'Virtual Pod Gamma',
+    meetingUrl: 'https://meet.google.com/chk-values-eval',
+    type: 'VIRTUAL',
+    date: 'May 18, 2024',
+    isToday: true,
+    isWeek: true
+  },
+  {
+    id: 'ev-3',
+    candidate: 'Zach Buechler',
+    role: 'Product Designer',
+    round: 'Design Presentation',
+    interviewer: 'Manny Delgado',
+    interviewerAvatar: '',
+    pstTime: '10:00 AM – 11:00 AM PST',
+    room: 'Conference Suite 402',
+    meetingUrl: 'https://meet.google.com/chk-pres-suite',
+    type: 'PHYSICAL',
+    date: 'May 18, 2024',
+    isToday: true,
+    isWeek: true
+  },
+  {
+    id: 'ev-4',
+    candidate: 'Alex Rivera',
+    role: 'Staff Distributed Systems Engineer',
+    round: 'System Architecture (Raft & Storage)',
+    interviewer: 'Manny Delgado',
+    interviewerAvatar: '',
+    pstTime: '1:00 PM – 2:00 PM PST',
+    room: 'Virtual Pod Alpha',
+    meetingUrl: 'https://meet.google.com/chk-raft-storage',
+    type: 'VIRTUAL',
+    date: 'May 19, 2024',
+    isToday: false,
+    isWeek: true
+  },
+  {
+    id: 'ev-5',
+    candidate: 'Maya Lin',
+    role: 'Senior Frontend Engineer',
+    round: 'Technical Screen (React & State)',
+    interviewer: 'Claire Pritchett',
+    interviewerAvatar: '',
+    pstTime: '11:00 AM – 12:00 PM PST',
+    room: 'Virtual Pod Gamma',
+    meetingUrl: 'https://meet.google.com/chk-fe-screen',
+    type: 'VIRTUAL',
+    date: 'May 26, 2024',
+    isToday: false,
+    isWeek: false
+  }
+];
+
 export const UpcomingEventsView: React.FC = () => {
   const { convertTime } = useTimezone();
+  const { isDemoMode, scheduleState } = useCoordination();
   const [timeframe, setTimeframe] = useState<'TODAY' | 'WEEK' | 'MONTH'>('TODAY');
   const [selectedEvent, setSelectedEvent] = useState<any | null>(null);
 
-  const allEvents = [
-    {
-      id: 'ev-1',
-      candidate: 'Zach Buechler',
-      role: 'Product Designer',
-      round: 'Design Exercise 1',
-      interviewer: 'Claire Pritchett',
-      interviewerAvatar: '',
-      pstTime: '9:00 AM – 9:30 AM PST',
-      room: 'Virtual Pod Alpha (Google Meet)',
-      meetingUrl: 'https://meet.google.com/chk-design-ex1',
-      type: 'VIRTUAL',
-      date: 'May 18, 2024',
-      isToday: true,
-      isWeek: true
-    },
-    {
-      id: 'ev-2',
-      candidate: 'Zach Buechler',
-      role: 'Product Designer',
-      round: 'Company Values',
-      interviewer: 'Phil Dunphy',
-      interviewerAvatar: '',
-      pstTime: '9:30 AM – 10:00 AM PST',
-      room: 'Virtual Pod Gamma',
-      meetingUrl: 'https://meet.google.com/chk-values-eval',
-      type: 'VIRTUAL',
-      date: 'May 18, 2024',
-      isToday: true,
-      isWeek: true
-    },
-    {
-      id: 'ev-3',
-      candidate: 'Zach Buechler',
-      role: 'Product Designer',
-      round: 'Design Presentation',
-      interviewer: 'Manny Delgado',
-      interviewerAvatar: '',
-      pstTime: '10:00 AM – 11:00 AM PST',
-      room: 'Conference Suite 402',
-      meetingUrl: 'https://meet.google.com/chk-pres-suite',
-      type: 'PHYSICAL',
-      date: 'May 18, 2024',
-      isToday: true,
-      isWeek: true
-    },
-    {
-      id: 'ev-4',
-      candidate: 'Alex Rivera',
-      role: 'Staff Distributed Systems Engineer',
-      round: 'System Architecture (Raft & Storage)',
-      interviewer: 'Manny Delgado',
-      interviewerAvatar: '',
-      pstTime: '1:00 PM – 2:00 PM PST',
-      room: 'Virtual Pod Alpha',
-      meetingUrl: 'https://meet.google.com/chk-raft-storage',
-      type: 'VIRTUAL',
-      date: 'May 19, 2024',
-      isToday: false,
-      isWeek: true
-    },
-    {
-      id: 'ev-5',
-      candidate: 'Maya Lin',
-      role: 'Senior Frontend Engineer',
-      round: 'Technical Screen (React & State)',
-      interviewer: 'Claire Pritchett',
-      interviewerAvatar: '',
-      pstTime: '11:00 AM – 12:00 PM PST',
-      room: 'Virtual Pod Gamma',
-      meetingUrl: 'https://meet.google.com/chk-fe-screen',
-      type: 'VIRTUAL',
-      date: 'May 26, 2024',
-      isToday: false,
-      isWeek: false
-    }
-  ];
+  const allEvents = isDemoMode
+    ? DEMO_EVENTS
+    : scheduleState?.activeSessions && scheduleState.activeSessions.length > 0
+    ? scheduleState.activeSessions.map((sess) => ({
+        id: sess.id,
+        candidate: 'Candidate',
+        role: sess.interviewerRole,
+        round: sess.title,
+        interviewer: sess.interviewer,
+        interviewerAvatar: sess.interviewerAvatar,
+        pstTime: sess.pstTimeSlot,
+        room: sess.room,
+        meetingUrl: `https://meet.google.com/chk-${sess.room.toLowerCase().replace(/[^a-z0-9]/g, '-')}`,
+        type: 'VIRTUAL',
+        date: 'Today',
+        isToday: true,
+        isWeek: true
+      }))
+    : [];
 
   const filteredEvents = allEvents.filter(ev => {
     if (timeframe === 'TODAY') return ev.isToday;
@@ -141,59 +163,69 @@ export const UpcomingEventsView: React.FC = () => {
       {/* Events Agenda */}
       <div className="flex-1 min-h-0 overflow-y-auto p-6 max-w-5xl space-y-4">
         <div className="border border-[#eaecf0] rounded-2xl overflow-hidden bg-white shadow-2xs divide-y divide-[#eaecf0]">
-          {filteredEvents.map((ev) => (
-            <div 
-              key={ev.id} 
-              className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:bg-[#f9fafb] transition-colors"
-            >
-              <div className="flex items-start gap-4">
-                <div className="p-2.5 rounded-xl bg-[#e7f2fe] text-[#1668e8] shrink-0 mt-0.5">
-                  <Calendar className="w-4 h-4" />
-                </div>
-                <div className="space-y-1">
-                  <div className="flex items-center gap-2">
-                    <span className="font-bold text-sm text-[#101828]">{ev.round}</span>
-                    <span className="text-[11px] font-medium text-[#1668e8] bg-[#e7f2fe] px-2.5 py-0.5 rounded-full border border-[#bcd7fd]">
-                      {ev.candidate} ({ev.role})
-                    </span>
-                  </div>
-                  <div className="flex flex-wrap items-center gap-4 text-xs text-[#475467]">
-                    <span className="flex items-center gap-1 font-semibold text-[#101828]">
-                      <Clock className="w-3.5 h-3.5 text-[#1668e8]" />
-                      {ev.date} • {convertTime(ev.pstTime)}
-                    </span>
-                    <span className="flex items-center gap-1">
-                      <UserRound className="w-3.5 h-3.5 text-[#98a2b3]" />
-                      Interviewer: {ev.interviewer}
-                    </span>
-                    <span className="flex items-center gap-1">
-                      <MapPin className="w-3.5 h-3.5 text-[#98a2b3]" />
-                      {ev.room}
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => setSelectedEvent(ev)}
-                  className="px-3.5 py-1.5 rounded-full border border-[#d0d5dd] text-xs font-semibold text-[#344054] hover:bg-white transition-colors shadow-2xs"
-                >
-                  View Details
-                </button>
-                <a 
-                  href={ev.meetingUrl}
-                  target="_blank" 
-                  rel="noreferrer"
-                  className="px-4 py-1.5 rounded-full bg-[#1668e8] hover:bg-[#145ac7] text-white text-xs font-semibold shadow-2xs flex items-center gap-1.5 transition-colors"
-                >
-                  <Video className="w-3.5 h-3.5" />
-                  <span>Join Room</span>
-                </a>
-              </div>
+          {filteredEvents.length === 0 ? (
+            <div className="p-12 text-center text-[#667085] space-y-2">
+              <Calendar className="w-8 h-8 text-[#98a2b3] mx-auto mb-1" />
+              <p className="font-semibold text-sm text-[#344054]">No upcoming interviews</p>
+              <p className="text-xs max-w-sm mx-auto">
+                Scheduled interviews and confirmed calendar holds will appear here once candidate loops are dispatched.
+              </p>
             </div>
-          ))}
+          ) : (
+            filteredEvents.map((ev) => (
+              <div 
+                key={ev.id} 
+                className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:bg-[#f9fafb] transition-colors"
+              >
+                <div className="flex items-start gap-4">
+                  <div className="p-2.5 rounded-xl bg-[#e7f2fe] text-[#1668e8] shrink-0 mt-0.5">
+                    <Calendar className="w-4 h-4" />
+                  </div>
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2">
+                      <span className="font-bold text-sm text-[#101828]">{ev.round}</span>
+                      <span className="text-[11px] font-medium text-[#1668e8] bg-[#e7f2fe] px-2.5 py-0.5 rounded-full border border-[#bcd7fd]">
+                        {ev.candidate} ({ev.role})
+                      </span>
+                    </div>
+                    <div className="flex flex-wrap items-center gap-4 text-xs text-[#475467]">
+                      <span className="flex items-center gap-1 font-semibold text-[#101828]">
+                        <Clock className="w-3.5 h-3.5 text-[#1668e8]" />
+                        {ev.date} • {convertTime(ev.pstTime)}
+                      </span>
+                      <span className="flex items-center gap-1">
+                        <UserRound className="w-3.5 h-3.5 text-[#98a2b3]" />
+                        Interviewer: {ev.interviewer}
+                      </span>
+                      <span className="flex items-center gap-1">
+                        <MapPin className="w-3.5 h-3.5 text-[#98a2b3]" />
+                        {ev.room}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setSelectedEvent(ev)}
+                    className="px-3.5 py-1.5 rounded-full border border-[#d0d5dd] text-xs font-semibold text-[#344054] hover:bg-white transition-colors shadow-2xs"
+                  >
+                    View Details
+                  </button>
+                  <a 
+                    href={ev.meetingUrl}
+                    target="_blank" 
+                    rel="noreferrer"
+                    className="px-4 py-1.5 rounded-full bg-[#1668e8] hover:bg-[#145ac7] text-white text-xs font-semibold shadow-2xs flex items-center gap-1.5 transition-colors"
+                  >
+                    <Video className="w-3.5 h-3.5" />
+                    <span>Join Room</span>
+                  </a>
+                </div>
+              </div>
+            ))
+          )}
         </div>
       </div>
 

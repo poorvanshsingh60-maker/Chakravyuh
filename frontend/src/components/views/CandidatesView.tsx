@@ -180,6 +180,23 @@ export const CandidatesView: React.FC<CandidatesViewProps> = ({
                   </td>
                 </tr>
               ))}
+              {filtered.length === 0 && (
+                <tr>
+                  <td colSpan={6} className="p-8 text-center text-[#667085]">
+                    <div className="max-w-sm mx-auto space-y-2">
+                      <p className="font-semibold text-sm text-[#344054]">No candidates in pipeline</p>
+                      <p className="text-xs">Add your first candidate to start scheduling interview loops with evaluators.</p>
+                      <button
+                        onClick={() => setModalOpen(true)}
+                        className="mt-2 inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-[#1668e8] text-white text-xs font-semibold shadow-2xs hover:bg-[#145ac7] transition-colors"
+                      >
+                        <Plus className="w-3.5 h-3.5" />
+                        <span>Add Candidate</span>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              )}
             </tbody>
           </table>
         </div>

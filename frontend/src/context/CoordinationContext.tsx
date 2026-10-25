@@ -241,29 +241,49 @@ interface CoordinationState {
   markMessageAsRead: (id: string) => void;
   dispatchSchedule: (candidateName: string, candidateEmail: string, sessions: SavedScheduleSession[]) => void;
   requestReschedule: (candidateName: string, roundName: string, reason: string) => void;
+  isDemoMode?: boolean;
 }
 
 const CoordinationContext = createContext<CoordinationState | undefined>(undefined);
 
-const STORAGE_KEY = 'chakravyuh_coordination_state_v4';
-const SCHEDULE_STORAGE_KEY = 'chakravyuh_schedule_state_v5';
+export interface CoordinationProviderProps {
+  children: React.ReactNode;
+  isDemoMode?: boolean;
+  userId?: string;
+  currentUser?: {
+    id: string;
+    email: string;
+    full_name: string;
+    role: string;
+  } | null;
+}
 
-export const CoordinationProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+export const CoordinationProvider: React.FC<CoordinationProviderProps> = ({ 
+  children,
+  isDemoMode = false,
+  userId = 'default',
+  currentUser = null
+}) => {
+  const STORAGE_KEY = isDemoMode ? 'chakravyuh_demo_coordination_state' : `chakravyuh_live_coord_${userId}`;
+  const SCHEDULE_STORAGE_KEY = isDemoMode ? 'chakravyuh_demo_schedule_state' : `chakravyuh_live_sched_${userId}`;
+  const MESSAGES_STORAGE_KEY = isDemoMode ? 'chakravyuh_demo_messages' : `chakravyuh_live_msgs_${userId}`;
   const [isInviteAccepted, setIsInviteAccepted] = useState<boolean>(() => {
     try {
       const saved = localStorage.getItem(STORAGE_KEY);
-      return saved ? JSON.parse(saved).isInviteAccepted ?? true : true;
+      if (saved) return JSON.parse(saved).isInviteAccepted ?? false;
+      return isDemoMode ? true : false;
     } catch {
-      return true;
+      return isDemoMode ? true : false;
     }
   });
 
   const [areSlotsConfirmed, setAreSlotsConfirmed] = useState<boolean>(() => {
     try {
       const saved = localStorage.getItem(STORAGE_KEY);
-      return saved ? JSON.parse(saved).areSlotsConfirmed ?? true : true;
+      if (saved) return JSON.parse(saved).areSlotsConfirmed ?? false;
+      return isDemoMode ? true : false;
     } catch {
-      return true;
+      return isDemoMode ? true : false;
     }
   });
 
@@ -272,13 +292,13 @@ export const CoordinationProvider: React.FC<{ children: React.ReactNode }> = ({ 
       const saved = localStorage.getItem(STORAGE_KEY);
       if (saved) {
         const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed.assignments) && parsed.assignments.length > 0) {
+        if (Array.isArray(parsed.assignments)) {
           return parsed.assignments;
         }
       }
-      return INITIAL_ASSIGNMENTS;
+      return isDemoMode ? INITIAL_ASSIGNMENTS : [];
     } catch {
-      return INITIAL_ASSIGNMENTS;
+      return isDemoMode ? INITIAL_ASSIGNMENTS : [];
     }
   });
 
@@ -287,25 +307,31 @@ export const CoordinationProvider: React.FC<{ children: React.ReactNode }> = ({ 
       const saved = localStorage.getItem(SCHEDULE_STORAGE_KEY);
       if (saved) {
         const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed.activeSessions) && parsed.activeSessions.length >= 3) {
-          const intSet = new Set(parsed.activeSessions.map((s: any) => s.interviewer));
-          // Must not have Dr. Sarah Chen (not in loop) and must have at least 2 distinct interviewers
-          if (!intSet.has('Dr. Sarah Chen') && intSet.size >= 2) {
-            return parsed;
-          }
+        if (Array.isArray(parsed.activeSessions)) {
+          return parsed;
         }
       }
-      return {
-        scheduleApplied: false,
+      return isDemoMode ? {
+        scheduleApplied: true,
         selectedOption: 'A',
         activeSessions: DEFAULT_SESSIONS_OPTION_A,
         currentDateIndex: 0
-      };
-    } catch {
-      return {
+      } : {
         scheduleApplied: false,
         selectedOption: 'A',
+        activeSessions: [],
+        currentDateIndex: 0
+      };
+    } catch {
+      return isDemoMode ? {
+        scheduleApplied: true,
+        selectedOption: 'A',
         activeSessions: DEFAULT_SESSIONS_OPTION_A,
+        currentDateIndex: 0
+      } : {
+        scheduleApplied: false,
+        selectedOption: 'A',
+        activeSessions: [],
         currentDateIndex: 0
       };
     }
@@ -442,19 +468,61 @@ export const CoordinationProvider: React.FC<{ children: React.ReactNode }> = ({ 
     return created;
   };
 
-  const MESSAGES_STORAGE_KEY = 'chakravyuh_messages_v1';
   const [messages, setMessages] = useState<CoordinationMessage[]>(() => {
     try {
       const saved = localStorage.getItem(MESSAGES_STORAGE_KEY);
       if (saved) {
         const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+        if (Array.isArray(parsed)) return parsed;
       }
-      return INITIAL_MESSAGES;
+      return isDemoMode ? INITIAL_MESSAGES : [];
     } catch {
-      return INITIAL_MESSAGES;
+      return isDemoMode ? INITIAL_MESSAGES : [];
     }
   });
+
+  // Re-sync state when switching between live and demo sandbox modes
+  useEffect(() => {
+    try {
+      const savedCoord = localStorage.getItem(STORAGE_KEY);
+      if (savedCoord) {
+        const parsed = JSON.parse(savedCoord);
+        setAssignments(Array.isArray(parsed.assignments) ? parsed.assignments : (isDemoMode ? INITIAL_ASSIGNMENTS : []));
+        setIsInviteAccepted(parsed.isInviteAccepted ?? (isDemoMode ? true : false));
+        setAreSlotsConfirmed(parsed.areSlotsConfirmed ?? (isDemoMode ? true : false));
+      } else {
+        setAssignments(isDemoMode ? INITIAL_ASSIGNMENTS : []);
+        setIsInviteAccepted(isDemoMode ? true : false);
+        setAreSlotsConfirmed(isDemoMode ? true : false);
+      }
+
+      const savedSched = localStorage.getItem(SCHEDULE_STORAGE_KEY);
+      if (savedSched) {
+        setScheduleState(JSON.parse(savedSched));
+      } else {
+        setScheduleState(isDemoMode ? {
+          scheduleApplied: true,
+          selectedOption: 'A',
+          activeSessions: DEFAULT_SESSIONS_OPTION_A,
+          currentDateIndex: 0
+        } : {
+          scheduleApplied: false,
+          selectedOption: 'A',
+          activeSessions: [],
+          currentDateIndex: 0
+        });
+      }
+
+      const savedMsgs = localStorage.getItem(MESSAGES_STORAGE_KEY);
+      if (savedMsgs) {
+        setMessages(JSON.parse(savedMsgs));
+      } else {
+        setMessages(isDemoMode ? INITIAL_MESSAGES : []);
+      }
+    } catch (e) {
+      console.error('Failed to sync demo/live mode', e);
+    }
+  }, [isDemoMode, userId, STORAGE_KEY, SCHEDULE_STORAGE_KEY, MESSAGES_STORAGE_KEY]);
 
   useEffect(() => {
     try {
@@ -572,12 +640,28 @@ export const CoordinationProvider: React.FC<{ children: React.ReactNode }> = ({ 
     setAssignments(INITIAL_ASSIGNMENTS);
   };
 
+  const effectiveCandidateName = isDemoMode 
+    ? 'Marcus Vance' 
+    : (currentUser?.role === 'CANDIDATE' ? currentUser.full_name : 'Candidate');
+
+  const effectiveCandidateReg = isDemoMode
+    ? '20214012 (B.Tech CSE)'
+    : (currentUser?.role === 'CANDIDATE' ? currentUser.email : 'Pipeline Candidate');
+
+  const effectiveDriveName = isDemoMode
+    ? 'Google SDE Campus Placement Drive 2026'
+    : 'Active Placement Drive';
+
+  const effectiveInviteCode = isDemoMode
+    ? 'google-sde-marcus'
+    : '';
+
   return (
     <CoordinationContext.Provider value={{
-      candidateName: 'Marcus Vance',
-      candidateReg: '20214012 (B.Tech CSE)',
-      driveName: 'Google SDE Campus Placement Drive 2026',
-      inviteCode: 'google-sde-marcus',
+      candidateName: effectiveCandidateName,
+      candidateReg: effectiveCandidateReg,
+      driveName: effectiveDriveName,
+      inviteCode: effectiveInviteCode,
       isInviteAccepted,
       areSlotsConfirmed,
       isScorecardSubmitted,
@@ -600,7 +684,8 @@ export const CoordinationProvider: React.FC<{ children: React.ReactNode }> = ({ 
       submitScorecardForAssignment,
       nudgeAssignment,
       createAndSendAssignment,
-      updateScheduleState
+      updateScheduleState,
+      isDemoMode
     }}>
       {children}
     </CoordinationContext.Provider>

@@ -88,7 +88,8 @@ export const CandidateWorkspace: React.FC = () => {
     scheduleState,
     requestReschedule,
     messages,
-    markMessageAsRead
+    markMessageAsRead,
+    isDemoMode
   } = useCoordination();
 
   const [activeTab, setActiveTab] = useState<'schedule' | 'messages' | 'slot-selection'>('schedule');
@@ -112,18 +113,24 @@ export const CandidateWorkspace: React.FC = () => {
       }));
     }
 
+    if (!isDemoMode) {
+      return [];
+    }
+
     return DEFAULT_CONFIRMED_ROUNDS.map(r => ({
       ...r,
       status: (rescheduledRoundIds[r.id] ? 'RESCHEDULE_REQUESTED' : r.status) as any
     }));
-  }, [scheduleState?.scheduleApplied, scheduleState?.activeSessions, rescheduledRoundIds]);
+  }, [scheduleState?.scheduleApplied, scheduleState?.activeSessions, rescheduledRoundIds, isDemoMode]);
 
   // Messages directed to Candidate
   const candidateMessages = useMemo(() => {
     return messages.filter(
-      m => m.recipientRole === 'CANDIDATE' || m.recipientRole === 'ALL' || m.recipientName.toLowerCase().includes('marcus')
+      m => m.recipientRole === 'CANDIDATE' || 
+           m.recipientRole === 'ALL' || 
+           (isDemoMode ? m.recipientName.toLowerCase().includes('marcus') : m.recipientName.toLowerCase().includes(candidateName.toLowerCase()))
     );
-  }, [messages]);
+  }, [messages, isDemoMode, candidateName]);
 
   const unreadCount = candidateMessages.filter(m => !m.isRead).length;
 
@@ -247,43 +254,57 @@ END:VCALENDAR`;
         </div>
 
         {/* Coordination Banner: Candidate Placement Invite Status */}
-        {!isInviteAccepted ? (
-          <div className="mt-3 p-3.5 rounded-2xl bg-[#eff8ff] border border-[#b2ddff] flex flex-col sm:flex-row sm:items-center justify-between gap-3 animate-in fade-in shadow-2xs">
-            <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-full bg-[#1668e8] text-white flex items-center justify-center shrink-0">
-                <Send className="w-4 h-4" />
+        {isDemoMode ? (
+          !isInviteAccepted ? (
+            <div className="mt-3 p-3.5 rounded-2xl bg-[#eff8ff] border border-[#b2ddff] flex flex-col sm:flex-row sm:items-center justify-between gap-3 animate-in fade-in shadow-2xs">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-full bg-[#1668e8] text-white flex items-center justify-center shrink-0">
+                  <Send className="w-4 h-4" />
+                </div>
+                <div>
+                  <strong className="text-xs text-[#101828] block">
+                    New Interview Loop Invitation: Google SDE Campus Drive
+                  </strong>
+                  <span className="text-[11px] text-[#475467]">
+                    Coordinator Emma Watson has invited you to 3 evaluation rounds. Confirm to lock in calendar holds.
+                  </span>
+                </div>
               </div>
-              <div>
-                <strong className="text-xs text-[#101828] block">
-                  New Interview Loop Invitation: Google SDE Campus Drive
-                </strong>
-                <span className="text-[11px] text-[#475467]">
-                  Coordinator Emma Watson has invited you to 3 evaluation rounds. Confirm to lock in calendar holds.
+
+              <button
+                onClick={acceptInvite}
+                className="px-4 py-2 rounded-full bg-[#1668e8] hover:bg-[#145ac7] text-white text-xs font-bold shadow-xs flex items-center gap-1.5 shrink-0 transition-colors"
+              >
+                <Check className="w-3.5 h-3.5" />
+                <span>Accept Invite & Confirm Slots</span>
+              </button>
+            </div>
+          ) : (
+            <div className="mt-2.5 p-2.5 rounded-2xl bg-[#ecfdf3] border border-[#a6f4c5] flex items-center justify-between text-xs text-[#027a48] shadow-2xs">
+              <div className="flex items-center gap-2">
+                <CheckCircle2 className="w-4 h-4 text-[#12b76a]" />
+                <span className="font-semibold text-[11px]">
+                  Placement Loop Accepted • Real-Time Synced with Coordinator & Panel Desks
                 </span>
               </div>
+              <span className="text-[10px] font-bold bg-white px-2.5 py-0.5 rounded-full border border-[#a6f4c5]">
+                CONFIRMED
+              </span>
             </div>
-
-            <button
-              onClick={acceptInvite}
-              className="px-4 py-2 rounded-full bg-[#1668e8] hover:bg-[#145ac7] text-white text-xs font-bold shadow-xs flex items-center gap-1.5 shrink-0 transition-colors"
-            >
-              <Check className="w-3.5 h-3.5" />
-              <span>Accept Invite & Confirm Slots</span>
-            </button>
-          </div>
-        ) : (
+          )
+        ) : scheduleState?.activeSessions && scheduleState.activeSessions.length > 0 ? (
           <div className="mt-2.5 p-2.5 rounded-2xl bg-[#ecfdf3] border border-[#a6f4c5] flex items-center justify-between text-xs text-[#027a48] shadow-2xs">
             <div className="flex items-center gap-2">
               <CheckCircle2 className="w-4 h-4 text-[#12b76a]" />
               <span className="font-semibold text-[11px]">
-                Placement Loop Accepted • Real-Time Synced with Coordinator & Panel Desks
+                Interview Schedule Synchronized • Your upcoming rounds are locked in the master calendar
               </span>
             </div>
             <span className="text-[10px] font-bold bg-white px-2.5 py-0.5 rounded-full border border-[#a6f4c5]">
-              CONFIRMED
+              ACTIVE
             </span>
           </div>
-        )}
+        ) : null}
 
         {rescheduleSentBanner && (
           <div className="mt-2.5 p-3 rounded-2xl bg-[#fffaeb] border border-[#fedf89] flex items-center justify-between text-xs text-[#b54708] shadow-2xs animate-in fade-in">
@@ -355,70 +376,84 @@ END:VCALENDAR`;
             </div>
 
             <div className="space-y-2.5">
-              {confirmedRounds.map((round) => (
-                <div 
-                  key={round.id}
-                  className="bg-white rounded-2xl border border-[#eaecf0] shadow-2xs p-4 flex flex-col md:flex-row md:items-center justify-between gap-4 hover:border-[#1668e8]/30 transition-all"
-                >
-                  {/* Left Column: Round Details */}
-                  <div className="flex items-start gap-3 flex-1 min-w-0">
-                    <div className="w-9 h-9 rounded-xl bg-[#eff8ff] border border-[#b2ddff] text-[#175cd3] flex items-center justify-center font-bold text-xs font-mono shrink-0">
-                      0{round.order}
-                    </div>
-                    <div className="space-y-0.5 min-w-0 flex-1">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <span className="font-bold text-xs text-[#101828]">{round.roundName}</span>
-                        <Badge variant="info">{round.duration} mins</Badge>
-                        {round.status === 'RESCHEDULE_REQUESTED' && (
-                          <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-50 text-amber-700 border border-amber-200">
-                            Reschedule Pending
-                          </span>
-                        )}
-                        {round.id === 'round-1' && isScorecardSubmitted && (
-                          <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800">
-                            Evaluated (Strong Hire)
-                          </span>
-                        )}
-                      </div>
-                      <div className="flex flex-wrap items-center gap-3 text-xs text-[#475467] pt-0.5">
-                        <span className="flex items-center gap-1 font-semibold text-[#101828]">
-                          <Clock className="w-3.5 h-3.5 text-[#1668e8]" />
-                          {round.date} • {convertTime(round.pstTimeSlot)}
-                        </span>
-                        <span className="flex items-center gap-1 text-[#667085]">
-                          <MapPin className="w-3.5 h-3.5 text-[#98a2b3]" />
-                          {round.location}
-                        </span>
-                      </div>
-                    </div>
+              {confirmedRounds.length === 0 ? (
+                <div className="bg-white border border-[#eaecf0] rounded-2xl p-8 text-center space-y-3">
+                  <div className="w-12 h-12 rounded-full bg-[#f2f4f7] flex items-center justify-center mx-auto text-[#667085]">
+                    <Clock className="w-6 h-6 text-[#667085]" />
                   </div>
-
-                  {/* Right Column: Interviewer & Join CTA */}
-                  <div className="flex items-center justify-between md:justify-end gap-3 shrink-0 pt-2 md:pt-0 border-t md:border-t-0 border-[#f2f4f7]">
-                    <div className="flex items-center gap-2.5 w-56 sm:w-64 shrink-0">
-                      <AvatarBadge name={round.interviewerName} size="sm" />
-                      <div className="text-left text-xs min-w-0 flex-1">
-                        <span className="font-semibold text-[#101828] block truncate leading-tight">
-                          {round.interviewerName}
-                        </span>
-                        <span className="text-[10px] text-[#667085] block truncate leading-tight">
-                          {round.interviewerRole}
-                        </span>
-                      </div>
-                    </div>
-
-                    <a
-                      href={round.meetingLink}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="px-4 py-2 rounded-full bg-[#1668e8] hover:bg-[#145ac7] text-white text-xs font-semibold flex items-center gap-1.5 shadow-xs transition-colors shrink-0"
-                    >
-                      <Video className="w-3.5 h-3.5" />
-                      <span>Join Call</span>
-                    </a>
+                  <div className="space-y-1">
+                    <h3 className="text-sm font-bold text-[#101828]">No Assigned Interview Sessions</h3>
+                    <p className="text-xs text-[#667085] max-w-sm mx-auto">
+                      Your interview loops have not been scheduled yet. Once your coordinator dispatches your rounds, your schedule and video links will appear here.
+                    </p>
                   </div>
                 </div>
-              ))}
+              ) : (
+                confirmedRounds.map((round) => (
+                  <div 
+                    key={round.id}
+                    className="bg-white rounded-2xl border border-[#eaecf0] shadow-2xs p-4 flex flex-col md:flex-row md:items-center justify-between gap-4 hover:border-[#1668e8]/30 transition-all"
+                  >
+                    {/* Left Column: Round Details */}
+                    <div className="flex items-start gap-3 flex-1 min-w-0">
+                      <div className="w-9 h-9 rounded-xl bg-[#eff8ff] border border-[#b2ddff] text-[#175cd3] flex items-center justify-center font-bold text-xs font-mono shrink-0">
+                        0{round.order}
+                      </div>
+                      <div className="space-y-0.5 min-w-0 flex-1">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className="font-bold text-xs text-[#101828]">{round.roundName}</span>
+                          <Badge variant="info">{round.duration} mins</Badge>
+                          {round.status === 'RESCHEDULE_REQUESTED' && (
+                            <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-50 text-amber-700 border border-amber-200">
+                              Reschedule Pending
+                            </span>
+                          )}
+                          {round.id === 'round-1' && isScorecardSubmitted && (
+                            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800">
+                              Evaluated (Strong Hire)
+                            </span>
+                          )}
+                        </div>
+                        <div className="flex flex-wrap items-center gap-3 text-xs text-[#475467] pt-0.5">
+                          <span className="flex items-center gap-1 font-semibold text-[#101828]">
+                            <Clock className="w-3.5 h-3.5 text-[#1668e8]" />
+                            {round.date} • {convertTime(round.pstTimeSlot)}
+                          </span>
+                          <span className="flex items-center gap-1 text-[#667085]">
+                            <MapPin className="w-3.5 h-3.5 text-[#98a2b3]" />
+                            {round.location}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Right Column: Interviewer & Join CTA */}
+                    <div className="flex items-center justify-between md:justify-end gap-3 shrink-0 pt-2 md:pt-0 border-t md:border-t-0 border-[#f2f4f7]">
+                      <div className="flex items-center gap-2.5 w-56 sm:w-64 shrink-0">
+                        <AvatarBadge name={round.interviewerName} size="sm" />
+                        <div className="text-left text-xs min-w-0 flex-1">
+                          <span className="font-semibold text-[#101828] block truncate leading-tight">
+                            {round.interviewerName}
+                          </span>
+                          <span className="text-[10px] text-[#667085] block truncate leading-tight">
+                            {round.interviewerRole}
+                          </span>
+                        </div>
+                      </div>
+
+                      <a
+                        href={round.meetingLink}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="px-4 py-2 rounded-full bg-[#1668e8] hover:bg-[#145ac7] text-white text-xs font-semibold flex items-center gap-1.5 shadow-xs transition-colors shrink-0"
+                      >
+                        <Video className="w-3.5 h-3.5" />
+                        <span>Join Call</span>
+                      </a>
+                    </div>
+                  </div>
+                ))
+              )}
             </div>
 
             {/* Preparation Notes Box */}

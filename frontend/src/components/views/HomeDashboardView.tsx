@@ -48,7 +48,9 @@ export const HomeDashboardView: React.FC<HomeDashboardViewProps> = ({
     submitScorecardForAssignment,
     nudgeAssignment,
     createAndSendAssignment,
-    messages
+    messages,
+    isDemoMode,
+    scheduleState
   } = useCoordination();
 
   const [toastMessage, setToastMessage] = useState<string | null>(null);
@@ -120,7 +122,7 @@ export const HomeDashboardView: React.FC<HomeDashboardViewProps> = ({
   const pendingScorecards = assignments.filter(a => a.status !== 'EVALUATED');
   const evaluatedScorecards = assignments.filter(a => a.status === 'EVALUATED');
   const rescheduleRequests = messages.filter(m => m.type === 'RESCHEDULE_REQUEST');
-  const urgentCount = pendingScorecards.length + (!isInviteAccepted ? 1 : 0) + rescheduleRequests.length;
+  const urgentCount = pendingScorecards.length + (isDemoMode && !isInviteAccepted ? 1 : 0) + rescheduleRequests.length;
 
   return (
     <div className="h-full flex flex-col bg-[#f8f9fa] overflow-y-auto">
@@ -324,8 +326,8 @@ export const HomeDashboardView: React.FC<HomeDashboardViewProps> = ({
                 </div>
               )}
 
-              {/* Task 2: Unconfirmed Candidate Invite */}
-              {!isInviteAccepted && (
+              {/* Task 2: Unconfirmed Candidate Invite (Demo Mode Only) */}
+              {isDemoMode && !isInviteAccepted && (
                 <div className="bg-white border border-[#eaecf0] rounded-2xl p-4 shadow-2xs space-y-2.5">
                   <div className="flex items-start justify-between gap-3">
                     <div className="space-y-1">
@@ -361,12 +363,12 @@ export const HomeDashboardView: React.FC<HomeDashboardViewProps> = ({
                   <Sparkles className="w-4 h-4 text-[#0284c7] shrink-0" />
                   <div>
                     <strong className="text-[#0369a1] block">Automated Schedule Engine Active</strong>
-                    <span className="text-[11px] text-[#0284c7]">Zero resource overlaps detected across 14 scheduled rounds.</span>
+                    <span className="text-[11px] text-[#0284c7]">Zero resource overlaps detected across {scheduleState.activeSessions?.length || (isDemoMode ? 14 : 0)} scheduled rounds.</span>
                   </div>
                 </div>
                 <button
                   onClick={() => onNavigate('scheduling')}
-                  className="px-3.5 py-1.5 bg-[#0284c7] hover:bg-[#0369a1] text-white font-semibold rounded-full shrink-0 text-xs shadow-2xs transition-colors"
+                  className="px-3.5 py-1.5 bg-[#0284c7] hover:bg-[#0369a1] text-white font-semibold rounded-full shrink-0 text-xs shadow-2xs transition-colors cursor-pointer"
                 >
                   Inspect Matrix
                 </button>
@@ -382,47 +384,70 @@ export const HomeDashboardView: React.FC<HomeDashboardViewProps> = ({
                 </h2>
                 <button 
                   onClick={() => onNavigate('scheduling')}
-                  className="text-xs text-[#1668e8] hover:underline font-semibold flex items-center gap-1"
+                  className="text-xs text-[#1668e8] hover:underline font-semibold flex items-center gap-1 cursor-pointer"
                 >
                   <span>Automate Schedule</span>
                   <ArrowRight className="w-3 h-3" />
                 </button>
               </div>
 
-              <div className="bg-white border border-[#eaecf0] rounded-2xl divide-y divide-[#f2f4f7] shadow-2xs text-xs overflow-hidden">
-                <div className="p-3.5 flex items-center justify-between">
-                  <div className="space-y-0.5">
-                    <span className="text-[11px] font-semibold text-[#1668e8]">{convertTime('10:00 AM – 10:45 AM')}</span>
-                    <h4 className="font-bold text-[#101828]">Marcus Vance • Round 1 (Coding)</h4>
-                    <span className="text-[11px] text-[#667085]">Interviewer: Dr. Sarah Chen</span>
+              {isDemoMode ? (
+                <div className="bg-white border border-[#eaecf0] rounded-2xl divide-y divide-[#f2f4f7] shadow-2xs text-xs overflow-hidden">
+                  <div className="p-3.5 flex items-center justify-between">
+                    <div className="space-y-0.5">
+                      <span className="text-[11px] font-semibold text-[#1668e8]">{convertTime('10:00 AM – 10:45 AM')}</span>
+                      <h4 className="font-bold text-[#101828]">Marcus Vance • Round 1 (Coding)</h4>
+                      <span className="text-[11px] text-[#667085]">Interviewer: Dr. Sarah Chen</span>
+                    </div>
+                    <span className="text-[10px] font-semibold px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
+                      Terminal 12
+                    </span>
                   </div>
-                  <span className="text-[10px] font-semibold px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
-                    Terminal 12
-                  </span>
-                </div>
 
-                <div className="p-3.5 flex items-center justify-between">
-                  <div className="space-y-0.5">
-                    <span className="text-[11px] font-semibold text-[#1668e8]">{convertTime('1:00 PM – 2:00 PM')}</span>
-                    <h4 className="font-bold text-[#101828]">Priya Sharma • System Design</h4>
-                    <span className="text-[11px] text-[#667085]">Interviewer: Phil Dunphy</span>
+                  <div className="p-3.5 flex items-center justify-between">
+                    <div className="space-y-0.5">
+                      <span className="text-[11px] font-semibold text-[#1668e8]">{convertTime('1:00 PM – 2:00 PM')}</span>
+                      <h4 className="font-bold text-[#101828]">Priya Sharma • System Design</h4>
+                      <span className="text-[11px] text-[#667085]">Interviewer: Phil Dunphy</span>
+                    </div>
+                    <span className="text-[10px] font-semibold px-2.5 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200">
+                      Terminal 08
+                    </span>
                   </div>
-                  <span className="text-[10px] font-semibold px-2.5 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200">
-                    Terminal 08
-                  </span>
-                </div>
 
-                <div className="p-3.5 flex items-center justify-between">
-                  <div className="space-y-0.5">
-                    <span className="text-[11px] font-semibold text-[#1668e8]">{convertTime('3:00 PM – 3:45 PM')}</span>
-                    <h4 className="font-bold text-[#101828]">Elena Rostova • Values & Leadership</h4>
-                    <span className="text-[11px] text-[#667085]">Interviewer: Claire Pritchett</span>
+                  <div className="p-3.5 flex items-center justify-between">
+                    <div className="space-y-0.5">
+                      <span className="text-[11px] font-semibold text-[#1668e8]">{convertTime('3:00 PM – 3:45 PM')}</span>
+                      <h4 className="font-bold text-[#101828]">Elena Rostova • Values & Leadership</h4>
+                      <span className="text-[11px] text-[#667085]">Interviewer: Claire Pritchett</span>
+                    </div>
+                    <span className="text-[10px] font-semibold px-2.5 py-0.5 rounded-full bg-purple-50 text-purple-700 border border-purple-200">
+                      Suite 402
+                    </span>
                   </div>
-                  <span className="text-[10px] font-semibold px-2.5 py-0.5 rounded-full bg-purple-50 text-purple-700 border border-purple-200">
-                    Suite 402
-                  </span>
                 </div>
-              </div>
+              ) : scheduleState.activeSessions && scheduleState.activeSessions.length > 0 ? (
+                <div className="bg-white border border-[#eaecf0] rounded-2xl divide-y divide-[#f2f4f7] shadow-2xs text-xs overflow-hidden">
+                  {scheduleState.activeSessions.slice(0, 4).map((sess) => (
+                    <div key={sess.id} className="p-3.5 flex items-center justify-between">
+                      <div className="space-y-0.5">
+                        <span className="text-[11px] font-semibold text-[#1668e8]">{sess.pstTimeSlot}</span>
+                        <h4 className="font-bold text-[#101828]">{sess.title}</h4>
+                        <span className="text-[11px] text-[#667085]">Interviewer: {sess.interviewer}</span>
+                      </div>
+                      <span className="text-[10px] font-semibold px-2.5 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200">
+                        {sess.room}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="bg-white border border-[#eaecf0] rounded-2xl p-8 shadow-2xs text-center text-xs text-[#667085]">
+                  <Calendar className="w-8 h-8 text-[#98a2b3] mx-auto mb-2 stroke-[1.5]" />
+                  <p className="font-semibold text-[#101828]">No sessions scheduled today</p>
+                  <p className="text-[11px] mt-0.5">Use Automate Scheduling to solve and publish your timetable.</p>
+                </div>
+              )}
 
               {/* Metric Snapshot */}
               <div className="grid grid-cols-2 gap-3 pt-1">
@@ -550,6 +575,12 @@ export const HomeDashboardView: React.FC<HomeDashboardViewProps> = ({
                       </div>
                     </div>
                   ))
+                ) : assignments.length === 0 ? (
+                  <div className="bg-[#f9fafb] border border-dashed border-[#eaecf0] rounded-2xl p-6 text-center text-xs text-[#667085] space-y-1">
+                    <CheckCircle2 className="w-5 h-5 text-[#98a2b3] mx-auto mb-1" />
+                    <p className="font-semibold text-[#344054]">No evaluations assigned yet</p>
+                    <p className="text-[11px]">When candidates are scheduled with your panel, pending scorecards will appear here.</p>
+                  </div>
                 ) : (
                   <div className="bg-[#ecfdf3] border border-[#a6f4c5] rounded-2xl p-4 text-xs text-[#027a48] flex items-center justify-between">
                     <div className="flex items-center gap-2.5">
@@ -567,7 +598,9 @@ export const HomeDashboardView: React.FC<HomeDashboardViewProps> = ({
 
                 {/* Calibrated Guidelines */}
                 <div className="bg-white border border-[#eaecf0] rounded-2xl p-4 shadow-2xs space-y-2 text-xs">
-                  <span className="font-bold text-[#101828] block">Google SDE Panel Calibration Rubric</span>
+                  <span className="font-bold text-[#101828] block">
+                    {isDemoMode ? 'Google SDE Panel Calibration Rubric' : 'Interview Evaluation Calibration Rubric'}
+                  </span>
                   <div className="grid grid-cols-3 gap-2 pt-1 text-[11px]">
                     <div className="p-2.5 bg-[#f9fafb] rounded-xl border border-[#eaecf0]">
                       <strong className="text-[#101828] block">Strong Hire (5)</strong>
@@ -601,32 +634,65 @@ export const HomeDashboardView: React.FC<HomeDashboardViewProps> = ({
                 </div>
 
                 <div className="bg-white border border-[#eaecf0] rounded-2xl p-4 shadow-2xs space-y-3 text-xs">
-                  <div className="p-3 bg-[#f8f9fa] border border-[#eaecf0] rounded-xl space-y-1.5">
-                    <div className="flex items-center justify-between">
-                      <span className="font-bold text-[#101828]">Round 1: DSA Screen</span>
-                      <span className="text-[11px] font-semibold text-[#1668e8]">Today, {convertTime('10:00 AM')}</span>
-                    </div>
-                    <p className="text-[#475467] text-[11px]">Candidate: Marcus Vance (Google SDE)</p>
-                    <div className="flex items-center gap-2 pt-1 border-t border-[#eaecf0]">
-                      <a
-                        href="https://meet.google.com/chk-dist-sys"
-                        target="_blank"
-                        rel="noreferrer"
-                        className="text-[#1668e8] font-semibold text-[11px] flex items-center gap-1 hover:underline"
-                      >
-                        <Video className="w-3 h-3" />
-                        <span>Join Google Meet</span>
-                      </a>
-                    </div>
-                  </div>
+                  {isDemoMode ? (
+                    <>
+                      <div className="p-3 bg-[#f8f9fa] border border-[#eaecf0] rounded-xl space-y-1.5">
+                        <div className="flex items-center justify-between">
+                          <span className="font-bold text-[#101828]">Round 1: DSA Screen</span>
+                          <span className="text-[11px] font-semibold text-[#1668e8]">Today, {convertTime('10:00 AM')}</span>
+                        </div>
+                        <p className="text-[#475467] text-[11px]">Candidate: Marcus Vance (Google SDE)</p>
+                        <div className="flex items-center gap-2 pt-1 border-t border-[#eaecf0]">
+                          <a
+                            href="https://meet.google.com/chk-dist-sys"
+                            target="_blank"
+                            rel="noreferrer"
+                            className="text-[#1668e8] font-semibold text-[11px] flex items-center gap-1 hover:underline"
+                          >
+                            <Video className="w-3 h-3" />
+                            <span>Join Google Meet</span>
+                          </a>
+                        </div>
+                      </div>
 
-                  <div className="p-3 bg-[#f8f9fa] border border-[#eaecf0] rounded-xl space-y-1.5 opacity-75">
-                    <div className="flex items-center justify-between">
-                      <span className="font-bold text-[#101828]">Round 2: Architecture Review</span>
-                      <span className="text-[11px] font-semibold text-[#1668e8]">Tomorrow, {convertTime('2:00 PM')}</span>
+                      <div className="p-3 bg-[#f8f9fa] border border-[#eaecf0] rounded-xl space-y-1.5 opacity-75">
+                        <div className="flex items-center justify-between">
+                          <span className="font-bold text-[#101828]">Round 2: Architecture Review</span>
+                          <span className="text-[11px] font-semibold text-[#1668e8]">Tomorrow, {convertTime('2:00 PM')}</span>
+                        </div>
+                        <p className="text-[#475467] text-[11px]">Candidate: Elena Rostova (Staff Loop)</p>
+                      </div>
+                    </>
+                  ) : assignments.length > 0 ? (
+                    assignments.slice(0, 3).map((assign) => (
+                      <div key={assign.id} className="p-3 bg-[#f8f9fa] border border-[#eaecf0] rounded-xl space-y-1.5">
+                        <div className="flex items-center justify-between">
+                          <span className="font-bold text-[#101828]">{assign.roundName}</span>
+                          <span className="text-[11px] font-semibold text-[#1668e8]">{assign.pstTimeSlot}</span>
+                        </div>
+                        <p className="text-[#475467] text-[11px]">Candidate: {assign.candidateName} ({assign.role})</p>
+                        {assign.meetingLink && (
+                          <div className="flex items-center gap-2 pt-1 border-t border-[#eaecf0]">
+                            <a
+                              href={assign.meetingLink}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="text-[#1668e8] font-semibold text-[11px] flex items-center gap-1 hover:underline"
+                            >
+                              <Video className="w-3 h-3" />
+                              <span>Join Meeting</span>
+                            </a>
+                          </div>
+                        )}
+                      </div>
+                    ))
+                  ) : (
+                    <div className="p-5 text-center text-[#667085] space-y-1">
+                      <Clock className="w-5 h-5 text-[#98a2b3] mx-auto mb-1" />
+                      <p className="font-semibold text-xs text-[#344054]">No sessions scheduled today</p>
+                      <p className="text-[11px]">When candidates are assigned to your panel, sessions will appear here.</p>
                     </div>
-                    <p className="text-[#475467] text-[11px]">Candidate: Elena Rostova (Staff Loop)</p>
-                  </div>
+                  )}
                 </div>
               </div>
 
@@ -649,42 +715,66 @@ export const HomeDashboardView: React.FC<HomeDashboardViewProps> = ({
                 </h2>
               </div>
 
-              {!isInviteAccepted ? (
-                <div className="bg-[#eff8ff] border border-[#b2ddff] rounded-2xl p-5 shadow-xs space-y-3">
-                  <div>
-                    <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-[#1668e8] text-white uppercase tracking-wider">
-                      Action Required
-                    </span>
-                    <h3 className="text-base font-bold text-[#101828] mt-2">
-                      Google SDE Campus Placement Loop
-                    </h3>
-                    <p className="text-xs text-[#344054] mt-1 leading-relaxed">
-                      You have been invited to a 3-round evaluation loop (DSA Screen, Distributed Architecture, Values). Accept to confirm your schedule and lock your slots.
+              {isDemoMode ? (
+                !isInviteAccepted ? (
+                  <div className="bg-[#eff8ff] border border-[#b2ddff] rounded-2xl p-5 shadow-xs space-y-3">
+                    <div>
+                      <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-[#1668e8] text-white uppercase tracking-wider">
+                        Action Required
+                      </span>
+                      <h3 className="text-base font-bold text-[#101828] mt-2">
+                        Google SDE Campus Placement Loop
+                      </h3>
+                      <p className="text-xs text-[#344054] mt-1 leading-relaxed">
+                        You have been invited to a 3-round evaluation loop (DSA Screen, Distributed Architecture, Values). Accept to confirm your schedule and lock your slots.
+                      </p>
+                    </div>
+
+                    <div className="pt-2">
+                      <button
+                        onClick={() => {
+                          acceptInvite();
+                          showToast('Loop invitation accepted! Schedule confirmed.');
+                        }}
+                        className="w-full py-2.5 px-4 bg-[#1668e8] hover:bg-[#145ac7] text-white text-xs font-semibold rounded-full shadow-xs flex items-center justify-center gap-2 transition-colors"
+                      >
+                        <Check className="w-4 h-4" />
+                        <span>Accept Invite & Confirm Slots</span>
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="bg-[#ecfdf3] border border-[#a6f4c5] rounded-2xl p-5 shadow-xs space-y-2">
+                    <div className="flex items-center gap-2 text-emerald-800">
+                      <CheckCircle2 className="w-5 h-5 text-emerald-600" />
+                      <h3 className="text-sm font-bold">Interview Schedule Confirmed</h3>
+                    </div>
+                    <p className="text-xs text-[#027a48] leading-relaxed">
+                      Your 3 interview rounds have been locked in the master calendar. Review your meeting links on the right before each round.
                     </p>
                   </div>
-
-                  <div className="pt-2">
-                    <button
-                      onClick={() => {
-                        acceptInvite();
-                        showToast('Loop invitation accepted! Schedule confirmed.');
-                      }}
-                      className="w-full py-2.5 px-4 bg-[#1668e8] hover:bg-[#145ac7] text-white text-xs font-semibold rounded-full shadow-xs flex items-center justify-center gap-2 transition-colors"
-                    >
-                      <Check className="w-4 h-4" />
-                      <span>Accept Invite & Confirm Slots</span>
-                    </button>
-                  </div>
-                </div>
-              ) : (
+                )
+              ) : scheduleState?.activeSessions && scheduleState.activeSessions.length > 0 ? (
                 <div className="bg-[#ecfdf3] border border-[#a6f4c5] rounded-2xl p-5 shadow-xs space-y-2">
                   <div className="flex items-center gap-2 text-emerald-800">
                     <CheckCircle2 className="w-5 h-5 text-emerald-600" />
-                    <h3 className="text-sm font-bold">Interview Schedule Confirmed</h3>
+                    <h3 className="text-sm font-bold">Interview Schedule Active</h3>
                   </div>
                   <p className="text-xs text-[#027a48] leading-relaxed">
-                    Your 3 interview rounds have been locked in the master calendar. Review your meeting links on the right before each round.
+                    Your scheduled interview rounds have been synchronized. Review your upcoming meetings and video rooms on the right.
                   </p>
+                </div>
+              ) : (
+                <div className="bg-white border border-[#eaecf0] rounded-2xl p-6 shadow-2xs text-center space-y-3">
+                  <div className="w-10 h-10 rounded-full bg-[#f2f4f7] flex items-center justify-center mx-auto text-[#667085]">
+                    <Send className="w-5 h-5 text-[#667085]" />
+                  </div>
+                  <div className="space-y-1">
+                    <h3 className="text-sm font-bold text-[#101828]">No Active Invitations</h3>
+                    <p className="text-xs text-[#667085] leading-relaxed max-w-sm mx-auto">
+                      You do not have any pending interview invitations. Once a coordinator schedules an interview loop for you, your invitation details and schedule confirmation will appear here.
+                    </p>
+                  </div>
                 </div>
               )}
             </div>
@@ -706,58 +796,98 @@ export const HomeDashboardView: React.FC<HomeDashboardViewProps> = ({
               </div>
 
               <div className="bg-white border border-[#eaecf0] rounded-2xl divide-y divide-[#f2f4f7] shadow-2xs text-xs overflow-hidden">
-                {/* Round 1 */}
-                <div className="p-4 space-y-2">
-                  <div className="flex items-start justify-between">
-                    <div>
-                      <span className="text-[10px] font-bold text-[#1668e8] uppercase">Round 1 (60 min)</span>
-                      <h4 className="text-xs font-bold text-[#101828]">Problem Solving & DSA Screen</h4>
-                      <p className="text-[11px] text-[#667085]">Interviewer: Dr. Sarah Chen (Google)</p>
+                {isDemoMode ? (
+                  <>
+                    {/* Round 1 */}
+                    <div className="p-4 space-y-2">
+                      <div className="flex items-start justify-between">
+                        <div>
+                          <span className="text-[10px] font-bold text-[#1668e8] uppercase">Round 1 (60 min)</span>
+                          <h4 className="text-xs font-bold text-[#101828]">Problem Solving & DSA Screen</h4>
+                          <p className="text-[11px] text-[#667085]">Interviewer: Dr. Sarah Chen (Google)</p>
+                        </div>
+                        <span className="text-[10px] font-semibold px-2.5 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200">
+                          Mon Oct 26 • {convertTime('10:00 AM')}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-3 pt-1 text-[11px]">
+                        <a
+                          href="https://meet.google.com/chk-dist-sys"
+                          target="_blank"
+                          rel="noreferrer"
+                          className="text-[#1668e8] font-semibold flex items-center gap-1 hover:underline"
+                        >
+                          <Video className="w-3 h-3" />
+                          <span>Join Google Meet</span>
+                        </a>
+                      </div>
                     </div>
-                    <span className="text-[10px] font-semibold px-2.5 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200">
-                      Mon Oct 26 • {convertTime('10:00 AM')}
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-3 pt-1 text-[11px]">
-                    <a
-                      href="https://meet.google.com/chk-dist-sys"
-                      target="_blank"
-                      rel="noreferrer"
-                      className="text-[#1668e8] font-semibold flex items-center gap-1 hover:underline"
-                    >
-                      <Video className="w-3 h-3" />
-                      <span>Join Google Meet</span>
-                    </a>
-                  </div>
-                </div>
 
-                {/* Round 2 */}
-                <div className="p-4 space-y-2">
-                  <div className="flex items-start justify-between">
-                    <div>
-                      <span className="text-[10px] font-bold text-[#6941c6] uppercase">Round 2 (60 min)</span>
-                      <h4 className="text-xs font-bold text-[#101828]">Distributed Systems Architecture</h4>
-                      <p className="text-[11px] text-[#667085]">Interviewer: Phil Dunphy (Atlassian)</p>
+                    {/* Round 2 */}
+                    <div className="p-4 space-y-2">
+                      <div className="flex items-start justify-between">
+                        <div>
+                          <span className="text-[10px] font-bold text-[#6941c6] uppercase">Round 2 (60 min)</span>
+                          <h4 className="text-xs font-bold text-[#101828]">Distributed Systems Architecture</h4>
+                          <p className="text-[11px] text-[#667085]">Interviewer: Phil Dunphy (Atlassian)</p>
+                        </div>
+                        <span className="text-[10px] font-semibold px-2.5 py-0.5 rounded-full bg-purple-50 text-purple-700 border border-purple-200">
+                          Tue Oct 27 • {convertTime('2:00 PM')}
+                        </span>
+                      </div>
                     </div>
-                    <span className="text-[10px] font-semibold px-2.5 py-0.5 rounded-full bg-purple-50 text-purple-700 border border-purple-200">
-                      Tue Oct 27 • {convertTime('2:00 PM')}
-                    </span>
-                  </div>
-                </div>
 
-                {/* Round 3 */}
-                <div className="p-4 space-y-2">
-                  <div className="flex items-start justify-between">
-                    <div>
-                      <span className="text-[10px] font-bold text-[#027a48] uppercase">Round 3 (45 min)</span>
-                      <h4 className="text-xs font-bold text-[#101828]">Engineering Culture & Values</h4>
-                      <p className="text-[11px] text-[#667085]">Interviewer: Claire Pritchett (Lead)</p>
+                    {/* Round 3 */}
+                    <div className="p-4 space-y-2">
+                      <div className="flex items-start justify-between">
+                        <div>
+                          <span className="text-[10px] font-bold text-[#027a48] uppercase">Round 3 (45 min)</span>
+                          <h4 className="text-xs font-bold text-[#101828]">Engineering Culture & Values</h4>
+                          <p className="text-[11px] text-[#667085]">Interviewer: Claire Pritchett (Lead)</p>
+                        </div>
+                        <span className="text-[10px] font-semibold px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
+                          Fri Oct 30 • {convertTime('2:00 PM')}
+                        </span>
+                      </div>
                     </div>
-                    <span className="text-[10px] font-semibold px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
-                      Fri Oct 30 • {convertTime('2:00 PM')}
-                    </span>
+                  </>
+                ) : scheduleState?.activeSessions && scheduleState.activeSessions.length > 0 ? (
+                  scheduleState.activeSessions.map((sess, idx) => (
+                    <div key={sess.id} className="p-4 space-y-2">
+                      <div className="flex items-start justify-between">
+                        <div>
+                          <span className="text-[10px] font-bold text-[#1668e8] uppercase">
+                            Round {idx + 1} ({sess.durationMins} min)
+                          </span>
+                          <h4 className="text-xs font-bold text-[#101828]">{sess.title}</h4>
+                          <p className="text-[11px] text-[#667085]">Interviewer: {sess.interviewer} ({sess.interviewerRole})</p>
+                        </div>
+                        <span className="text-[10px] font-semibold px-2.5 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200">
+                          {sess.pstTimeSlot}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-3 pt-1 text-[11px]">
+                        <a
+                          href={`https://meet.google.com/chk-${sess.room.toLowerCase().replace(/[^a-z0-9]/g, '-')}`}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="text-[#1668e8] font-semibold flex items-center gap-1 hover:underline"
+                        >
+                          <Video className="w-3 h-3" />
+                          <span>Join Video Meeting ({sess.room})</span>
+                        </a>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <div className="p-6 text-center text-[#667085] space-y-2">
+                    <Calendar className="w-6 h-6 text-[#98a2b3] mx-auto" />
+                    <p className="font-semibold text-xs text-[#344054]">No confirmed interview rounds</p>
+                    <p className="text-[11px] max-w-xs mx-auto">
+                      When your interview rounds are finalized, your time slots and meeting links will appear here.
+                    </p>
                   </div>
-                </div>
+                )}
               </div>
             </div>
 

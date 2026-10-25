@@ -34,7 +34,16 @@ interface AssignedInterview {
   growthAreas?: string;
 }
 
-export const InterviewerWorkspace: React.FC = () => {
+interface InterviewerWorkspaceProps {
+  currentUser?: {
+    id: string;
+    email: string;
+    full_name: string;
+    role: string;
+  };
+}
+
+export const InterviewerWorkspace: React.FC<InterviewerWorkspaceProps> = ({ currentUser }) => {
   const { convertTime, currentTimezone } = useTimezone();
   const { 
     isInviteAccepted, 
@@ -42,7 +51,8 @@ export const InterviewerWorkspace: React.FC = () => {
     assignments,
     isNudged,
     messages,
-    markMessageAsRead
+    markMessageAsRead,
+    isDemoMode
   } = useCoordination();
 
   const [activeTab, setActiveTab] = useState<'dashboard' | 'notices' | 'availability'>('dashboard');
@@ -50,9 +60,11 @@ export const InterviewerWorkspace: React.FC = () => {
   // Messages directed to Interviewer panel
   const panelMessages = useMemo(() => {
     return messages.filter(
-      m => m.recipientRole === 'INTERVIEWER' || m.recipientRole === 'ALL' || m.recipientName.toLowerCase().includes('sarah')
+      m => m.recipientRole === 'INTERVIEWER' || 
+           m.recipientRole === 'ALL' || 
+           (isDemoMode ? m.recipientName.toLowerCase().includes('sarah') : (currentUser && m.recipientName.toLowerCase().includes(currentUser.full_name.toLowerCase())))
     );
-  }, [messages]);
+  }, [messages, isDemoMode, currentUser]);
 
   const unreadCount = panelMessages.filter(m => !m.isRead).length;
 
@@ -123,17 +135,24 @@ export const InterviewerWorkspace: React.FC = () => {
       <div className="bg-white border-b border-[#eaecf0] px-6 py-3.5 shrink-0">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
           <div className="flex items-center gap-3">
-            <AvatarBadge name="Dr. Sarah Chen" size="lg" />
+            <AvatarBadge 
+              name={isDemoMode ? "Dr. Sarah Chen" : (currentUser?.full_name || "Interviewer")} 
+              size="lg" 
+            />
             <div>
               <div className="flex items-center gap-2">
                 <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-[#ecfdf3] text-[#027a48] border border-[#a6f4c5] uppercase tracking-wider">
                   Interviewer Workspace
                 </span>
-                <span className="font-bold text-sm text-[#101828]">Dr. Sarah Chen</span>
-                <span className="text-xs text-[#667085]">• Google Panel Lead</span>
+                <span className="font-bold text-sm text-[#101828]">
+                  {isDemoMode ? "Dr. Sarah Chen" : (currentUser?.full_name || "Interviewer Panelist")}
+                </span>
+                <span className="text-xs text-[#667085]">
+                  {isDemoMode ? "• Google Panel Lead" : (currentUser?.email ? `• ${currentUser.email}` : "• Active Evaluator")}
+                </span>
               </div>
               <p className="text-xs text-[#475467] mt-0.5">
-                Google Engineering Panel • Staff Distributed Systems Engineer
+                {isDemoMode ? "Google Engineering Panel • Staff Distributed Systems Engineer" : "Evaluation Panel • Assigned Technical Rounds"}
               </p>
             </div>
           </div>
@@ -258,87 +277,101 @@ export const InterviewerWorkspace: React.FC = () => {
             </div>
 
             <div className="space-y-2.5">
-              {assignments.map((inv) => {
-                const isTarget = inv.id === 'inv-101' || inv.candidateName.includes('Marcus');
-                const isConfirmed = isTarget ? isInviteAccepted : true;
-                const isEvaluated = inv.status === 'EVALUATED';
-                const isItemNudged = (inv.isNudged || (isTarget && isNudged)) && !isEvaluated;
+              {assignments.length === 0 ? (
+                <div className="bg-white border border-[#eaecf0] rounded-2xl p-8 text-center space-y-3">
+                  <div className="w-12 h-12 rounded-full bg-[#f2f4f7] flex items-center justify-center mx-auto text-[#667085]">
+                    <FileText className="w-6 h-6 text-[#667085]" />
+                  </div>
+                  <div className="space-y-1">
+                    <h3 className="text-sm font-bold text-[#101828]">No Assigned Interview Loops</h3>
+                    <p className="text-xs text-[#667085] max-w-sm mx-auto">
+                      You do not have any candidate evaluations scheduled right now. When a coordinator assigns candidate rounds to your panel, your evaluation cards and scorecards will show up here.
+                    </p>
+                  </div>
+                </div>
+              ) : (
+                assignments.map((inv) => {
+                  const isTarget = inv.id === 'inv-101' || inv.candidateName.includes('Marcus');
+                  const isConfirmed = isTarget ? isInviteAccepted : true;
+                  const isEvaluated = inv.status === 'EVALUATED';
+                  const isItemNudged = (inv.isNudged || (isTarget && isNudged)) && !isEvaluated;
 
-                return (
-                  <div 
-                    key={inv.id}
-                    className={`rounded-2xl shadow-2xs p-4 flex flex-col md:flex-row md:items-center justify-between gap-3 transition-all ${
-                      isItemNudged
-                        ? 'bg-rose-50/40 animate-pulse border border-rose-200/60'
-                        : 'bg-white border border-[#eaecf0] hover:border-[#1668e8]/30'
-                    }`}
-                  >
-                    <div className="flex items-start gap-3">
-                      <AvatarBadge name={inv.candidateName} size="md" />
-                      <div className="space-y-0.5">
-                        <div className="flex items-center gap-2">
-                          <span className="font-bold text-xs text-[#101828]">{inv.candidateName}</span>
-                          <span className="text-[11px] text-[#667085]">• {inv.role}</span>
-                          
-                          {isEvaluated ? (
-                            <span className="px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-[#ecfdf3] text-[#027a48] border border-[#a6f4c5]">
-                              Evaluated ({inv.decision || 'STRONG_HIRE'})
-                            </span>
-                          ) : isItemNudged ? (
-                            <span className="px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-rose-100 text-rose-800 border border-rose-200/60">
-                              Nudged by Coordinator
-                            </span>
-                          ) : isConfirmed ? (
-                            <span className="px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-[#eff8ff] text-[#175cd3] border border-[#b2ddff]">
-                              Confirmed & Ready
-                            </span>
-                          ) : (
-                            <span className="px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-amber-50 text-amber-700 border border-amber-200">
-                              Invite Sent (Pending)
-                            </span>
-                          )}
-                        </div>
+                  return (
+                    <div 
+                      key={inv.id}
+                      className={`rounded-2xl shadow-2xs p-4 flex flex-col md:flex-row md:items-center justify-between gap-3 transition-all ${
+                        isItemNudged
+                          ? 'bg-rose-50/40 animate-pulse border border-rose-200/60'
+                          : 'bg-white border border-[#eaecf0] hover:border-[#1668e8]/30'
+                      }`}
+                    >
+                      <div className="flex items-start gap-3">
+                        <AvatarBadge name={inv.candidateName} size="md" />
+                        <div className="space-y-0.5">
+                          <div className="flex items-center gap-2">
+                            <span className="font-bold text-xs text-[#101828]">{inv.candidateName}</span>
+                            <span className="text-[11px] text-[#667085]">• {inv.role}</span>
+                            
+                            {isEvaluated ? (
+                              <span className="px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-[#ecfdf3] text-[#027a48] border border-[#a6f4c5]">
+                                Evaluated ({inv.decision || 'STRONG_HIRE'})
+                              </span>
+                            ) : isItemNudged ? (
+                              <span className="px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-rose-100 text-rose-800 border border-rose-200/60">
+                                Nudged by Coordinator
+                              </span>
+                            ) : isConfirmed ? (
+                              <span className="px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-[#eff8ff] text-[#175cd3] border border-[#b2ddff]">
+                                Confirmed & Ready
+                              </span>
+                            ) : (
+                              <span className="px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-amber-50 text-amber-700 border border-amber-200">
+                                Invite Sent (Pending)
+                              </span>
+                            )}
+                          </div>
 
-                        <div className="flex flex-wrap items-center gap-3 text-xs text-[#475467] pt-0.5">
-                          <span className="font-semibold text-[#101828]">{inv.roundName}</span>
-                          <span className="flex items-center gap-1 text-[#1668e8]">
-                            <Clock className="w-3 h-3" />
-                            {inv.date} • {convertTime(inv.pstTimeSlot)}
-                          </span>
-                          <span className="flex items-center gap-1 text-[#667085]">
-                            <MapPin className="w-3 h-3 text-[#98a2b3]" />
-                            {inv.roomName}
-                          </span>
+                          <div className="flex flex-wrap items-center gap-3 text-xs text-[#475467] pt-0.5">
+                            <span className="font-semibold text-[#101828]">{inv.roundName}</span>
+                            <span className="flex items-center gap-1 text-[#1668e8]">
+                              <Clock className="w-3 h-3" />
+                              {inv.date} • {convertTime(inv.pstTimeSlot)}
+                            </span>
+                            <span className="flex items-center gap-1 text-[#667085]">
+                              <MapPin className="w-3 h-3 text-[#98a2b3]" />
+                              {inv.roomName}
+                            </span>
+                          </div>
                         </div>
                       </div>
-                    </div>
 
-                    <div className="flex items-center gap-2 shrink-0 pt-2 md:pt-0 border-t md:border-t-0 border-[#f2f4f7]">
-                      <a
-                        href={inv.meetingLink}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="px-3.5 py-1.5 rounded-full border border-[#d0d5dd] hover:bg-[#f9fafb] text-[#344054] text-xs font-semibold flex items-center gap-1.5 transition-colors shadow-2xs"
-                      >
-                        <Video className="w-3.5 h-3.5" />
-                        <span>Join Call</span>
-                      </a>
+                      <div className="flex items-center gap-2 shrink-0 pt-2 md:pt-0 border-t md:border-t-0 border-[#f2f4f7]">
+                        <a
+                          href={inv.meetingLink}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="px-3.5 py-1.5 rounded-full border border-[#d0d5dd] hover:bg-[#f9fafb] text-[#344054] text-xs font-semibold flex items-center gap-1.5 transition-colors shadow-2xs"
+                        >
+                          <Video className="w-3.5 h-3.5" />
+                          <span>Join Call</span>
+                        </a>
 
-                      <button
-                        onClick={() => openScorecard(inv)}
-                        className={`px-4 py-1.5 rounded-full text-xs font-semibold flex items-center gap-1.5 transition-all shadow-xs ${
-                          isEvaluated
-                            ? 'bg-[#f2f4f7] hover:bg-[#eaecf0] text-[#344054]'
-                            : 'bg-[#1668e8] hover:bg-[#145ac7] text-white'
-                        }`}
-                      >
-                        <FileText className="w-3.5 h-3.5" />
-                        <span>{isEvaluated ? 'Edit Scorecard' : 'Fill Scorecard'}</span>
-                      </button>
+                        <button
+                          onClick={() => openScorecard(inv)}
+                          className={`px-4 py-1.5 rounded-full text-xs font-semibold flex items-center gap-1.5 transition-all shadow-xs ${
+                            isEvaluated
+                              ? 'bg-[#f2f4f7] hover:bg-[#eaecf0] text-[#344054]'
+                              : 'bg-[#1668e8] hover:bg-[#145ac7] text-white'
+                          }`}
+                        >
+                          <FileText className="w-3.5 h-3.5" />
+                          <span>{isEvaluated ? 'Edit Scorecard' : 'Fill Scorecard'}</span>
+                        </button>
+                      </div>
                     </div>
-                  </div>
-                );
-              })}
+                  );
+                })
+              )}
             </div>
           </div>
         )}
