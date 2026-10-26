@@ -579,7 +579,7 @@ export function App() {
   return (
     <CoordinationProvider isDemoMode={isDemoMode} userId={currentUser?.id} currentUser={currentUser}>
       {!currentUser ? (
-        <LoginPage onLogin={handleLogin} initialMode="SIGNUP" />
+        <LoginPage onLogin={handleLogin} onEnterDemo={enterDemoMode} initialMode="SIGNUP" />
       ) : (
         <>
           <MainLayout 

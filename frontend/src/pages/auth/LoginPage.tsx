@@ -1,17 +1,19 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { UserRole } from '../../types/user';
 import { ChakravyuhLogo } from '../../components/ChakravyuhLogo';
-import { AlertCircle, Loader2 } from 'lucide-react';
+import { AlertCircle, Loader2, Sparkles } from 'lucide-react';
 import { authService } from '../../services/authService';
 
 interface LoginPageProps {
   onLogin: (user: { id: string; email: string; full_name: string; role: UserRole }, startInDemo?: boolean) => void;
+  onEnterDemo?: () => void;
   initialMode?: 'SIGNUP' | 'LOGIN';
   inviteCode?: string | null;
 }
 
 export const LoginPage: React.FC<LoginPageProps> = ({ 
   onLogin, 
+  onEnterDemo,
   initialMode = 'LOGIN'
 }) => {
   const [mode, setMode] = useState<'SIGNUP' | 'LOGIN'>(initialMode);
@@ -308,6 +310,38 @@ export const LoginPage: React.FC<LoginPageProps> = ({
             >
               {loading && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
               <span>{mode === 'SIGNUP' ? 'Create Account' : 'Sign In'}</span>
+            </button>
+          </div>
+
+          {/* Demo Sandbox Entry Button */}
+          <div className="pt-1">
+            <div className="relative my-2.5 flex items-center justify-center">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-[#eaecf0]"></div>
+              </div>
+              <span className="relative bg-white px-2.5 text-[10px] uppercase font-bold text-[#98a2b3]">
+                or try without account
+              </span>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => {
+                if (onEnterDemo) {
+                  onEnterDemo();
+                } else {
+                  onLogin({
+                    id: 'coord-demo-1',
+                    email: 'emma.watson@chakravyuh.ai',
+                    full_name: 'Emma Watson (Lead Scheduler)',
+                    role: 'COORDINATOR'
+                  }, true);
+                }
+              }}
+              className="w-full py-2.5 px-4 rounded-full border border-amber-300 bg-amber-50 hover:bg-amber-100 text-amber-900 text-xs font-semibold transition-all shadow-2xs flex items-center justify-center gap-2 cursor-pointer active:scale-[0.99]"
+            >
+              <Sparkles className="w-3.5 h-3.5 text-amber-600" />
+              <span>Explore Demo Sandbox (Mock Drive)</span>
             </button>
           </div>
         </form>

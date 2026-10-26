@@ -54,5 +54,16 @@
     "salt": "",
     "password_hash": "",
     "created_at": "2026-10-25T22:33:22.613504+00:00"
+  },
+  "adigamer635m@gmail.com": {
+    "id": "google-103026781434",
+    "email": "adigamer635m@gmail.com",
+    "full_name": "Aditya Singh",
+    "role": "INTERVIEWER",
+    "picture": "https://lh3.googleusercontent.com/a/ACg8ocLy4LRHSCEyJSG159JrWMiNGVeK_rt2Eyh6gSzl7XcyasVT3DAb=s96-c",
+    "auth_provider": "google",
+    "salt": "",
+    "password_hash": "",
+    "created_at": "2026-10-26T04:38:52.458971+00:00"
   }
 }
