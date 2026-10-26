@@ -30,9 +30,9 @@ export const MasterSchedulingView: React.FC<MasterSchedulingViewProps> = ({
   const effectiveRoleName = activeCandidate?.role || roleName;
 
   return (
-    <div className="flex-1 min-h-0 overflow-hidden flex flex-col bg-[#f8f9fa]">
-      {/* Top Unified Sub-Navigation Bar */}
-      <div className="flex items-center justify-between border-b border-[#eaecf0] bg-white px-6 py-2.5 shrink-0">
+    <div className="flex-1 min-h-0 flex flex-col overflow-y-auto bg-[#f8f9fa] scroll-smooth">
+      {/* Top Unified Sub-Navigation Bar - Sticky & Frosted */}
+      <div className="sticky top-0 z-30 flex items-center justify-between border-b border-[#eaecf0] bg-white/95 backdrop-blur-md px-6 py-2.5 shrink-0 shadow-2xs">
         <div className="flex items-center gap-1.5 bg-[#f2f4f7] p-1 rounded-full border border-[#eaecf0]">
           <button
             type="button"
@@ -76,7 +76,7 @@ export const MasterSchedulingView: React.FC<MasterSchedulingViewProps> = ({
       </div>
 
       {/* Workspace Body */}
-      <div className="flex-1 min-h-0 overflow-hidden flex flex-col">
+      <div className="flex-1 flex flex-col">
         {subTab === 'master-matrix' ? (
           <CoordinatorWorkspace onSimulateCandidate={onSimulateCandidate} />
         ) : (

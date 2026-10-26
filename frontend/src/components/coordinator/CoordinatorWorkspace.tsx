@@ -9,7 +9,10 @@ import {
   User, 
   Check, 
   Send, 
-  ShieldCheck
+  ShieldCheck,
+  ChevronDown,
+  ChevronUp,
+  SlidersHorizontal
 } from 'lucide-react';
 import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
@@ -145,6 +148,7 @@ export const CoordinatorWorkspace: React.FC<CoordinatorWorkspaceProps> = ({ onSi
   const [enforcePrerequisites, setEnforcePrerequisites] = useState(true);
   const [balanceWorkload, setBalanceWorkload] = useState(true);
   const [minimizeIdleGaps, setMinimizeIdleGaps] = useState(true);
+  const [showSolverRules, setShowSolverRules] = useState(false);
 
   // Selected event modal
   const [selectedEvent, setSelectedEvent] = useState<CalendarEventItem | null>(null);
@@ -272,7 +276,7 @@ export const CoordinatorWorkspace: React.FC<CoordinatorWorkspaceProps> = ({ onSi
   };
 
   return (
-    <div className="h-full flex flex-col bg-[#f8f9fa] overflow-hidden font-['Inter',-apple-system,BlinkMacSystemFont,'Segoe_UI',Roboto,sans-serif]">
+    <div className="w-full flex flex-col bg-[#f8f9fa] font-['Inter',-apple-system,BlinkMacSystemFont,'Segoe_UI',Roboto,sans-serif]">
       
       {/* Coordinator Header & Live Status */}
       <div className="bg-white border-b border-[#eaecf0] px-6 py-2.5 shrink-0 flex items-center justify-between">
@@ -295,14 +299,14 @@ export const CoordinatorWorkspace: React.FC<CoordinatorWorkspaceProps> = ({ onSi
         )}
       </div>
 
-      <div className="flex-1 min-h-0 overflow-y-auto p-4 max-w-7xl mx-auto w-full space-y-4">
+      <div className="p-4 sm:p-6 max-w-7xl mx-auto w-full space-y-6">
         
         {/* CP-SAT SOLVER PANEL & MASTER SCHEDULE CALENDAR */}
         <div className="space-y-6">
             
             {/* Solver Trigger Bar (SolverPanel) */}
-            <div className="bg-white rounded-xl border border-[#eaecf0] p-6 shadow-2xs space-y-5">
-              <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-4 border-b border-[#f2f4f7]">
+            <div className="bg-white rounded-xl border border-[#eaecf0] p-5 shadow-2xs space-y-4">
+              <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-3 border-b border-[#f2f4f7]">
                 <div>
                   <div className="flex items-center gap-2">
                     <Sparkles className="w-4 h-4 text-amber-500 fill-amber-500" />
@@ -311,13 +315,23 @@ export const CoordinatorWorkspace: React.FC<CoordinatorWorkspaceProps> = ({ onSi
                     </h2>
                     <Badge variant="info">Auto-Scheduler</Badge>
                   </div>
-                  <p className="text-xs text-[#667085] mt-1">
+                  <p className="text-xs text-[#667085] mt-0.5">
                     Select your dates and rules to automatically schedule interview rounds without conflicts.
                   </p>
                 </div>
 
-                {/* Primary Generate Schedule Action Button */}
-                <div className="flex items-center gap-3">
+                {/* Primary Generate Schedule Action Button & Rules Toggle */}
+                <div className="flex items-center gap-2.5">
+                  <button
+                    type="button"
+                    onClick={() => setShowSolverRules(!showSolverRules)}
+                    className="px-3.5 py-2 rounded-full border border-[#d0d5dd] bg-white hover:bg-[#f9fafb] text-[#344054] text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer"
+                  >
+                    <SlidersHorizontal className="w-3.5 h-3.5 text-[#1668e8]" />
+                    <span>{showSolverRules ? 'Hide Rules' : 'Configure Rules'}</span>
+                    {showSolverRules ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+                  </button>
+
                   <Button
                     variant="primary"
                     onClick={handleTriggerSolver}
@@ -330,99 +344,99 @@ export const CoordinatorWorkspace: React.FC<CoordinatorWorkspaceProps> = ({ onSi
                 </div>
               </div>
 
-              {/* Controls Grid */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-5 text-xs">
-                {/* Date Horizon Picker */}
-                <div className="space-y-2">
-                  <label className="font-semibold text-[#344054] flex items-center gap-1.5">
-                    <CalendarIcon className="w-3.5 h-3.5 text-[#667085]" />
-                    <span>Scheduling Date Range</span>
-                  </label>
-                  <div className="grid grid-cols-2 gap-2">
-                    <div>
-                      <span className="text-[10px] text-[#667085] block">Start Date</span>
-                      <input 
-                        type="date"
-                        value={startDate}
-                        onChange={(e) => setStartDate(e.target.value)}
-                        className="w-full border border-[#d0d5dd] rounded-xl p-2 text-xs bg-white text-[#101828] focus:border-[#1668e8] focus:ring-1 focus:ring-[#1668e8] outline-none"
-                      />
-                    </div>
-                    <div>
-                      <span className="text-[10px] text-[#667085] block">End Date</span>
-                      <input 
-                        type="date"
-                        value={endDate}
-                        onChange={(e) => setEndDate(e.target.value)}
-                        className="w-full border border-[#d0d5dd] rounded-xl p-2 text-xs bg-white text-[#101828] focus:border-[#1668e8] focus:ring-1 focus:ring-[#1668e8] outline-none"
-                      />
-                    </div>
+              {/* Date Horizon Picker & Summary Row */}
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+                <div className="flex items-center gap-2.5">
+                  <span className="font-semibold text-[#344054] flex items-center gap-1.5 shrink-0">
+                    <CalendarIcon className="w-3.5 h-3.5 text-[#1668e8]" />
+                    <span>Horizon:</span>
+                  </span>
+                  <div className="flex items-center gap-2">
+                    <input 
+                      type="date"
+                      value={startDate}
+                      onChange={(e) => setStartDate(e.target.value)}
+                      className="border border-[#d0d5dd] rounded-lg px-2.5 py-1.5 text-xs bg-white text-[#101828] focus:border-[#1668e8] outline-none"
+                    />
+                    <span className="text-[#98a2b3]">to</span>
+                    <input 
+                      type="date"
+                      value={endDate}
+                      onChange={(e) => setEndDate(e.target.value)}
+                      className="border border-[#d0d5dd] rounded-lg px-2.5 py-1.5 text-xs bg-white text-[#101828] focus:border-[#1668e8] outline-none"
+                    />
                   </div>
                 </div>
 
-                {/* Required Rules Toggles */}
-                <div className="space-y-2">
-                  <label className="font-semibold text-[#344054] block">Required Rules</label>
-                  <div className="space-y-1.5 text-xs text-[#344054]">
-                    <label className="flex items-center gap-2 cursor-pointer">
-                      <input 
-                        type="checkbox" 
-                        checked={preventDoubleBooking}
-                        onChange={(e) => setPreventDoubleBooking(e.target.checked)}
-                        className="rounded border-[#d0d5dd] text-[#1668e8] focus:ring-[#1668e8]" 
-                      />
-                      <span>No double-booking (interviewer & room)</span>
-                    </label>
-                    <label className="flex items-center gap-2 cursor-pointer">
-                      <input 
-                        type="checkbox" 
-                        checked={enforcePrerequisites}
-                        onChange={(e) => setEnforcePrerequisites(e.target.checked)}
-                        className="rounded border-[#d0d5dd] text-[#1668e8] focus:ring-[#1668e8]" 
-                      />
-                      <span>Keep round order (Round 1 before Round 2)</span>
-                    </label>
-                    <label className="flex items-center gap-2 cursor-pointer">
-                      <input 
-                        type="checkbox" 
-                        checked={respectAvailability}
-                        onChange={(e) => setRespectAvailability(e.target.checked)}
-                        className="rounded border-[#d0d5dd] text-[#1668e8] focus:ring-[#1668e8]" 
-                      />
-                      <span>Respect interviewer weekly limits</span>
-                    </label>
-                  </div>
-                </div>
-
-                {/* Smart Preferences */}
-                <div className="space-y-2">
-                  <label className="font-semibold text-[#344054] block">Smart Preferences</label>
-                  <div className="space-y-1.5 text-xs text-[#344054]">
-                    <label className="flex items-center gap-2 cursor-pointer">
-                      <input 
-                        type="checkbox" 
-                        checked={balanceWorkload}
-                        onChange={(e) => setBalanceWorkload(e.target.checked)}
-                        className="rounded border-[#d0d5dd] text-[#1668e8] focus:ring-[#1668e8]" 
-                      />
-                      <span>Spread interviews fairly across team</span>
-                    </label>
-                    <label className="flex items-center gap-2 cursor-pointer">
-                      <input 
-                        type="checkbox" 
-                        checked={minimizeIdleGaps}
-                        onChange={(e) => setMinimizeIdleGaps(e.target.checked)}
-                        className="rounded border-[#d0d5dd] text-[#1668e8] focus:ring-[#1668e8]" 
-                      />
-                      <span>Avoid long waiting gaps between rounds</span>
-                    </label>
-                    <div className="text-[11px] text-[#027a48] font-medium mt-1 pt-1 border-t border-[#f2f4f7] flex items-center gap-1.5">
-                      <Check className="w-3.5 h-3.5 text-[#12b76a]" />
-                      <span>Ready to schedule in seconds</span>
-                    </div>
-                  </div>
+                <div className="flex items-center gap-2 text-[11px] text-[#475467]">
+                  <span className="w-2 h-2 rounded-full bg-emerald-500" />
+                  <span>5 Constraints Active • CP-SAT Minimal-Churn Engine</span>
                 </div>
               </div>
+
+              {/* Collapsible Rules Details */}
+              {showSolverRules && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-5 pt-3 border-t border-[#f2f4f7] text-xs animate-in fade-in">
+                  {/* Required Rules Toggles */}
+                  <div className="space-y-2">
+                    <label className="font-semibold text-[#344054] block">Required Rules</label>
+                    <div className="space-y-1.5 text-xs text-[#344054]">
+                      <label className="flex items-center gap-2 cursor-pointer">
+                        <input 
+                          type="checkbox" 
+                          checked={preventDoubleBooking}
+                          onChange={(e) => setPreventDoubleBooking(e.target.checked)}
+                          className="rounded border-[#d0d5dd] text-[#1668e8] focus:ring-[#1668e8]" 
+                        />
+                        <span>No double-booking (interviewer & room)</span>
+                      </label>
+                      <label className="flex items-center gap-2 cursor-pointer">
+                        <input 
+                          type="checkbox" 
+                          checked={enforcePrerequisites}
+                          onChange={(e) => setEnforcePrerequisites(e.target.checked)}
+                          className="rounded border-[#d0d5dd] text-[#1668e8] focus:ring-[#1668e8]" 
+                        />
+                        <span>Keep round order (Round 1 before Round 2)</span>
+                      </label>
+                      <label className="flex items-center gap-2 cursor-pointer">
+                        <input 
+                          type="checkbox" 
+                          checked={respectAvailability}
+                          onChange={(e) => setRespectAvailability(e.target.checked)}
+                          className="rounded border-[#d0d5dd] text-[#1668e8] focus:ring-[#1668e8]" 
+                        />
+                        <span>Respect interviewer weekly limits</span>
+                      </label>
+                    </div>
+                  </div>
+
+                  {/* Smart Preferences */}
+                  <div className="space-y-2">
+                    <label className="font-semibold text-[#344054] block">Smart Preferences</label>
+                    <div className="space-y-1.5 text-xs text-[#344054]">
+                      <label className="flex items-center gap-2 cursor-pointer">
+                        <input 
+                          type="checkbox" 
+                          checked={balanceWorkload}
+                          onChange={(e) => setBalanceWorkload(e.target.checked)}
+                          className="rounded border-[#d0d5dd] text-[#1668e8] focus:ring-[#1668e8]" 
+                        />
+                        <span>Spread interviews fairly across team</span>
+                      </label>
+                      <label className="flex items-center gap-2 cursor-pointer">
+                        <input 
+                          type="checkbox" 
+                          checked={minimizeIdleGaps}
+                          onChange={(e) => setMinimizeIdleGaps(e.target.checked)}
+                          className="rounded border-[#d0d5dd] text-[#1668e8] focus:ring-[#1668e8]" 
+                        />
+                        <span>Avoid long waiting gaps between rounds</span>
+                      </label>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Unfilled Scorecards & Interviewer Nudge Hub */}
@@ -604,40 +618,45 @@ export const CoordinatorWorkspace: React.FC<CoordinatorWorkspaceProps> = ({ onSi
 
               {/* Master Calendar Matrix Grid */}
               {calendarEvents.length === 0 && (
-                <div className="m-4 p-5 rounded-2xl bg-[#f9fafb] border border-dashed border-[#eaecf0] text-center space-y-1">
-                  <CalendarIcon className="w-5 h-5 text-[#98a2b3] mx-auto mb-1" />
+                <div className="m-4 p-6 rounded-2xl bg-[#f9fafb] border border-dashed border-[#eaecf0] text-center space-y-1.5">
+                  <CalendarIcon className="w-6 h-6 text-[#98a2b3] mx-auto mb-1" />
                   <p className="font-semibold text-xs text-[#344054]">No Published Master Schedule</p>
-                  <p className="text-[11px] text-[#667085]">
+                  <p className="text-[11px] text-[#667085] max-w-md mx-auto">
                     Configure your placement parameters and click "Run Live CP-SAT Optimization Engine" above to generate a conflict-free master schedule.
                   </p>
                 </div>
               )}
-              <div className="p-4 overflow-x-auto">
-                <div className="min-w-[840px]">
-                  {/* Day Headers */}
-                  <div className="grid grid-cols-6 border-b border-[#eaecf0] pb-2 text-xs font-bold text-[#475467]">
-                    <div className="col-span-1 text-center text-[#98a2b3] flex items-center justify-center gap-1">
-                      <Clock className="w-3.5 h-3.5" />
+
+              {/* Horizontally scrollable calendar container */}
+              <div className="overflow-x-auto scrollbar-thin">
+                <div className="min-w-[1100px] w-full divide-y divide-[#eaecf0]">
+                  {/* Sticky Day Headers */}
+                  <div className="sticky top-0 z-20 bg-white/95 backdrop-blur-md px-4 py-3 grid grid-cols-12 items-center border-b border-[#eaecf0] shadow-2xs">
+                    <div className="col-span-2 text-center text-[#667085] flex items-center justify-center gap-1.5 font-bold text-xs">
+                      <Clock className="w-3.5 h-3.5 text-[#1668e8]" />
                       <span>Time ({currentTimezone.shortName})</span>
                     </div>
                     {weekDays.map((day) => (
-                      <div key={day.fullDate} className="col-span-1 text-center py-1.5 bg-[#f9fafb] rounded-xl border border-[#eaecf0] mx-1">
-                        <span className="block text-[11px] text-[#101828] font-bold">{day.formattedDate}</span>
+                      <div key={day.fullDate} className="col-span-2 text-center py-2 px-2 bg-[#f8f9fa] rounded-2xl border border-[#eaecf0] mx-1">
+                        <span className="block text-xs text-[#101828] font-bold tracking-tight">{day.formattedDate}</span>
+                        <span className="text-[10px] text-[#667085] font-medium">09:00 – 17:00</span>
                       </div>
                     ))}
                   </div>
 
                   {/* Grid Rows */}
-                  <div className="divide-y divide-[#f2f4f7] text-xs">
+                  <div className="divide-y divide-[#f2f4f7] px-4 py-2 text-xs">
                     {pstHours.map((pstH) => {
                       const convertedTime = convertHourLabel(pstH);
 
                       return (
-                        <div key={pstH} className="grid grid-cols-6 py-3 items-center min-h-[76px]">
+                        <div key={pstH} className="grid grid-cols-12 py-3 items-stretch min-h-[92px] hover:bg-[#fafafa]/80 transition-colors">
                           {/* Time Column Header */}
-                          <div className="col-span-1 text-center font-mono text-[#101828] font-bold text-xs">
-                            <span>{convertedTime.full}</span>
-                            <span className="text-[10px] text-[#98a2b3] block font-normal">
+                          <div className="col-span-2 flex flex-col justify-center items-center text-center font-mono pr-3 border-r border-[#f2f4f7]">
+                            <span className="text-xs font-bold text-[#101828] bg-[#f2f4f7] px-2.5 py-1 rounded-full">
+                              {convertedTime.full}
+                            </span>
+                            <span className="text-[10px] text-[#98a2b3] mt-1 font-medium">
                               ({pstH}:00 PT)
                             </span>
                           </div>
@@ -649,34 +668,53 @@ export const CoordinatorWorkspace: React.FC<CoordinatorWorkspaceProps> = ({ onSi
                             );
 
                             return (
-                              <div key={dayIdx} className="col-span-1 px-1 h-full flex flex-col justify-center">
-                                {matchingEvents.map((evt) => (
-                                  <div
-                                    key={evt.id}
-                                    onClick={() => setSelectedEvent(evt)}
-                                    className={`p-2.5 rounded-xl border text-left space-y-1 shadow-2xs transition-transform hover:scale-[1.02] cursor-pointer ${
-                                      evt.roundType === 'tech'
-                                        ? 'bg-[#eff8ff] border-[#b2ddff] text-[#175cd3]'
-                                        : evt.roundType === 'arch'
-                                        ? 'bg-[#f9f5ff] border-[#e9d7fe] text-[#6941c6]'
-                                        : 'bg-[#ecfdf3] border-[#a6f4c5] text-[#027a48]'
-                                    }`}
-                                  >
-                                    <div className="font-bold text-[11px] truncate flex items-center justify-between">
-                                      <span>{evt.candidateName}</span>
-                                      <span className="text-[9px] uppercase px-1 rounded bg-white/70 font-bold">
-                                        {evt.roundType}
-                                      </span>
-                                    </div>
-                                    <div className="text-[10px] text-[#344054] font-medium truncate">
-                                      {evt.roundName}
-                                    </div>
-                                    <div className="text-[9px] text-[#667085] flex items-center gap-1 truncate">
-                                      <User className="w-2.5 h-2.5" />
-                                      <span>{evt.interviewer}</span>
-                                    </div>
+                              <div key={dayIdx} className="col-span-2 px-1.5 flex flex-col justify-center gap-2">
+                                {matchingEvents.length === 0 ? (
+                                  <div className="h-full min-h-[64px] rounded-2xl border border-dashed border-[#f2f4f7] flex items-center justify-center text-[10px] text-[#d0d5dd] select-none hover:border-[#eaecf0] transition-colors">
+                                    <span>Available</span>
                                   </div>
-                                ))}
+                                ) : (
+                                  matchingEvents.map((evt) => (
+                                    <div
+                                      key={evt.id}
+                                      onClick={() => setSelectedEvent(evt)}
+                                      className={`p-2.5 rounded-2xl border text-left space-y-1.5 shadow-2xs transition-all hover:scale-[1.01] hover:shadow-xs cursor-pointer ${
+                                        evt.roundType === 'tech'
+                                          ? 'bg-[#eff8ff] border-[#b2ddff] text-[#175cd3]'
+                                          : evt.roundType === 'arch'
+                                          ? 'bg-[#f9f5ff] border-[#e9d7fe] text-[#6941c6]'
+                                          : 'bg-[#ecfdf3] border-[#a6f4c5] text-[#027a48]'
+                                      }`}
+                                    >
+                                      <div className="flex items-center justify-between gap-1">
+                                        <span className="font-bold text-xs truncate text-[#101828]">{evt.candidateName}</span>
+                                        <span className={`text-[9px] uppercase px-1.5 py-0.5 rounded-full font-bold shrink-0 ${
+                                          evt.roundType === 'tech'
+                                            ? 'bg-[#d1e9ff] text-[#175cd3]'
+                                            : evt.roundType === 'arch'
+                                            ? 'bg-[#ece9fe] text-[#6941c6]'
+                                            : 'bg-[#d1fadf] text-[#027a48]'
+                                        }`}>
+                                          {evt.roundType}
+                                        </span>
+                                      </div>
+                                      <div className="text-[11px] text-[#344054] font-medium truncate">
+                                        {evt.roundName}
+                                      </div>
+                                      <div className="flex items-center justify-between text-[10px] text-[#667085] pt-1 border-t border-black/5">
+                                        <div className="flex items-center gap-1 truncate">
+                                          <User className="w-2.5 h-2.5 shrink-0" />
+                                          <span className="truncate">{evt.interviewer.split(' ')[0]} {evt.interviewer.split(' ')[1]?.[0]}.</span>
+                                        </div>
+                                        {evt.room && (
+                                          <span className="text-[9px] px-1.5 py-0.5 bg-black/5 rounded-full text-[#475467] shrink-0 font-medium">
+                                            {evt.room}
+                                          </span>
+                                        )}
+                                      </div>
+                                    </div>
+                                  ))
+                                )}
                               </div>
                             );
                           })}
