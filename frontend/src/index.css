@@ -44,3 +44,58 @@
 ::-webkit-scrollbar-thumb:hover {
   background: #94a3b8;
 }
+
+/* Chakravyuh Website Logo Loading Animations */
+@keyframes logoPulseGlow {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 0.95;
+  }
+  50% {
+    transform: scale(1.05);
+    opacity: 1;
+  }
+}
+
+@keyframes orbitRotate {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes orbitReverse {
+  0% {
+    transform: rotate(360deg);
+  }
+  100% {
+    transform: rotate(0deg);
+  }
+}
+
+@keyframes shimmerProgress {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+.animate-logo-pulse {
+  animation: logoPulseGlow 2.2s ease-in-out infinite;
+}
+
+.animate-orbit-slow {
+  animation: orbitRotate 12s linear infinite;
+}
+
+.animate-orbit-reverse {
+  animation: orbitReverse 8s linear infinite;
+}
+
+.animate-shimmer-bar {
+  animation: shimmerProgress 1.5s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}

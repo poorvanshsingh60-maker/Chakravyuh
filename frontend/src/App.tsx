@@ -27,6 +27,7 @@ import { HelpSupportView } from './components/views/HelpSupportView';
 import { TimezoneSelector } from './components/common/TimezoneSelector';
 import { authService } from './services/authService';
 import { CoordinationProvider, useCoordination } from './context/CoordinationContext';
+import { ChakravyuhLoadingAnimation } from './components/common/ChakravyuhLoadingAnimation';
 import { Sparkles } from 'lucide-react';
 
 interface AuthUser {
@@ -450,16 +451,27 @@ export function App() {
   } | null>(null);
 
   const handleLogin = (user: AuthUser) => {
-    setCurrentUser(user);
-    setLiveUserBackup(user);
-    setIsDemoMode(false);
-    try {
-      localStorage.setItem('chakravyuh_user', JSON.stringify(user));
-      localStorage.setItem('chakravyuh_live_user_backup', JSON.stringify(user));
-      localStorage.setItem('chakravyuh_is_demo_mode', 'false');
-    } catch (e) {
-      console.error('Failed to save session:', e);
-    }
+    setTransitionTarget({
+      role: user.role,
+      name: user.full_name,
+      title: `Signing into ${user.role.toLowerCase()} command portal...`
+    });
+    setIsSwitchingRole(true);
+
+    setTimeout(() => {
+      setCurrentUser(user);
+      setLiveUserBackup(user);
+      setIsDemoMode(false);
+      try {
+        localStorage.setItem('chakravyuh_user', JSON.stringify(user));
+        localStorage.setItem('chakravyuh_live_user_backup', JSON.stringify(user));
+        localStorage.setItem('chakravyuh_is_demo_mode', 'false');
+      } catch (e) {
+        console.error('Failed to save session:', e);
+      }
+      setIsSwitchingRole(false);
+      setTransitionTarget(null);
+    }, 450);
   };
 
   const handleLogout = () => {
@@ -472,53 +484,75 @@ export function App() {
   };
 
   const enterDemoMode = () => {
-    if (currentUser) {
-      setLiveUserBackup(currentUser);
-      try {
-        localStorage.setItem('chakravyuh_live_user_backup', JSON.stringify(currentUser));
-      } catch (e) {
-        console.error('Failed to backup live user:', e);
+    setTransitionTarget({
+      role: 'COORDINATOR',
+      name: 'Emma Watson',
+      title: 'Entering Mock Drive Demo Sandbox...'
+    });
+    setIsSwitchingRole(true);
+
+    setTimeout(() => {
+      if (currentUser) {
+        setLiveUserBackup(currentUser);
+        try {
+          localStorage.setItem('chakravyuh_live_user_backup', JSON.stringify(currentUser));
+        } catch (e) {
+          console.error('Failed to backup live user:', e);
+        }
       }
-    }
-    const demoUser: AuthUser = {
-      id: 'coord-demo-1',
-      email: 'emma.watson@chakravyuh.ai',
-      full_name: 'Emma Watson (Lead Scheduler)',
-      role: 'COORDINATOR'
-    };
-    setCurrentUser(demoUser);
-    setIsDemoMode(true);
-    try {
-      localStorage.setItem('chakravyuh_is_demo_mode', 'true');
-      localStorage.setItem('chakravyuh_user', JSON.stringify(demoUser));
-    } catch (e) {
-      console.error('Failed to enter demo mode:', e);
-    }
+      const demoUser: AuthUser = {
+        id: 'coord-demo-1',
+        email: 'emma.watson@chakravyuh.ai',
+        full_name: 'Emma Watson (Lead Scheduler)',
+        role: 'COORDINATOR'
+      };
+      setCurrentUser(demoUser);
+      setIsDemoMode(true);
+      try {
+        localStorage.setItem('chakravyuh_is_demo_mode', 'true');
+        localStorage.setItem('chakravyuh_user', JSON.stringify(demoUser));
+      } catch (e) {
+        console.error('Failed to enter demo mode:', e);
+      }
+      setIsSwitchingRole(false);
+      setTransitionTarget(null);
+    }, 450);
   };
 
   const exitDemoMode = () => {
-    setIsDemoMode(false);
-    try {
-      localStorage.setItem('chakravyuh_is_demo_mode', 'false');
-    } catch (e) {
-      console.error('Failed to exit demo mode:', e);
-    }
-    if (liveUserBackup) {
-      setCurrentUser(liveUserBackup);
+    setTransitionTarget({
+      role: 'COORDINATOR',
+      name: 'Exiting Demo Sandbox',
+      title: 'Restoring live account state...'
+    });
+    setIsSwitchingRole(true);
+
+    setTimeout(() => {
+      setIsDemoMode(false);
       try {
-        localStorage.setItem('chakravyuh_user', JSON.stringify(liveUserBackup));
+        localStorage.setItem('chakravyuh_is_demo_mode', 'false');
       } catch (e) {
-        console.error('Failed to restore live user:', e);
+        console.error('Failed to exit demo mode:', e);
       }
-    } else {
-      const realUser = authService.getStoredUser();
-      if (realUser) {
-        setCurrentUser(realUser);
+      if (liveUserBackup) {
+        setCurrentUser(liveUserBackup);
+        try {
+          localStorage.setItem('chakravyuh_user', JSON.stringify(liveUserBackup));
+        } catch (e) {
+          console.error('Failed to restore live user:', e);
+        }
       } else {
-        authService.logout();
-        setCurrentUser(null);
+        const realUser = authService.getStoredUser();
+        if (realUser) {
+          setCurrentUser(realUser);
+        } else {
+          authService.logout();
+          setCurrentUser(null);
+        }
       }
-    }
+      setIsSwitchingRole(false);
+      setTransitionTarget(null);
+    }, 400);
   };
 
   const handleSwitchRole = (newRole: UserRole) => {
@@ -595,34 +629,14 @@ export function App() {
             onExitDemoMode={exitDemoMode}
           />
 
-          {/* Apple HIG Role Switch Smooth Transition Overlay */}
+          {/* Chakravyuh Website Logo Loading Animation Transition */}
           {isSwitchingRole && transitionTarget && (
-            <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-white/70 backdrop-blur-md transition-all duration-300 animate-in fade-in">
-              <div className="bg-white/95 border border-[#eaecf0] shadow-2xl rounded-3xl p-6 flex flex-col items-center gap-4 max-w-sm w-full mx-4 text-center transform transition-all scale-100 animate-in zoom-in-95">
-                <div className="relative flex items-center justify-center">
-                  <div className="w-14 h-14 rounded-full border-2 border-[#1668e8]/20 border-t-[#1668e8] animate-spin" />
-                  <div className="absolute w-9 h-9 rounded-full bg-[#1668e8] text-white flex items-center justify-center font-bold text-sm shadow-xs select-none">
-                    {transitionTarget.name.charAt(0)}
-                  </div>
-                </div>
-
-                <div className="space-y-1">
-                  <span className="text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-[#eff8ff] text-[#175cd3] border border-[#b2ddff]">
-                    {transitionTarget.role} Portal Active
-                  </span>
-                  <h3 className="text-base font-bold text-[#101828] mt-1">
-                    {transitionTarget.name}
-                  </h3>
-                  <p className="text-xs text-[#667085]">
-                    {transitionTarget.title}
-                  </p>
-                </div>
-
-                <p className="text-[11px] text-[#98a2b3] italic animate-pulse">
-                  Hydrating calendar views, panel credentials & coordination bus...
-                </p>
-              </div>
-            </div>
+            <ChakravyuhLoadingAnimation 
+              targetRole={transitionTarget.role}
+              targetName={transitionTarget.name}
+              subMessage={transitionTarget.title}
+              size="fullscreen"
+            />
           )}
         </>
       )}
