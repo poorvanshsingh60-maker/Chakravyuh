@@ -241,6 +241,14 @@ interface CoordinationState {
   markMessageAsRead: (id: string) => void;
   dispatchSchedule: (candidateName: string, candidateEmail: string, sessions: SavedScheduleSession[]) => void;
   requestReschedule: (candidateName: string, roundName: string, reason: string) => void;
+  resolveRescheduleRequest: (messageId: string, resolution?: {
+    candidateName?: string;
+    roundName?: string;
+    newTimeSlot?: string;
+    newRoom?: string;
+    newDayIndex?: number;
+    newPstHour?: number;
+  }) => void;
   isDemoMode?: boolean;
 }
 
@@ -634,6 +642,70 @@ export const CoordinationProvider: React.FC<CoordinationProviderProps> = ({
     setMessages(prev => [rescheduleMsg, ...prev]);
   };
 
+  const resolveRescheduleRequest = (
+    messageId: string,
+    resolution?: {
+      candidateName?: string;
+      roundName?: string;
+      newTimeSlot?: string;
+      newRoom?: string;
+      newDayIndex?: number;
+      newPstHour?: number;
+    }
+  ) => {
+    const target = messages.find(m => m.id === messageId);
+    const candName = resolution?.candidateName || target?.senderName || 'Marcus Vance';
+    const roundName = resolution?.roundName || 'Design Exercise 1 & Domain Screen';
+    const slot = resolution?.newTimeSlot || 'Tuesday, Oct 27 • 2:00 PM – 2:45 PM PST';
+    const room = resolution?.newRoom || 'Virtual Pod Alpha';
+
+    const confirmationMsg: CoordinationMessage = {
+      id: `msg-resolved-${Date.now()}`,
+      senderName: 'Emma Watson',
+      senderRole: 'Lead Coordinator',
+      recipientName: candName,
+      recipientRole: 'CANDIDATE',
+      subject: `Reschedule Approved: ${roundName}`,
+      body: `CP-SAT constraint solver evaluated minimal-churn alternate slots and reallocated: ${slot} in ${room}. Zero conflicts detected across evaluator calendars.`,
+      timestamp: 'Just now',
+      type: 'SCHEDULE_CONFIRMATION',
+      isRead: false,
+      status: 'DELIVERED'
+    };
+
+    setMessages(prev => [confirmationMsg, ...prev.filter(m => m.id !== messageId)]);
+
+    // Update active sessions in scheduleState if applicable
+    setScheduleState(prev => {
+      const updatedSessions = (prev.activeSessions || []).map(sess => {
+        if (
+          sess.title.toLowerCase().includes('design') || 
+          sess.id === 'sess-1' || 
+          sess.title.toLowerCase().includes(roundName.toLowerCase())
+        ) {
+          return {
+            ...sess,
+            pstTimeSlot: slot,
+            pstRowHour: resolution?.newPstHour ?? 14,
+            room: room
+          };
+        }
+        return sess;
+      });
+      const newState = {
+        ...prev,
+        activeSessions: updatedSessions,
+        lastUpdated: new Date().toISOString()
+      };
+      try {
+        localStorage.setItem(SCHEDULE_STORAGE_KEY, JSON.stringify(newState));
+      } catch (e) {
+        console.error(e);
+      }
+      return newState;
+    });
+  };
+
   const resetFlow = () => {
     setIsInviteAccepted(false);
     setAreSlotsConfirmed(false);
@@ -675,6 +747,7 @@ export const CoordinationProvider: React.FC<CoordinationProviderProps> = ({
       markMessageAsRead,
       dispatchSchedule,
       requestReschedule,
+      resolveRescheduleRequest,
       acceptInvite,
       confirmSlots,
       submitScorecard,

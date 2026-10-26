@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { UserRole } from './types/user';
 import { LoginPage } from './pages/auth/LoginPage';
-import { CoordinatorWorkspace } from './components/coordinator/CoordinatorWorkspace';
 import { InterviewerWorkspace } from './components/interviewer/InterviewerWorkspace';
 import { CandidateWorkspace } from './components/candidate/CandidateWorkspace';
 import { Sidebar } from './components/Sidebar';
@@ -18,7 +17,7 @@ import { AllTasksView } from './components/views/AllTasksView';
 import { UpcomingEventsView } from './components/views/UpcomingEventsView';
 import { CandidatesView } from './components/views/CandidatesView';
 import { JobsView } from './components/views/JobsView';
-import { AutomateSchedulingView } from './components/views/AutomateSchedulingView';
+import { MasterSchedulingView } from './components/views/MasterSchedulingView';
 import { InterviewerTrainingView } from './components/views/InterviewerTrainingView';
 import { CommunicationsView } from './components/views/CommunicationsView';
 import { DirectoryView } from './components/views/DirectoryView';
@@ -165,8 +164,8 @@ function MainLayout({
           ? 'My Interview Loops' 
           : currentUser?.role === 'CANDIDATE' 
           ? 'My Confirmed Schedule' 
-          : 'Master Schedule Grid';
-      case 'scheduling': return 'Automate Scheduling Matrix';
+          : 'Master Scheduling Matrix';
+      case 'scheduling': return 'Master Scheduling Matrix';
       case 'candidates': return 'Candidate Loops';
       case 'all-tasks': return 'Tasks & Approvals';
       case 'my-tasks': return 'My Task Checklist';
@@ -203,11 +202,10 @@ function MainLayout({
             </h2>
           </div>
 
-          {/* Middle: Live Account Status OR Demo Sandbox Switcher */}
+          {/* Middle: Live Account Status OR Demo Sandbox Switcher (Apple HIG White Card) */}
           {isDemoMode ? (
-            <div className="flex items-center gap-2 bg-amber-50/80 border border-amber-300/80 p-1 pl-3 pr-1.5 rounded-full shadow-2xs">
-              <span className="text-[10px] font-bold text-amber-900 uppercase tracking-wider flex items-center gap-1.5 hidden md:flex">
-                <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
+            <div className="flex items-center gap-2 bg-white border border-[#eaecf0] p-1 pl-3 pr-1.5 rounded-full shadow-2xs">
+              <span className="text-[10px] font-bold text-[#344054] uppercase tracking-wider hidden md:flex items-center">
                 Demo Sandbox:
               </span>
               <div className="flex items-center gap-1">
@@ -217,7 +215,7 @@ function MainLayout({
                   className={`px-3 py-1 rounded-full text-xs font-bold transition-all cursor-pointer ${
                     currentUser.role === 'COORDINATOR'
                       ? 'bg-[#1668e8] text-white shadow-xs'
-                      : 'text-[#444746] hover:bg-white hover:text-[#1f1f1f]'
+                      : 'text-[#475467] hover:bg-[#f2f4f7] hover:text-[#101828]'
                   }`}
                 >
                   Coordinator
@@ -228,7 +226,7 @@ function MainLayout({
                   className={`px-3 py-1 rounded-full text-xs font-bold transition-all cursor-pointer ${
                     currentUser.role === 'INTERVIEWER'
                       ? 'bg-[#1668e8] text-white shadow-xs'
-                      : 'text-[#444746] hover:bg-white hover:text-[#1f1f1f]'
+                      : 'text-[#475467] hover:bg-[#f2f4f7] hover:text-[#101828]'
                   }`}
                 >
                   Interviewer
@@ -239,7 +237,7 @@ function MainLayout({
                   className={`px-3 py-1 rounded-full text-xs font-bold transition-all cursor-pointer ${
                     currentUser.role === 'CANDIDATE'
                       ? 'bg-[#1668e8] text-white shadow-xs'
-                      : 'text-[#444746] hover:bg-white hover:text-[#1f1f1f]'
+                      : 'text-[#475467] hover:bg-[#f2f4f7] hover:text-[#101828]'
                   }`}
                 >
                   Candidate
@@ -311,7 +309,11 @@ function MainLayout({
           {currentTab === 'flowchart' && (
             <div className="flex-1 min-h-0 overflow-hidden flex flex-col">
               {currentUser.role === 'COORDINATOR' && (
-                <CoordinatorWorkspace 
+                <MasterSchedulingView 
+                  onGoToCommunications={() => setCurrentTab('communications')}
+                  activeCandidate={activeCandidate}
+                  candidateName={activeCandidate?.name || currentUser.full_name}
+                  roleName={activeCandidate?.role || '20224012 (CSE) — Google SDE'}
                   onSimulateCandidate={() => onSwitchRole('CANDIDATE')}
                 />
               )}
@@ -363,12 +365,14 @@ function MainLayout({
             <JobsView jobs={jobs} />
           )}
 
-          {/* Automate Scheduling */}
+          {/* Unified Master Scheduling Matrix */}
           {currentTab === 'scheduling' && (
-            <AutomateSchedulingView 
+            <MasterSchedulingView 
               onGoToCommunications={() => setCurrentTab('communications')}
+              activeCandidate={activeCandidate}
               candidateName={activeCandidate?.name || currentUser.full_name}
-              roleName={activeCandidate?.role || 'Senior Software Engineer'}
+              roleName={activeCandidate?.role || '20224012 (CSE) — Google SDE'}
+              onSimulateCandidate={() => onSwitchRole('CANDIDATE')}
             />
           )}
 

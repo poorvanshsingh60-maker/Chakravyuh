@@ -209,18 +209,18 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 Operations & Schedule
               </span>
 
-              {/* Automate Scheduling Matrix */}
+              {/* Unified Master Scheduling */}
               <button 
                 onClick={() => onSelectTab('scheduling')}
                 className={`w-full flex items-center justify-between px-3 py-2 rounded-xl font-medium transition-colors text-left ${
-                  currentTab === 'scheduling' 
+                  currentTab === 'scheduling' || (currentUser?.role === 'COORDINATOR' && currentTab === 'flowchart')
                     ? 'bg-[#1668e8] text-white shadow-xs' 
                     : 'text-[#344054] hover:bg-[#f9fafb]'
                 }`}
               >
                 <div className="flex items-center gap-2.5">
-                  <Calendar className={`w-4 h-4 ${currentTab === 'scheduling' ? 'text-white' : 'text-[#667085]'}`} />
-                  <span>Automate Scheduling</span>
+                  <Calendar className={`w-4 h-4 ${currentTab === 'scheduling' || (currentUser?.role === 'COORDINATOR' && currentTab === 'flowchart') ? 'text-white' : 'text-[#667085]'}`} />
+                  <span>Master Scheduling</span>
                 </div>
               </button>
             </div>

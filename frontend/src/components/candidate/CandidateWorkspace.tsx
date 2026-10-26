@@ -96,6 +96,10 @@ export const CandidateWorkspace: React.FC = () => {
   const [rescheduledRoundIds, setRescheduledRoundIds] = useState<Record<string, boolean>>({});
 
   // Dynamic syncing of confirmed rounds with schedule state
+  const hasActiveReschedule = useMemo(() => {
+    return messages.some(m => m.type === 'RESCHEDULE_REQUEST');
+  }, [messages]);
+
   const confirmedRounds: ConfirmedRound[] = useMemo(() => {
     if (scheduleState?.scheduleApplied && scheduleState.activeSessions && scheduleState.activeSessions.length > 0) {
       return scheduleState.activeSessions.map((sess, idx) => ({
@@ -103,13 +107,13 @@ export const CandidateWorkspace: React.FC = () => {
         roundName: sess.title,
         order: idx + 1,
         duration: sess.durationMins,
-        date: 'Saturday, May 18, 2024',
+        date: sess.pstTimeSlot.includes('Tuesday') ? 'Tuesday, Oct 27, 2026' : 'Saturday, May 18, 2024',
         pstTimeSlot: sess.pstTimeSlot,
         interviewerName: sess.interviewer,
         interviewerRole: sess.interviewerRole,
         location: sess.room,
         meetingLink: `https://meet.google.com/chk-${sess.room.toLowerCase().replace(/[^a-z0-9]/g, '-')}`,
-        status: (rescheduledRoundIds[sess.id] ? 'RESCHEDULE_REQUESTED' : 'CONFIRMED') as 'RESCHEDULE_REQUESTED' | 'CONFIRMED'
+        status: (hasActiveReschedule && rescheduledRoundIds[sess.id] ? 'RESCHEDULE_REQUESTED' : 'CONFIRMED') as 'RESCHEDULE_REQUESTED' | 'CONFIRMED'
       }));
     }
 
@@ -119,9 +123,9 @@ export const CandidateWorkspace: React.FC = () => {
 
     return DEFAULT_CONFIRMED_ROUNDS.map(r => ({
       ...r,
-      status: (rescheduledRoundIds[r.id] ? 'RESCHEDULE_REQUESTED' : r.status) as any
+      status: (hasActiveReschedule && rescheduledRoundIds[r.id] ? 'RESCHEDULE_REQUESTED' : r.status) as any
     }));
-  }, [scheduleState?.scheduleApplied, scheduleState?.activeSessions, rescheduledRoundIds, isDemoMode]);
+  }, [scheduleState?.scheduleApplied, scheduleState?.activeSessions, rescheduledRoundIds, hasActiveReschedule, isDemoMode]);
 
   // Messages directed to Candidate
   const candidateMessages = useMemo(() => {
