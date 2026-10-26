@@ -1,5 +1,6 @@
 import React from 'react';
 import { useAuthContext } from '../../context/AuthContext';
+import { ChakravyuhLoadingAnimation } from './ChakravyuhLoadingAnimation';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -10,7 +11,13 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, fallba
   const { isAuthenticated, isLoading } = useAuthContext();
 
   if (isLoading) {
-    return <div className="p-8 text-center text-xs text-[#667085]">Authenticating session...</div>;
+    return (
+      <ChakravyuhLoadingAnimation 
+        size="fullscreen"
+        message="Authenticating session..."
+        subMessage="Verifying credentials & panel permissions..."
+      />
+    );
   }
 
   if (!isAuthenticated) {

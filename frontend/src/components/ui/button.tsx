@@ -12,7 +12,7 @@ export const Button: React.FC<ButtonProps> = ({
   children, 
   ...props 
 }) => {
-  const base = "inline-flex items-center justify-center font-medium rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-offset-1";
+  const base = "inline-flex items-center justify-center font-medium rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-offset-1";
   
   const variants = {
     primary: "bg-[#1668e8] hover:bg-[#145ac7] text-white shadow-2xs focus:ring-[#1668e8]",

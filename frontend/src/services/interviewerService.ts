@@ -13,5 +13,14 @@ export const interviewerService = {
 
   updateCapacity: async (id: string, maxWeekly: number): Promise<void> => {
     await api.put(`/interviewers/${id}/capacity`, { maxWeeklyInterviews: maxWeekly }).catch(() => {});
+  },
+
+  updateAvailability: async (id: string, availableSlots: Record<string, boolean>): Promise<any> => {
+    try {
+      const res = await api.patch(`/interviewers/${id}/availability`, { available_slots: availableSlots });
+      return res.data;
+    } catch {
+      return null;
+    }
   }
 };

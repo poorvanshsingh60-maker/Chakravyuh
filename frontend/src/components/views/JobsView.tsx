@@ -18,7 +18,7 @@ interface JobsViewProps {
 
 export const JobsView: React.FC<JobsViewProps> = ({ jobs }) => {
   const [jobList, setJobList] = useState<JobPosition[]>(jobs);
-  const [selectedJob, setSelectedJob] = useState<JobPosition>(jobs[0]);
+  const [selectedJob, setSelectedJob] = useState<JobPosition | null>(jobs[0] || null);
 
   // Modal states
   const [createJobModalOpen, setCreateJobModalOpen] = useState(false);
@@ -64,11 +64,12 @@ export const JobsView: React.FC<JobsViewProps> = ({ jobs }) => {
 
   const handleAddRound = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newRoundName.trim()) return;
+    if (!newRoundName.trim() || !selectedJob) return;
 
+    const currentJob = selectedJob;
     const skillsArray = newRoundSkills.split(',').map(s => s.trim()).filter(Boolean);
     const updatedRounds = [
-      ...selectedJob.rounds,
+      ...currentJob.rounds,
       {
         name: newRoundName,
         duration: parseInt(newRoundDuration, 10) || 45,
@@ -76,16 +77,17 @@ export const JobsView: React.FC<JobsViewProps> = ({ jobs }) => {
       }
     ];
 
-    const updatedJob = { ...selectedJob, rounds: updatedRounds };
+    const updatedJob: JobPosition = { ...currentJob, rounds: updatedRounds };
     setSelectedJob(updatedJob);
-    setJobList(jobList.map(j => j.id === selectedJob.id ? updatedJob : j));
+    setJobList(jobList.map(j => j.id === currentJob.id ? updatedJob : j));
     setAddRoundModalOpen(false);
     setNewRoundName('');
-    setFeedbackToast(`Round "${newRoundName}" added to ${selectedJob.title}!`);
+    setFeedbackToast(`Round "${newRoundName}" added to ${currentJob.title}!`);
     setTimeout(() => setFeedbackToast(null), 3500);
   };
 
   const handleDeleteRound = (roundIndex: number) => {
+    if (!selectedJob) return;
     const updatedRounds = selectedJob.rounds.filter((_, idx) => idx !== roundIndex);
     const updatedJob = { ...selectedJob, rounds: updatedRounds };
     setSelectedJob(updatedJob);
@@ -108,7 +110,7 @@ export const JobsView: React.FC<JobsViewProps> = ({ jobs }) => {
           <button 
             type="button"
             onClick={() => setCreateJobModalOpen(true)}
-            className="px-3.5 py-1.5 rounded-lg bg-[#1668e8] hover:bg-[#145ac7] text-white text-xs font-semibold shadow-2xs flex items-center gap-1.5 transition-colors"
+            className="px-4 py-2 rounded-full bg-[#1668e8] hover:bg-[#145ac7] text-white text-xs font-semibold shadow-2xs flex items-center gap-1.5 transition-colors"
           >
             <Plus className="w-3.5 h-3.5" />
             <span>Create Job Setup</span>
@@ -117,7 +119,7 @@ export const JobsView: React.FC<JobsViewProps> = ({ jobs }) => {
       </div>
 
       {feedbackToast && (
-        <div className="mx-8 mt-4 p-3.5 rounded-xl bg-[#ecfdf3] text-[#0b7c3e] border border-[#abefc6] text-xs font-semibold flex items-center gap-2 animate-in fade-in">
+        <div className="mx-8 mt-4 p-3.5 rounded-2xl bg-[#ecfdf3] text-[#0b7c3e] border border-[#abefc6] text-xs font-semibold flex items-center gap-2 animate-in fade-in">
           <CheckCircle2 className="w-4 h-4 text-[#0b7c3e]" />
           <span>{feedbackToast}</span>
         </div>
@@ -133,57 +135,65 @@ export const JobsView: React.FC<JobsViewProps> = ({ jobs }) => {
           </h2>
 
           <div className="space-y-2.5">
-            {jobList.map((job) => {
-              const isSelected = selectedJob.id === job.id;
-              return (
-                <div
-                  key={job.id}
-                  onClick={() => setSelectedJob(job)}
-                  className={`p-4 rounded-xl border transition-all cursor-pointer ${
-                    isSelected 
-                      ? 'border-[#1668e8] bg-[#f9fafb] ring-1 ring-[#1668e8]/20 shadow-2xs' 
-                      : 'border-[#eaecf0] bg-white hover:bg-[#fafafa]'
-                  }`}
-                >
-                  <div className="flex items-start justify-between">
-                    <div>
-                      <h3 className="font-bold text-sm text-[#101828]">{job.title}</h3>
-                      <p className="text-xs text-[#667085] mt-0.5">{job.department}</p>
+            {jobList.length === 0 ? (
+              <div className="p-8 text-center bg-[#f9fafb] rounded-2xl border border-dashed border-[#eaecf0] space-y-1">
+                <p className="font-semibold text-xs text-[#344054]">No job requisitions</p>
+                <p className="text-[11px] text-[#667085]">Click "Create Job Setup" above to add your first position.</p>
+              </div>
+            ) : (
+              jobList.map((job) => {
+                const isSelected = selectedJob?.id === job.id;
+                return (
+                  <div
+                    key={job.id}
+                    onClick={() => setSelectedJob(job)}
+                    className={`p-4 rounded-2xl border transition-all cursor-pointer ${
+                      isSelected 
+                        ? 'border-[#1668e8] bg-[#f9fafb] ring-1 ring-[#1668e8]/20 shadow-2xs' 
+                        : 'border-[#eaecf0] bg-white hover:bg-[#fafafa]'
+                    }`}
+                  >
+                    <div className="flex items-start justify-between">
+                      <div>
+                        <h3 className="font-bold text-sm text-[#101828]">{job.title}</h3>
+                        <p className="text-xs text-[#667085] mt-0.5">{job.department}</p>
+                      </div>
+                      <ChevronRight className={`w-4 h-4 ${isSelected ? 'text-[#1668e8]' : 'text-[#98a2b3]'}`} />
                     </div>
-                    <ChevronRight className={`w-4 h-4 ${isSelected ? 'text-[#1668e8]' : 'text-[#98a2b3]'}`} />
-                  </div>
 
-                  <div className="flex items-center gap-4 text-xs text-[#667085] pt-3 mt-3 border-t border-[#f2f4f7]">
-                    <span className="flex items-center gap-1">
-                      <MapPin className="w-3.5 h-3.5 text-[#98a2b3]" />
-                      {job.location}
-                    </span>
-                    <span className="flex items-center gap-1 font-medium text-[#101828]">
-                      <Users className="w-3.5 h-3.5 text-[#1668e8]" />
-                      {job.activeCandidates} candidates
-                    </span>
+                    <div className="flex items-center gap-4 text-xs text-[#667085] pt-3 mt-3 border-t border-[#f2f4f7]">
+                      <span className="flex items-center gap-1">
+                        <MapPin className="w-3.5 h-3.5 text-[#98a2b3]" />
+                        {job.location}
+                      </span>
+                      <span className="flex items-center gap-1 font-medium text-[#101828]">
+                        <Users className="w-3.5 h-3.5 text-[#1668e8]" />
+                        {job.activeCandidates} candidates
+                      </span>
+                    </div>
                   </div>
-                </div>
-              );
-            })}
+                );
+              })
+            )}
           </div>
         </div>
 
         {/* Right Column: Calibrated Round Plan (7 Cols) */}
         <div className="col-span-12 md:col-span-7 space-y-4">
-          <div className="bg-white border border-[#eaecf0] rounded-xl p-6 shadow-2xs space-y-6">
-            
-            <div className="border-b border-[#f2f4f7] pb-4">
-              <span className="text-[11px] font-semibold text-[#1668e8] bg-[#e7f2fe] px-2 py-0.5 rounded border border-[#bcd7fd]">
-                INTERVIEW LOOP SETUP
-              </span>
-              <h3 className="text-lg font-bold text-[#101828] mt-2">
-                {selectedJob.title} — Pipeline
-              </h3>
-              <p className="text-xs text-[#667085] mt-1">
-                {selectedJob.rounds.length} sequential rounds configured for automated constraint optimization.
-              </p>
-            </div>
+          {selectedJob ? (
+            <div className="bg-white border border-[#eaecf0] rounded-2xl p-6 shadow-2xs space-y-6">
+              
+              <div className="border-b border-[#f2f4f7] pb-4">
+                <span className="text-[11px] font-semibold text-[#1668e8] bg-[#e7f2fe] px-2.5 py-0.5 rounded-full border border-[#bcd7fd]">
+                  INTERVIEW LOOP SETUP
+                </span>
+                <h3 className="text-lg font-bold text-[#101828] mt-2">
+                  {selectedJob.title} — Pipeline
+                </h3>
+                <p className="text-xs text-[#667085] mt-1">
+                  {selectedJob.rounds.length} sequential rounds configured for automated constraint optimization.
+                </p>
+              </div>
 
             {/* Rounds List */}
             <div className="space-y-3">
@@ -197,7 +207,7 @@ export const JobsView: React.FC<JobsViewProps> = ({ jobs }) => {
                       <h4 className="font-semibold text-xs text-[#101828]">{round.name}</h4>
                     </div>
                     <div className="flex items-center gap-2">
-                      <span className="flex items-center gap-1 text-[11px] font-mono text-[#667085] bg-white px-2 py-0.5 rounded border border-[#eaecf0]">
+                      <span className="flex items-center gap-1 text-[11px] font-semibold text-[#667085] bg-white px-2 py-0.5 rounded-full border border-[#eaecf0]">
                         <Clock className="w-3 h-3 text-[#98a2b3]" />
                         {round.duration} min
                       </span>
@@ -234,7 +244,13 @@ export const JobsView: React.FC<JobsViewProps> = ({ jobs }) => {
               <span>Add Interview Round</span>
             </button>
 
-          </div>
+            </div>
+          ) : (
+            <div className="bg-white border border-[#eaecf0] rounded-2xl p-12 text-center text-[#667085] space-y-2 shadow-2xs">
+              <p className="font-semibold text-sm text-[#344054]">No Requisition Selected</p>
+              <p className="text-xs">Create or select a job requisition to configure its interview loop pipeline.</p>
+            </div>
+          )}
         </div>
 
       </div>
@@ -312,7 +328,7 @@ export const JobsView: React.FC<JobsViewProps> = ({ jobs }) => {
         <Dialog
           isOpen={addRoundModalOpen}
           onClose={() => setAddRoundModalOpen(false)}
-          title={`Add Round to ${selectedJob.title}`}
+          title={`Add Round to ${selectedJob?.title || 'Requisition'}`}
         >
           <form onSubmit={handleAddRound} className="space-y-4 text-xs">
             <div className="space-y-1">

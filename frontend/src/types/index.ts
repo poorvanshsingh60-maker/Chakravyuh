@@ -58,7 +58,7 @@ export interface JobPosition {
 export interface InterviewerDirectoryItem {
   id: string;
   name: string;
-  avatar: string;
+  avatar?: string;
   role: string;
   team: string;
   skills: string[];

@@ -6,8 +6,10 @@ import {
   ChevronDown, 
   ChevronRight, 
   MoreHorizontal, 
-  Plus 
+  Plus,
+  X
 } from 'lucide-react';
+import { AvatarBadge } from '../common/AvatarBadge';
 
 export const InterviewerTrainingView: React.FC = () => {
   const [activeSubTab, setActiveSubTab] = useState<'members' | 'setup'>('members');
@@ -33,10 +35,10 @@ export const InterviewerTrainingView: React.FC = () => {
   };
 
   return (
-    <div className="flex-1 flex flex-col min-h-screen bg-white">
+    <div className="h-full flex flex-col bg-white overflow-hidden">
       
       {/* View Header */}
-      <div className="px-8 pt-6 pb-2 border-b border-[#eaecf0] bg-white">
+      <div className="px-6 py-4 border-b border-[#eaecf0] bg-white shrink-0">
         <h1 className="text-xl font-bold text-[#101828] mb-4">
           Company Values
         </h1>
@@ -70,7 +72,7 @@ export const InterviewerTrainingView: React.FC = () => {
       </div>
 
       {/* Main Content Area */}
-      <div className="p-8 space-y-6 max-w-6xl">
+      <div className="flex-1 min-h-0 overflow-y-auto p-6 space-y-4 max-w-6xl w-full">
         
         {activeSubTab === 'setup' ? (
           /* Training Setup & Calibration Rules */
@@ -155,11 +157,7 @@ export const InterviewerTrainingView: React.FC = () => {
                     className="grid grid-cols-12 px-6 py-4 items-center hover:bg-[#f9fafb] cursor-pointer transition-colors"
                   >
                     <div className="col-span-3 flex items-center gap-3">
-                      <img 
-                        src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=100&auto=format&fit=crop&q=80" 
-                        alt="Claire"
-                        className="w-8 h-8 rounded-full object-cover" 
-                      />
+                      <AvatarBadge name="Claire Pritchett" size="sm" />
                       <span className="font-semibold text-sm text-[#101828]">Claire Pritchett</span>
                     </div>
 
@@ -199,11 +197,7 @@ export const InterviewerTrainingView: React.FC = () => {
                     className="grid grid-cols-12 px-6 py-4 items-center hover:bg-[#f9fafb] cursor-pointer transition-colors"
                   >
                     <div className="col-span-3 flex items-center gap-3">
-                      <img 
-                        src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=80" 
-                        alt="Phil"
-                        className="w-8 h-8 rounded-full object-cover" 
-                      />
+                      <AvatarBadge name="Phil Dunphy" size="sm" />
                       <span className="font-semibold text-sm text-[#101828]">Phil Dunphy</span>
                     </div>
 
@@ -285,11 +279,7 @@ export const InterviewerTrainingView: React.FC = () => {
                 <div>
                   <div className="grid grid-cols-12 px-6 py-4 items-center hover:bg-[#f9fafb] cursor-pointer transition-colors">
                     <div className="col-span-3 flex items-center gap-3">
-                      <img 
-                        src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&auto=format&fit=crop&q=80" 
-                        alt="Manny"
-                        className="w-8 h-8 rounded-full object-cover" 
-                      />
+                      <AvatarBadge name="Manny Delgado" size="sm" />
                       <span className="font-semibold text-sm text-[#101828]">Manny Delgado</span>
                     </div>
                     <div className="col-span-2">
@@ -329,7 +319,9 @@ export const InterviewerTrainingView: React.FC = () => {
           <div className="bg-white rounded-xl border border-[#eaecf0] shadow-xl max-w-md w-full p-6 space-y-4 text-xs animate-in fade-in zoom-in-95 duration-150">
             <div className="flex items-center justify-between border-b border-[#eaecf0] pb-3">
               <h3 className="text-base font-bold text-[#101828]">Add Shadow Session</h3>
-              <button onClick={() => setAddShadowModalOpen(false)} className="text-[#98a2b3] hover:text-[#101828]">✕</button>
+              <button onClick={() => setAddShadowModalOpen(false)} className="text-[#98a2b3] hover:text-[#101828]">
+                <X className="w-4 h-4" />
+              </button>
             </div>
 
             <form onSubmit={handleAddShadow} className="space-y-3">

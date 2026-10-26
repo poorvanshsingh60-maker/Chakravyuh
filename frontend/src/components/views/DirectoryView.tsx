@@ -3,6 +3,7 @@ import { InterviewerDirectoryItem } from '../../types';
 import { Search, Plus, CheckCircle2, ShieldCheck } from 'lucide-react';
 import { Dialog } from '../ui/dialog';
 import { Button } from '../ui/button';
+import { AvatarBadge } from '../common/AvatarBadge';
 
 
 interface DirectoryViewProps {
@@ -36,7 +37,7 @@ export const DirectoryView: React.FC<DirectoryViewProps> = ({ interviewers }) =>
     const newItem: InterviewerDirectoryItem = {
       id: `int-${Date.now()}`,
       name: newName,
-      avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80',
+      avatar: '',
       role: newRole,
       team: newTeam,
       skills: newSkills.split(',').map(s => s.trim()).filter(Boolean),
@@ -54,10 +55,10 @@ export const DirectoryView: React.FC<DirectoryViewProps> = ({ interviewers }) =>
   };
 
   return (
-    <div className="flex-1 flex flex-col min-h-screen bg-white">
+    <div className="h-full flex flex-col bg-white overflow-hidden">
       
       {/* Header */}
-      <div className="px-8 pt-6 pb-4 border-b border-[#eaecf0]">
+      <div className="px-6 py-4 border-b border-[#eaecf0] shrink-0">
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-xl font-bold text-[#101828]">Interviewer Directory</h1>
@@ -78,23 +79,23 @@ export const DirectoryView: React.FC<DirectoryViewProps> = ({ interviewers }) =>
       </div>
 
       {toastMessage && (
-        <div className="mx-8 mt-4 p-3.5 rounded-xl bg-[#ecfdf3] text-[#0b7c3e] border border-[#abefc6] text-xs font-semibold flex items-center gap-2 animate-in fade-in">
+        <div className="mx-8 mt-4 p-3.5 rounded-2xl bg-[#ecfdf3] text-[#0b7c3e] border border-[#abefc6] text-xs font-semibold flex items-center gap-2 animate-in fade-in">
           <CheckCircle2 className="w-4 h-4 text-[#0b7c3e]" />
           <span>{toastMessage}</span>
         </div>
       )}
 
-      <div className="p-8 max-w-6xl space-y-6">
+      <div className="flex-1 min-h-0 overflow-y-auto p-6 max-w-6xl w-full space-y-4">
         
         {/* Search */}
         <div className="relative w-full sm:w-80">
-          <Search className="w-4 h-4 text-[#98a2b3] absolute left-3 top-1/2 -translate-y-1/2" />
+          <Search className="w-4 h-4 text-[#98a2b3] absolute left-3.5 top-1/2 -translate-y-1/2" />
           <input 
             type="text" 
             placeholder="Search by name, role, or skill..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full bg-white border border-[#d0d5dd] rounded-lg pl-9 pr-3 py-1.5 text-xs text-[#344054] placeholder-[#98a2b3] focus:outline-none focus:border-[#1668e8]"
+            className="w-full bg-[#f8f9fa] hover:bg-[#f2f4f7] focus:bg-white border border-[#d0d5dd] focus:border-[#1668e8] rounded-full pl-9 pr-4 py-2 text-xs text-[#344054] placeholder-[#98a2b3] focus:outline-none transition-colors"
           />
         </div>
 
@@ -104,15 +105,11 @@ export const DirectoryView: React.FC<DirectoryViewProps> = ({ interviewers }) =>
             <div 
               key={item.id} 
               onClick={() => setSelectedInterviewer(item)}
-              className="p-5 rounded-xl border border-[#eaecf0] bg-white shadow-2xs space-y-4 hover:border-[#1668e8]/50 hover:shadow-xs transition-all cursor-pointer"
+              className="p-5 rounded-2xl border border-[#eaecf0] bg-white shadow-2xs space-y-4 hover:border-[#1668e8]/50 hover:shadow-xs transition-all cursor-pointer"
             >
               <div className="flex items-start justify-between">
                 <div className="flex items-center gap-3">
-                  <img 
-                    src={item.avatar} 
-                    alt={item.name} 
-                    className="w-11 h-11 rounded-full object-cover border border-[#eaecf0]"
-                  />
+                  <AvatarBadge name={item.name} size="md" />
                   <div>
                     <h3 className="font-bold text-sm text-[#101828]">{item.name}</h3>
                     <p className="text-xs text-[#475467]">{item.role}</p>
@@ -121,7 +118,7 @@ export const DirectoryView: React.FC<DirectoryViewProps> = ({ interviewers }) =>
                 </div>
 
                 <div className="text-right space-y-1">
-                  <span className={`text-[11px] font-semibold px-2 py-0.5 rounded border inline-block ${
+                  <span className={`text-[11px] font-semibold px-2.5 py-0.5 rounded-full border inline-block ${
                     item.status === 'ACTIVE' 
                       ? 'bg-[#ecfdf3] text-[#0b7c3e] border-[#abefc6]' 
                       : 'bg-[#fffaeb] text-[#b54708] border-[#fedf89]'
@@ -141,7 +138,7 @@ export const DirectoryView: React.FC<DirectoryViewProps> = ({ interviewers }) =>
                 </span>
                 <div className="flex flex-wrap gap-1.5">
                   {item.skills.map((skill, sIdx) => (
-                    <span key={sIdx} className="text-[11px] px-2 py-0.5 rounded bg-[#f2f4f7] text-[#344054] font-medium border border-[#eaecf0]">
+                    <span key={sIdx} className="text-[11px] px-2.5 py-0.5 rounded-full bg-[#f2f4f7] text-[#344054] font-medium border border-[#eaecf0]">
                       {skill}
                     </span>
                   ))}
@@ -178,15 +175,11 @@ export const DirectoryView: React.FC<DirectoryViewProps> = ({ interviewers }) =>
           <div className="space-y-4 text-xs">
             <div className="p-4 bg-[#f9fafb] rounded-xl border border-[#eaecf0] space-y-3">
               <div className="flex items-center gap-3">
-                <img
-                  src={selectedInterviewer.avatar}
-                  alt={selectedInterviewer.name}
-                  className="w-12 h-12 rounded-full object-cover border-2 border-[#1668e8]"
-                />
+                <AvatarBadge name={selectedInterviewer.name} size="lg" />
                 <div>
                   <h3 className="font-bold text-sm text-[#101828]">{selectedInterviewer.name}</h3>
                   <p className="text-xs text-[#667085]">{selectedInterviewer.role} • {selectedInterviewer.team}</p>
-                  <span className="text-[11px] font-mono font-semibold text-[#1668e8]">
+                  <span className="text-[11px] font-semibold text-[#1668e8]">
                     {selectedInterviewer.trainingLevel}
                   </span>
                 </div>
@@ -195,7 +188,7 @@ export const DirectoryView: React.FC<DirectoryViewProps> = ({ interviewers }) =>
               <div className="pt-2 border-t border-[#eaecf0] space-y-2 text-[#344054]">
                 <div className="flex justify-between">
                   <span className="font-semibold">Weekly Burnout Threshold:</span>
-                  <span className="font-mono">{selectedInterviewer.scheduledThisWeek} / {selectedInterviewer.weeklyCapacity} sessions</span>
+                  <span className="font-semibold">{selectedInterviewer.scheduledThisWeek} / {selectedInterviewer.weeklyCapacity} sessions</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="font-semibold">Calendar Sync:</span>

@@ -3,7 +3,8 @@ import { INTERVIEWERS } from '../../mockData';
 import { 
   FileEdit, 
   CheckCircle2, 
-  Send 
+  Send,
+  X 
 } from 'lucide-react';
 
 export const InterviewerHub: React.FC = () => {
@@ -178,9 +179,9 @@ export const InterviewerHub: React.FC = () => {
               </div>
               <button 
                 onClick={() => setDrawerOpen(false)}
-                className="text-slate-400 hover:text-slate-600 font-mono text-base"
+                className="text-slate-400 hover:text-slate-600"
               >
-                ✕
+                <X className="w-5 h-5" />
               </button>
             </div>
 
