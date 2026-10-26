@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { 
   Calendar as CalendarIcon, 
   CheckCircle2, 
@@ -7,10 +7,10 @@ import {
   Download, 
   MapPin, 
   RotateCcw, 
-  Check,
-  Send,
-  MessageSquare,
-  MailCheck
+  Check, 
+  Send, 
+  MessageSquare, 
+  MailCheck 
 } from 'lucide-react';
 import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
@@ -18,6 +18,7 @@ import { Dialog } from '../ui/dialog';
 import { useTimezone } from '../../context/TimezoneContext';
 import { AvatarBadge } from '../common/AvatarBadge';
 import { useCoordination } from '../../context/CoordinationContext';
+import { scheduleService } from '../../services/scheduleService';
 
 interface ConfirmedRound {
   id: string;
@@ -94,6 +95,30 @@ export const CandidateWorkspace: React.FC = () => {
 
   const [activeTab, setActiveTab] = useState<'schedule' | 'messages' | 'slot-selection'>('schedule');
   const [rescheduledRoundIds, setRescheduledRoundIds] = useState<Record<string, boolean>>({});
+  const [backendRounds, setBackendRounds] = useState<ConfirmedRound[]>([]);
+
+  // Fetch confirmed rounds from SQLite database
+  useEffect(() => {
+    if (!isDemoMode) {
+      scheduleService.getMySchedule(candidateName).then((res) => {
+        if (res && res.rounds && res.rounds.length > 0) {
+          setBackendRounds(res.rounds.map((sess: any, idx: number) => ({
+            id: sess.id,
+            roundName: sess.title,
+            order: idx + 1,
+            duration: sess.durationMins || 45,
+            date: 'Monday, Oct 26, 2026',
+            pstTimeSlot: sess.pstTimeSlot || '10:00 AM - 11:00 AM PST',
+            interviewerName: sess.interviewer,
+            interviewerRole: sess.interviewerRole || 'Evaluation Panelist',
+            location: sess.room || 'CCF Lab 1',
+            meetingLink: sess.meetingLink || `https://meet.jit.si/chakravyuh-loop-${sess.id}`,
+            status: 'CONFIRMED'
+          })));
+        }
+      }).catch(() => {});
+    }
+  }, [isDemoMode, candidateName]);
 
   // Dynamic syncing of confirmed rounds with schedule state
   const hasActiveReschedule = useMemo(() => {
@@ -112,8 +137,15 @@ export const CandidateWorkspace: React.FC = () => {
         interviewerName: sess.interviewer,
         interviewerRole: sess.interviewerRole,
         location: sess.room,
-        meetingLink: `https://meet.google.com/chk-${sess.room.toLowerCase().replace(/[^a-z0-9]/g, '-')}`,
+        meetingLink: sess.meetingLink || `https://meet.jit.si/chakravyuh-loop-${sess.room.toLowerCase().replace(/[^a-z0-9]/g, '-')}`,
         status: (hasActiveReschedule && rescheduledRoundIds[sess.id] ? 'RESCHEDULE_REQUESTED' : 'CONFIRMED') as 'RESCHEDULE_REQUESTED' | 'CONFIRMED'
+      }));
+    }
+
+    if (backendRounds.length > 0) {
+      return backendRounds.map(r => ({
+        ...r,
+        status: (hasActiveReschedule && rescheduledRoundIds[r.id] ? 'RESCHEDULE_REQUESTED' : r.status) as any
       }));
     }
 
@@ -125,7 +157,7 @@ export const CandidateWorkspace: React.FC = () => {
       ...r,
       status: (hasActiveReschedule && rescheduledRoundIds[r.id] ? 'RESCHEDULE_REQUESTED' : r.status) as any
     }));
-  }, [scheduleState?.scheduleApplied, scheduleState?.activeSessions, rescheduledRoundIds, hasActiveReschedule, isDemoMode]);
+  }, [scheduleState?.scheduleApplied, scheduleState?.activeSessions, backendRounds, rescheduledRoundIds, hasActiveReschedule, isDemoMode]);
 
   // Messages directed to Candidate
   const candidateMessages = useMemo(() => {

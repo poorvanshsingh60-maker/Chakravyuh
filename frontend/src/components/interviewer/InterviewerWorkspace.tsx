@@ -16,6 +16,7 @@ import { Dialog } from '../ui/dialog';
 import { useTimezone } from '../../context/TimezoneContext';
 import { AvatarBadge } from '../common/AvatarBadge';
 import { useCoordination } from '../../context/CoordinationContext';
+import { interviewerService } from '../../services/interviewerService';
 
 interface AssignedInterview {
   id: string;
@@ -95,6 +96,18 @@ export const InterviewerWorkspace: React.FC<InterviewerWorkspaceProps> = ({ curr
     'Friday-13': true,
     'Friday-14': true,
   });
+
+  const [isSavingAvailability, setIsSavingAvailability] = useState(false);
+  const [availabilitySavedBanner, setAvailabilitySavedBanner] = useState(false);
+
+  const handleSaveAvailability = async () => {
+    setIsSavingAvailability(true);
+    const intId = currentUser?.id || 'int-1';
+    await interviewerService.updateAvailability(intId, availableSlots);
+    setIsSavingAvailability(false);
+    setAvailabilitySavedBanner(true);
+    setTimeout(() => setAvailabilitySavedBanner(false), 4000);
+  };
 
   const toggleSlot = (day: string, hour: number) => {
     const key = `${day}-${hour}`;
@@ -460,7 +473,7 @@ export const InterviewerWorkspace: React.FC<InterviewerWorkspaceProps> = ({ curr
                 </p>
               </div>
 
-              <div className="flex items-center gap-3">
+              <div className="flex flex-wrap items-center gap-3">
                 <div className="flex items-center gap-1.5 text-xs text-[#475467]">
                   <span className="w-3 h-3 rounded-full bg-emerald-100 border border-emerald-400"></span>
                   <span>Available</span>
@@ -469,8 +482,24 @@ export const InterviewerWorkspace: React.FC<InterviewerWorkspaceProps> = ({ curr
                   <span className="w-3 h-3 rounded-full bg-[#f8f9fa] border border-[#eaecf0]"></span>
                   <span>Busy</span>
                 </div>
+                <button
+                  type="button"
+                  onClick={handleSaveAvailability}
+                  disabled={isSavingAvailability}
+                  className="px-3.5 py-1.5 rounded-full bg-[#1668e8] hover:bg-[#145ac7] text-white text-xs font-bold transition-all shadow-2xs flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                >
+                  <Check className="w-3.5 h-3.5" />
+                  <span>{isSavingAvailability ? 'Saving...' : 'Save Availability to Engine'}</span>
+                </button>
               </div>
             </div>
+
+            {availabilitySavedBanner && (
+              <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-2xl text-xs text-emerald-800 font-semibold flex items-center gap-2 animate-in fade-in">
+                <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                <span>Your weekly availability was saved! The CP-SAT solver will schedule interviews strictly within your open slots.</span>
+              </div>
+            )}
 
             <div className="bg-white rounded-2xl border border-[#eaecf0] shadow-2xs p-4">
               <div className="grid grid-cols-1 sm:grid-cols-5 gap-3">

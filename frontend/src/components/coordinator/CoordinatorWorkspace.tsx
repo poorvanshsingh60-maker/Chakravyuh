@@ -192,7 +192,30 @@ export const CoordinatorWorkspace: React.FC<CoordinatorWorkspaceProps> = ({ onSi
         durationMins: sess.durationMins
       })));
     } else {
-      setCalendarEvents([]);
+      scheduleService.getActiveSchedule().then((res) => {
+        if (res && res.sessions && res.sessions.length > 0) {
+          setCalendarEvents(res.sessions.map((sess: any) => ({
+            id: sess.id,
+            candidateName: sess.candidateName || 'Candidate',
+            candidateRole: sess.candidateRole || 'Candidate',
+            roundName: sess.title,
+            roundType: sess.roundType || 'tech',
+            interviewer: sess.interviewer,
+            interviewerAvatar: sess.interviewerAvatar || '',
+            room: sess.room,
+            dayIndex: sess.dayIndex ?? 0,
+            pstHour: sess.pstHour ?? 9,
+            durationMins: sess.durationMins ?? 45
+          })));
+          if (res.status === 'PUBLISHED') {
+            setIsPublished(true);
+          }
+        } else {
+          setCalendarEvents([]);
+        }
+      }).catch(() => {
+        setCalendarEvents([]);
+      });
     }
   }, [isDemoMode, scheduleState]);
 
@@ -269,9 +292,10 @@ export const CoordinatorWorkspace: React.FC<CoordinatorWorkspaceProps> = ({ onSi
   };
 
   // Handle Publish
-  const handlePublish = () => {
+  const handlePublish = async () => {
     setIsPublished(true);
     setPublishBanner(true);
+    await scheduleService.publishActiveSchedule();
     setTimeout(() => setPublishBanner(false), 5000);
   };
 

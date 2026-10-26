@@ -105,6 +105,44 @@ export const scheduleService = {
     await api.post(`/schedules/${versionId}/publish`).catch(() => {});
   },
 
+  getActiveSchedule: async (): Promise<any> => {
+    try {
+      const res = await api.get('/schedules/active');
+      return res.data;
+    } catch {
+      return null;
+    }
+  },
+
+  publishActiveSchedule: async (): Promise<any> => {
+    try {
+      const res = await api.post('/schedules/publish');
+      return res.data;
+    } catch {
+      return null;
+    }
+  },
+
+  getMySchedule: async (candidateName?: string): Promise<any> => {
+    try {
+      const param = candidateName ? `?candidate_name=${encodeURIComponent(candidateName)}` : '';
+      const res = await api.get(`/schedules/my-schedule${param}`);
+      return res.data;
+    } catch {
+      return null;
+    }
+  },
+
+  getMyInterviews: async (interviewerName?: string): Promise<any> => {
+    try {
+      const param = interviewerName ? `?interviewer_name=${encodeURIComponent(interviewerName)}` : '';
+      const res = await api.get(`/schedules/my-interviews${param}`);
+      return res.data;
+    } catch {
+      return null;
+    }
+  },
+
   getVersions: async (): Promise<ScheduleVersion[]> => {
     try {
       const res = await api.get('/schedules/versions');

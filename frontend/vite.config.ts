@@ -29,6 +29,30 @@ export default defineConfig({
         target: 'http://localhost:8000',
         changeOrigin: true,
       },
+      '/candidates': {
+        target: 'http://localhost:8000',
+        changeOrigin: true,
+      },
+      '/interviewers': {
+        target: 'http://localhost:8000',
+        changeOrigin: true,
+      },
+      '/jobs': {
+        target: 'http://localhost:8000',
+        changeOrigin: true,
+      },
+      '/rooms': {
+        target: 'http://localhost:8000',
+        changeOrigin: true,
+      },
+      '/evaluations': {
+        target: 'http://localhost:8000',
+        changeOrigin: true,
+      },
+      '/messages': {
+        target: 'http://localhost:8000',
+        changeOrigin: true,
+      },
     },
   },
 });

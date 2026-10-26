@@ -26,6 +26,7 @@ import { SettingsView } from './components/views/SettingsView';
 import { HelpSupportView } from './components/views/HelpSupportView';
 import { TimezoneSelector } from './components/common/TimezoneSelector';
 import { authService } from './services/authService';
+import { candidateService } from './services/candidateService';
 import { CoordinationProvider, useCoordination } from './context/CoordinationContext';
 import { ChakravyuhLoadingAnimation } from './components/common/ChakravyuhLoadingAnimation';
 import { Sparkles } from 'lucide-react';
@@ -99,8 +100,35 @@ function MainLayout({
         setTasks(savedT ? JSON.parse(savedT) : []);
         const savedC = localStorage.getItem(`chakravyuh_live_candidates_${currentUser.id}`);
         const cList = savedC ? JSON.parse(savedC) : [];
-        setCandidates(cList);
-        setActiveCandidate(cList[0] || null);
+        if (cList.length > 0) {
+          setCandidates(cList);
+          setActiveCandidate(cList[0] || null);
+        } else {
+          // Fetch from SQLite backend
+          candidateService.getAll().then((dbCands) => {
+            if (dbCands && dbCands.length > 0) {
+              const mapped: CandidateItem[] = dbCands.map((c: any) => ({
+                id: c.id,
+                name: c.name,
+                role: c.role,
+                stage: c.stage || 'Technical Loop',
+                appliedDate: c.applied_date || 'Oct 2026',
+                scheduledDate: c.scheduled_date,
+                recruiter: c.recruiter || 'T&P Coordinator Emma',
+                status: c.status || 'NEEDS_SCHEDULING',
+                rating: c.rating || 0.0
+              }));
+              setCandidates(mapped);
+              setActiveCandidate(mapped[0] || null);
+            } else {
+              setCandidates([]);
+              setActiveCandidate(null);
+            }
+          }).catch(() => {
+            setCandidates([]);
+            setActiveCandidate(null);
+          });
+        }
       } catch {
         setTasks([]);
         setCandidates([]);

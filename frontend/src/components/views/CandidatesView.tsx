@@ -7,8 +7,8 @@ import {
   X 
 } from 'lucide-react';
 import { AvatarBadge } from '../common/AvatarBadge';
-
 import { useCoordination } from '../../context/CoordinationContext';
+import { candidateService } from '../../services/candidateService';
 
 interface CandidatesViewProps {
   candidates: CandidateItem[];
@@ -42,7 +42,7 @@ export const CandidatesView: React.FC<CandidatesViewProps> = ({
     e.preventDefault();
     if (!name.trim()) return;
 
-    onAddCandidate({
+    const newCand: CandidateItem = {
       id: `cand-${Date.now()}`,
       name,
       role,
@@ -50,7 +50,18 @@ export const CandidatesView: React.FC<CandidatesViewProps> = ({
       appliedDate: 'Just now',
       recruiter: 'Sarah Jenkins',
       status: 'NEEDS_SCHEDULING'
-    });
+    };
+
+    onAddCandidate(newCand);
+    candidateService.create({
+      id: newCand.id,
+      name: newCand.name,
+      email: email.trim() || `${name.toLowerCase().replace(/\s+/g, '.')}@example.com`,
+      role: newCand.role,
+      stage: newCand.stage,
+      status: newCand.status,
+      appliedDate: newCand.appliedDate
+    } as any).catch(err => console.error('Failed to save candidate to backend:', err));
 
     createAndSendAssignment({
       candidateName: name,

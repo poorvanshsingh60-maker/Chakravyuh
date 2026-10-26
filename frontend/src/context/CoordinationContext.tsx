@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { evaluationService } from '../services/evaluationService';
 
 export interface InterviewAssignment {
   id: string;
@@ -89,6 +90,7 @@ export interface SavedScheduleSession {
   durationMins: number;
   room: string;
   type: 'design' | 'values' | 'presentation' | 'bar_raiser';
+  meetingLink?: string;
 }
 
 export interface SavedScheduleState {
@@ -397,6 +399,22 @@ export const CoordinationProvider: React.FC<CoordinationProviderProps> = ({
     strengths?: string,
     growthAreas?: string
   ) => {
+    const target = assignments.find(a => a.id === assignmentId);
+    if (target) {
+      evaluationService.submit({
+        interview_id: assignmentId,
+        candidate_id: target.id,
+        candidate_name: target.candidateName,
+        interviewer_name: target.interviewerName,
+        round_name: target.roundName,
+        decision,
+        rating,
+        strengths,
+        growth_areas: growthAreas,
+        notes: 'Submitted via interviewer evaluation portal'
+      }).catch(err => console.error('Failed to save evaluation to SQLite', err));
+    }
+
     setAssignments(prev => prev.map(a => {
       if (a.id === assignmentId) {
         return {
